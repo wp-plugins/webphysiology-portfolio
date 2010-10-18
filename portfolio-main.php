@@ -258,7 +258,7 @@ function webphys_portfolio_edit_init() {
     echo '<p><label for="_siteurl">Enter Portfolio Web Page URL: </label>';
 	echo '<input type="text" id="_siteurl" name="_siteurl" value="' . $siteurl . '" class="widefat" /></p>';
     echo '<p><label for="_imageurl">Enter Portfolio Image URL: </label>';
-	echo '<input id="upload_image_button" type="button" value="Upload Image" /><br />';
+	echo '<input id="upload_portfolio_image_button" type="button" value="Upload Image" /><br />';
 	echo '<input type="text" id="_imageurl" name="_imageurl" value="' . $imageurl . '" class="widefat shortbottom" /><br />';
 	echo '<span class="attribute_instructions">Enter the URL for the portfolio image. Clicking "Insert into Post" from &lt;Upload Image&gt; will paste the inserted image\'s URL (take care what size is selected).</span></p>';
     echo '<p><label for="_sortorder">Enter site sort order: </label>';
@@ -273,25 +273,58 @@ function add_portfolio_metaboxes() {
 
 // Make certain the scripts and css necessary to support the file upload button are active
 function portfolio_admin_scripts() {
-    $x = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__)) . 'scripts/';
-	wp_enqueue_script('media-upload');
-	wp_enqueue_script('thickbox');
-	wp_register_script('portfolio-image-upload', $x . 'file_uploader.js', array('jquery','media-upload','thickbox'));
-	wp_enqueue_script('portfolio-image-upload');
+	
+	global $post;
+	
+	$continue = "False";
+	
+	// don't include the media upload script if we are not on a portfolio edit page, otherwise,
+	// the standard image upload will be hijacked and not work on other post and page admin pages
+	if (isset($post)) {
+		if (strtolower($post->post_type) == "portfolio") {
+			$continue = "True";
+		}
+	}
+	
+	if ($continue == "True") {
+		
+		$x = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__)) . 'scripts/';
+		wp_enqueue_script('media-upload');
+		wp_enqueue_script('thickbox');
+		wp_register_script('portfolio-image-upload', $x . 'file_uploader.js', array('jquery','media-upload','thickbox'));
+		wp_enqueue_script('portfolio-image-upload');
+		
+	}
 }
 
 function portfolio_admin_styles() {
-    $x = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__)) . 'scripts/fancybox/';
-	wp_register_style('lightbox_css', $x . '/jquery.fancybox-1.3.1.css');
-	wp_enqueue_style('lightbox_css');
 	
-	wp_enqueue_style('thickbox');
+	global $post;
+	
+	$continue = "False";
+	
+	// don't include the media upload script if we are not on a portfolio edit page, otherwise,
+	// the standard image upload will be hijacked and not work on other post and page admin pages
+	if (isset($post)) {
+		if (strtolower($post->post_type) == "portfolio") {
+			$continue = "True";
+		}
+	}
+	
+	if ($continue == "True") {
+		
+		$x = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__)) . 'scripts/fancybox/';
+		wp_register_style('lightbox_css', $x . '/jquery.fancybox-1.3.1.css');
+		wp_enqueue_style('lightbox_css');
+		
+		wp_enqueue_style('thickbox');
+		
+	}
 }
 
-if (is_admin()) {
-//if (isset($_GET['post']) ) {
-    add_action('admin_print_scripts', 'portfolio_admin_scripts');
-    add_action('admin_print_styles', 'portfolio_admin_styles');
+if (is_admin() ) {
+	add_action('admin_print_scripts', 'portfolio_admin_scripts');
+	add_action('admin_print_styles', 'portfolio_admin_styles');
 }
 
 
@@ -526,7 +559,9 @@ add_action('save_post', 'save_portfolio_meta', 1, 2); // save the custom fields
 function remove_post_custom_fields() {
 	remove_meta_box( 'tagsdiv-portfolio_type' , 'Portfolio' , 'side' );
 }
-add_action( 'admin_menu' , 'remove_post_custom_fields' );
+if (is_admin()) {
+	add_action( 'admin_menu' , 'remove_post_custom_fields' );
+}
 
 //*************************************************//
 //******** PORTFOLIO EDIT SCREEN CODE END  ********//
@@ -553,7 +588,6 @@ function add_new_portfolio_columns($columns) {
 
 	return $new_columns;
 }
-add_filter('manage_edit-Portfolio_columns', 'add_new_portfolio_columns');
 
 
 /* Define the data retrieval arguments for the Portfolio list columns */
@@ -597,7 +631,11 @@ function manage_portfolio_columns($column_name, $id) {
 		break;
 	} // end switch
 }
-add_action('manage_posts_custom_column', 'manage_portfolio_columns', 10, 2);
+
+if (is_admin()) {
+	add_filter('manage_edit-Portfolio_columns', 'add_new_portfolio_columns');
+	add_action('manage_posts_custom_column', 'manage_portfolio_columns', 10, 2);
+}
 
 //*************************************************//
 //********** PORTFOLIO LISTING CODE END  **********//
@@ -1026,7 +1064,7 @@ function set_portfolio_css() {
 		$x = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__)) . 'css/';
 		// note: wp_enqueue_style does not support conditional stylesheets at this time
 		echo "\n";
-		echo '<!--[if lte IE8]>' . "\n";
+		echo '<!--[if lte IE 8]>' . "\n";
 		echo '	<link rel="stylesheet" id="webphysiology_portfolio_ie_adjustment_css" type="text/css" href="' . $x . 'portfolio_lte_ie8.css" />' . "\n";
 		echo '<![endif]-->' . "\n";
 	}
