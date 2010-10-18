@@ -18,9 +18,6 @@ The Portfolio entry screen is highly customized to include just the items that m
 
 The end user interface can be adjusted somewhat using the Admin Settings values or via your own CSS. It also incorporates the TimThumb.php code in order to scale the images displayed in the list. The benefit here is to decrease the page weight while maintaining an acceptable quality image, plus the fact that you only need to load one image for use in the list thumbnail and expanded view. The end user interface also utilizes FancyBox to present the full-sized image in a lightbox fashion.
 
-For backwards compatibility, if this section is missing, the full length of the short description will be used, and
-Markdown parsed.
-
 
 == Installation ==
 
@@ -28,7 +25,9 @@ This section describes how to install the plugin and get it working.
 
 1. Extract the WEBphysiology Portfolio ZIP file and place the `webphysiology-portfolio` folder into the `/wp-content/plugins/` directory
 2. Activate the plugin through the 'Plugins' menu in WordPress
-3. Place the [portfolio] shortcode into the content area of your "portfolio" page
+3. Add the necessary Portfolio Types via it's menu under the Portfolio section
+4. Add one or more Portfolios
+5. Place the [portfolio] shortcode into the content area of your "portfolio" page
 
 == Frequently Asked Questions ==
 
