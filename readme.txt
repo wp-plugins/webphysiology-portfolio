@@ -1,7 +1,7 @@
 === Plugin Name ===
 Contributors: lambje
 Donate link: http://webphysiology.com/redir/webphysiology-portfolio/donate/
-Tags: portfolio,gallery,posts,post,custom post type,custom taxonomy
+Tags: portfolio,gallery,posts,post,custom post type,custom taxonomy,webphysiology
 Requires at least: 3.0.0
 Tested up to: 3.0.1
 Stable tag: trunk
