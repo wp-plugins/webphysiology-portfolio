@@ -4,7 +4,7 @@ Donate link: http://webphysiology.com/redir/webphysiology-portfolio/donate/
 Tags: portfolio,gallery,posts,post,custom post type,custom taxonomy,webphysiology
 Requires at least: 3.0.0
 Tested up to: 3.0.1
-Stable tag: trunk
+Stable tag: 1.0.1
 
 This plugin allows for the creation of an expanded-list styled page containing images and supporting detail, perfect for a portfolio presentation.
 
@@ -57,6 +57,8 @@ While my intention is to maintain this plugin such that it is defect free, this 
 
 = 1.0.0 =
 * Initial release.
+= 1.0.1 =
+* Minor adjustments to release (first pluginitis)
 
 == Support ==
 
