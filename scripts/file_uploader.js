@@ -2,7 +2,7 @@
 
 jQuery(document).ready(function() {
 	
-	jQuery('#upload_image_button').click(function() {
+	jQuery('#upload_portfolio_image_button').click(function() {
 		formfield = jQuery('#_imageurl').attr('name');
 		tb_show('', 'media-upload.php?type=image&amp;TB_iframe=true');
 		return false;
