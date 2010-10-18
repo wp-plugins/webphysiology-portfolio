@@ -1,0 +1,58 @@
+@charset "UTF-8";
+/* Portfolio Admin area CSS Document */
+
+.portfolio-admin .postbox-container {
+	width: 70%;
+}
+.company_logo {
+	margin-bottom: 20px;
+	margin-top: 10px;
+}
+.company_logo h2 {
+	padding-top: 18px;
+}
+.company_logo a {
+	background: url(../images/WEBphysiology-icon.png) no-repeat;
+	height: 60px;
+	width: 60px;
+	margin: 7px 15px 5px 2px;
+	float: left;
+}
+.postbox .inside {
+	margin: 5px 5px;
+}
+.postbox .inside label {
+	margin: 10px 0 10px 10px;
+}
+.postbox .inside input {
+	margin: 10px 0 10px 10px;
+}
+#upload_image_button {
+	margin: 0 0 0 10px;
+}
+.wrap .updated, .wrap .error {
+	margin-top: 25px;
+}
+.msg_hidden {
+	display: none;
+}
+.msg_visible {
+	display: inline;
+}
+.shortbottom {
+	margin-bottom: 3px !important;
+}
+.attribute_instructions {
+	margin-left: 20px;
+}
+#portolio-conf .portfolio_button {
+	float: left;
+	padding: 0 0 0 10px;
+}
+#pluginsettings {
+	margin-bottom: 10px;
+}
+.portfolio_donate {
+	float: left;
+	margin: 3px 0 0 20px;
+}
