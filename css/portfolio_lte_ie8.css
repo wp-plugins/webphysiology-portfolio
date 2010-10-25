@@ -19,3 +19,8 @@
 	background: none;
 	background-color: #FFC;
 }
+#portfolios #portfolio_credit {
+	/* The following is ignored by standards-based browsers */
+	-ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=80)";  /* IE8 */
+	filter: alpha(opacity=80); /* IE 5-7  */
+}
