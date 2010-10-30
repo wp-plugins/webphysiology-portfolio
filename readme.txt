@@ -45,9 +45,10 @@ While my intention is to maintain this plugin such that it is defect free, this 
 
 == Screenshots ==
 
-1. Portfolio Post edit screen
-2. Portfolio Page edit screen showing [shortcode] implementation
-3. Portfolio options screen
+1. Portfolio Page Frontend User Interface
+2. Portfolio Post edit screen
+3. Portfolio Page edit screen showing [shortcode] implementation
+4. Portfolio options screen
 
 == Upgrade Notice ==
 
