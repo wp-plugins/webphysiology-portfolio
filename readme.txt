@@ -41,7 +41,7 @@ More detailed information can be found here: http://webphysiology.com/plugins/we
 
 = How can I get support? =
 
-While my intention is to maintain this plugin such that it is defect free, this bit of work is not my number one priority.
+My intention, at a minimum, is to maintain this plugin such that it is defect free.  For more info visit our <a href="http://webphysiology.com/plugins/webphysiology-portfolio-plugin/">WEBphysiology Portfolio plugin page</a>.
 
 == Screenshots ==
 
