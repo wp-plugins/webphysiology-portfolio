@@ -4,7 +4,7 @@ Donate link: http://webphysiology.com/redir/webphysiology-portfolio/donate/
 Tags: portfolio,gallery,posts,post,custom post type,custom taxonomy,webphysiology
 Requires at least: 3.0.0
 Tested up to: 3.0.1
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 
 This plugin allows for the creation of an expanded-list styled page containing images and supporting detail, perfect for a portfolio presentation.
 
@@ -62,6 +62,8 @@ My intention, at a minimum, is to maintain this plugin such that it is defect fr
 * Minor adjustments to release (first pluginitis)
 = 1.0.2 =
 * Added support for WEBphysiology 80% opacity within IE
+* CSS adjustments
+* Updated thumbnail retrieval to change the image URL passed to timthumb to exlude the path up through the wp_content directory
 
 == Support ==
 

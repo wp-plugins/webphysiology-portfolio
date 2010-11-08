@@ -3,7 +3,7 @@
 Plugin Name: WEBphysiology Portfolio
 Plugin URI: http://webphysiology.com/redir/webphysiology-portfolio/
 Description: Provides a clean Portfolio listing with image, details and portfolio type taxonomy.  A [portfolio] shortcode is used to include the portfolio on any page.
-Version: 1.0.1
+Version: 1.0.2
 Author: Jeff Lambert
 Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 License: GPL2
@@ -25,6 +25,12 @@ License: GPL2
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+/*  UPDATES
+
+    1.0.2 - changed image url passed to timthumb.php to exclude the content directory from the path as
+    		some installs were having problems with this
+    
+*/
 
 // TimThumb.php was utilized in order to resize the uploaded site images for display as "thumbnails" on the portfolio listing.
 // 	Code was also "borrowed" from TimThumb for use in checking the existance of the specified image and replacing it with an "empty" image if it no longer existed.
@@ -952,6 +958,7 @@ if ( ! function_exists( 'get_Loop_Site_Image' ) ) :
 function get_Loop_Site_Image() {
 	
     $full_size_img_url = get_post_meta(get_the_ID(), "_imageurl", true);
+	$img_url = str_replace(content_url(), "", $full_size_img_url);
 	
 	$opt_val_img_width = get_option( 'webphysiology_portfolio_image_width' );
 	
@@ -961,6 +968,11 @@ function get_Loop_Site_Image() {
 		$img = clean_source($full_size_img_url);
 		if (!file_exists($img)) {
 			$full_size_img_url = "";
+		} else {
+			$img = clean_source($img_url);
+			if (!file_exists($img)) {
+				$full_size_img_url = "";
+			}
 		}
 	}
 	
@@ -969,6 +981,7 @@ function get_Loop_Site_Image() {
 		$anchor_open = '<a href="' . $full_size_img_url . '" title="' . the_title_attribute( 'echo=0' ) . '" class="Portfolio-Link thickbox">';
 		
 		$path = $anchor_open . '<img src="' . plugin_dir_url(__FILE__) . 'scripts/thumb/timthumb.php?src=' . $full_size_img_url . '&w=' . $opt_val_img_width . '&zc=1" alt="' . the_title_attribute('echo=0') . '" /></a>';
+		$path = $anchor_open . '<img src="' . plugin_dir_url(__FILE__) . 'scripts/thumb/timthumb.php?src=' . $img_url . '&w=' . $opt_val_img_width . '&zc=1" alt="' . the_title_attribute('echo=0') . '" /></a>';
 		
 	} else {
 		
