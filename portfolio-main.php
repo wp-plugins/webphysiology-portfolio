@@ -968,11 +968,6 @@ function get_Loop_Site_Image() {
 		$img = clean_source($full_size_img_url);
 		if (!file_exists($img)) {
 			$full_size_img_url = "";
-		} else {
-			$img = clean_source($img_url);
-			if (!file_exists($img)) {
-				$full_size_img_url = "";
-			}
 		}
 	}
 	
