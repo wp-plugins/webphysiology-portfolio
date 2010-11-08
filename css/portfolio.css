@@ -70,6 +70,7 @@
 	margin: 0;
 	padding: 0;
 	list-style: none;
+	font-size: 1em;  /* added 2010-11-01 */
 }
 #portfolios .portfolio_nav.top ul {
 	margin-bottom: 10px;
