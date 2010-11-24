@@ -67,4 +67,4 @@ My intention, at a minimum, is to maintain this plugin such that it is defect fr
 
 == Support ==
 
-While I am open to input on defects and will try and correct them as soon as I can make time, please understand that this is side work and not my number one priority.  That said, I also use this plugin and am keen to ensure it provides the intended functionality.  As to requests for enhancements, feel free to make these but please don't be offended if I don't respond to your suggestions, of if my responses are delayed.
+I will do my best to correct any reported defects as soon as I can make time, but please understand that this is side work.  That said, I also use this plugin and am keen to ensure it provides the intended functionality.  As to requests for enhancements, feel free to make these and I'll do my best to respond to these requests and, for those I feel would benefit the majority of users, will add it to an enhancement request list.  I can't say just how quickly these would be implemented but funding the request would definitely move it up in the queue.
