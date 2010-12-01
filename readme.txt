@@ -3,8 +3,8 @@ Contributors: lambje
 Donate link: http://webphysiology.com/redir/webphysiology-portfolio/donate/
 Tags: portfolio,gallery,posts,post,custom post type,custom taxonomy,webphysiology
 Requires at least: 3.0.0
-Tested up to: 3.0.1
-Stable tag: 1.0.2
+Tested up to: 3.0.2
+Stable tag: 1.1.0
 
 This plugin allows for the creation of an expanded-list styled page containing images and supporting detail, perfect for a portfolio presentation.
 
@@ -16,7 +16,7 @@ The plugin utilizes a Custom Post Type as well as a Custom Taxonomy. It provides
 
 The Portfolio entry screen is highly customized to include just the items that make up a Portfolio entry. Attributes that aren’t populated will not be displayed on the end user interface. Attaching an image to a Portfolio entry also has been made relatively painless.
 
-The end user interface can be adjusted somewhat using the Admin Settings values or via your own CSS. It also incorporates the TimThumb.php code in order to scale the images displayed in the list. The benefit here is to decrease the page weight while maintaining an acceptable quality image, plus the fact that you only need to load one image for use in the list thumbnail and expanded view. The end user interface also utilizes FancyBox to present the full-sized image in a lightbox fashion.
+The end user interface can be adjusted using the Portfolio (Admin) Settings values or via your own CSS. It also incorporates the TimThumb.php code in order to scale the images displayed in the list. The benefit here is to decrease the page weight while maintaining an acceptable quality image, plus the fact that you only need to load one image for use in the list thumbnail and expanded view. The end user interface also utilizes FancyBox to present the full-sized image in a litebox when you click on the image or you can go to a URL on an image click.
 
 
 == Installation ==
@@ -56,15 +56,22 @@ My intention, at a minimum, is to maintain this plugin such that it is defect fr
 
 == Changelog ==
 
-= 1.0.0 =
-* Initial release.
-= 1.0.1 =
-* Minor adjustments to release (first pluginitis)
+= 1.1.0 =
+* Added a color picker to the Admin styling area to make color selections quicker
+* Added the ability to change the detail data labels and their width
+* Added the ability to turn off the display of all detail data items should you want to store the values but not display them
+* Added the ability to navigate to the specified "site" URL when you click on the thumbnail as opposed to opening up a larger image in a litebox
+* Added the ability to specify a missing image URL as opposed to using the plugin provided image
+* Fixed potential issue where embedded STYLE was still being included when NOT using WEBphysiology Portfolio CSS
 = 1.0.2 =
 * Added support for WEBphysiology 80% opacity within IE
 * CSS adjustments
 * Updated thumbnail retrieval to change the image URL passed to timthumb to exlude the path up through the wp_content directory
+= 1.0.1 =
+* Minor adjustments to release (first pluginitis)
+= 1.0.0 =
+* Initial release.
 
 == Support ==
 
-I will do my best to correct any reported defects as soon as I can make time, but please understand that this is side work.  That said, I also use this plugin and am keen to ensure it provides the intended functionality.  As to requests for enhancements, feel free to make these and I'll do my best to respond to these requests and, for those I feel would benefit the majority of users, will add it to an enhancement request list.  I can't say just how quickly these would be implemented but funding the request would definitely move it up in the queue.
+I will do my best to correct any reported defects as soon as I can make time, but please understand that this is side work. That said, I also use this plugin and am keen to ensure it provides the intended functionality. As to requests for enhancements, feel free to make these. I'll do my best to respond to your requests and, for those requests that I feel would benefit the majority of users, I'll get them on the enhancement list. I can't say just how quickly these would be implemented but funding the request would definitely move it up in the queue.

@@ -7,15 +7,32 @@
  * @since webphysiology-portfolio 1.0.0
  */
 
+/*  UPDATES
+
+    1.1.0 - Added the ability to turn off the display of all detail data items should you want to store the values but not display the data to the user
+	
+*/
+
 global $loop;
 global $wp_query;
 global $portfolio_types;
 global $portfolio_output;
 
+$display_portfolio_type = get_option( 'webphysiology_portfolio_display_portfolio_type' );
 $display_created_on = get_option( 'webphysiology_portfolio_display_createdate' );
+$display_clientname = get_option( 'webphysiology_portfolio_display_clientname' );
+$display_siteurl = get_option( 'webphysiology_portfolio_display_siteurl' );
+$display_tech = get_option( 'webphysiology_portfolio_display_tech' );
+$detail_labels = get_option( 'webphysiology_portfolio_display_labels' );
 $portfolios_per_page = get_option( 'webphysiology_portfolio_items_per_page' );
 $display_credit = get_option( 'webphysiology_portfolio_display_credit' );
 $paged = (get_query_var('paged')) ? get_query_var('paged') : 1;
+
+$type_label = $detail_labels["Type"];
+$created_label = $detail_labels["Created"];
+$client_label = $detail_labels["Client"];
+$siteURL_label = $detail_labels["SiteURL"];
+$tech_label = $detail_labels["Tech"];
 
 // if the portfolio shortcode had no portfolio types defined
 if ( $portfolio_types == '' ) {
@@ -42,7 +59,6 @@ if ( $loop->have_posts() ) : while ( $loop->have_posts() ) : $loop->the_post();
 	}
 
 	$portfolio_output .= '<div id="post-' . get_the_ID() . '" class="' . implode(" ", get_post_class($post_class)) . '">';
-		
 	$portfolio_output .= '    <div class="portfolio_page_img">';
 	$portfolio_output .= '    	' . get_Loop_Site_Image();
 	$portfolio_output .= '    </div>';
@@ -72,25 +88,24 @@ if ( $loop->have_posts() ) : while ( $loop->have_posts() ) : $loop->the_post();
 	
 	$portfolio_output .= '		<div class="portfolio_meta">';
 	
-	if(!$type == '') {
-		$portfolio_output .= '            <div class="portfolio_client"><div class="key">Type: </div><div class="value">' . $type . '</div></div>';
+	if ((!$type == '') && ($display_portfolio_type == 'True')) {
+		$portfolio_output .= '            <div class="portfolio_type""><div class="key">' . $type_label . ': </div><div class="value">' . $type . '</div></div>';
 	}
 	
-	
-	if((!$datecreate == '') && ($display_created_on == 'True')) {
-		$portfolio_output .= '            <div class="portfolio_datecreate"><div class="key">Created: </div><div class="value">' .$datecreate . '</div></div>';
+	if ((!$datecreate == '') && ($display_created_on == 'True')) {
+		$portfolio_output .= '            <div class="portfolio_datecreate"><div class="key">' . $created_label . ': </div><div class="value">' .$datecreate . '</div></div>';
 	}
 	
-	if(!$client == '') {
-		$portfolio_output .= '            <div class="portfolio_client"><div class="key">For: </div><div class="value">' .$client . '</div></div>';
+	if ((!$client == '') && ($display_clientname == 'True')) {
+		$portfolio_output .= '            <div class="portfolio_client"><div class="key">' . $client_label . ': </div><div class="value">' .$client . '</div></div>';
 	}
 	
-	if(!$siteurl == '') {
-		$portfolio_output .= '            <div class="portfolio_siteurl"><div class="key">Site: </div><div class="value"><a href="' . $siteurl . '">' . $siteurl . '</a></div></div>';
+	if ((!$siteurl == '') && ($display_siteurl == 'True')) {
+		$portfolio_output .= '            <div class="portfolio_siteurl"><div class="key">' . $siteURL_label . ': </div><div class="value"><a href="' . $siteurl . '">' . $siteurl . '</a></div></div>';
 	}
 	
-	if(!$technical_details == '') {
-		$portfolio_output .= '            <div class="portfolio_techdetails"><div class="key">Tech: </div><div class="value">' . $technical_details . '</div></div>';
+	if ((!$technical_details == '') && ($display_tech == 'True')) {
+		$portfolio_output .= '            <div class="portfolio_techdetails"><div class="key">' . $tech_label . ': </div><div class="value">' . $technical_details . '</div></div>';
 	}
 	
 	$portfolio_output .= '            ' . wp_link_pages( array( 'before' => '<div class="page-link">' . __( 'Pages:', 'webphysiology_portfolio' ), 'after' => '</div>' ) );
