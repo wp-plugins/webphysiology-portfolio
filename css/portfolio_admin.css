@@ -1,0 +1,91 @@
+@charset "UTF-8";
+/* Portfolio Admin area CSS Document */
+
+#poststuff .inside, #poststuff .inside p {
+	font-size: 1em !important;
+}
+.portfolio-admin .postbox-container {
+	width: 100%;
+}
+.company_logo {
+	margin-bottom: 10px;
+	margin-top: 10px;
+}
+.company_logo h2 {
+	padding-top: 18px;
+}
+.company_logo a {
+	background: url(../images/WEBphysiology-icon.png) no-repeat;
+	height: 60px;
+	width: 60px;
+	margin: 7px 15px 5px 2px;
+	float: left;
+}
+.postbox .inside {
+	margin: 5px 5px;
+}
+.postbox .inside label {
+	margin: 10px 0 10px 10px;
+}
+.postbox .inside input {
+	margin: 10px 0 10px 10px;
+}
+#upload_image_button {
+	margin: 0 0 0 10px;
+}
+.wrap .updated, .wrap .error {
+	margin-top: 25px !important;
+}
+.msg_hidden {
+	display: none;
+}
+.msg_visible {
+	display: inline;
+}
+.shortbottom {
+	margin-bottom: 3px !important;
+}
+.tallbottom {
+	margin-bottom: 15px !important;
+}
+.attribute_instructions {
+	margin-left: 20px;
+	font-size: 0.85em;
+}
+#portolio-conf .portfolio_button {
+	float: left;
+	padding: 0 0 0 10px;
+}
+#pluginsettings {
+	margin-bottom: 10px;
+}
+.portfolio_donate {
+	float: left;
+	margin: 3px 0 0 20px;
+}
+.portfolio_admin_style {
+	float: left;
+}
+#color-selection-helper {
+	float: left;
+	margin: 20px 5px 20px 20px;
+	padding: 10px 10px;
+	border: 2px solid #ddd;
+}
+#color-selection-helper p {
+	text-align: center;
+	color: #aaa;
+	background: #eee;
+	font-size: 1.25em;
+	font-weight: bold;
+	margin: -10px -10px 8px -10px;
+	padding: 3px 3px;
+	background: #eee;
+}
+#colorselector {
+	text-align: center;
+	margin-bottom: 2px;
+}
+.half_input {
+	width: 50%;
+}
