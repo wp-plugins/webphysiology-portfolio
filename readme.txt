@@ -18,6 +18,8 @@ The Portfolio entry screen is highly customized to include just the items that m
 
 The end user interface can be adjusted using the Portfolio (Admin) Settings values or via your own CSS. It also incorporates the TimThumb.php code in order to scale the images displayed in the list. The benefit here is to decrease the page weight while maintaining an acceptable quality image, plus the fact that you only need to load one image for use in the list thumbnail and expanded view. The end user interface also utilizes FancyBox to present the full-sized image in a litebox when you click on the image or you can go to a URL on an image click.
 
+*** NOTE: If you get a "File Not Found" during installation from the WordPress site, simply run the installation again.
+
 
 == Installation ==
 
@@ -42,6 +44,10 @@ More detailed information can be found here: http://webphysiology.com/plugins/we
 = How can I get support? =
 
 My intention, at a minimum, is to maintain this plugin such that it is defect free.  For more info visit our <a href="http://webphysiology.com/plugins/webphysiology-portfolio-plugin/">WEBphysiology Portfolio plugin page</a>.
+
+= I get a "File Not Found" error when I try and install from WordPress plugin area
+
+This happens on occasion.  Running the install a second time typically results in a successful install.
 
 == Screenshots ==
 
@@ -73,5 +79,7 @@ My intention, at a minimum, is to maintain this plugin such that it is defect fr
 * Initial release.
 
 == Support ==
+
+*** NOTE: If you get a "File Not Found" during installation from the WordPress site, simply run the installation again.
 
 I will do my best to correct any reported defects as soon as I can make time, but please understand that this is side work. That said, I also use this plugin and am keen to ensure it provides the intended functionality. As to requests for enhancements, feel free to make these. I'll do my best to respond to your requests and, for those requests that I feel would benefit the majority of users, I'll get them on the enhancement list. I can't say just how quickly these would be implemented but funding the request would definitely move it up in the queue.
