@@ -1062,9 +1062,7 @@ function portfolio_plugin_page() {
 	echo '						<div id="color-selection-helper"">' . "\n";
 	echo '							<p>color selection helper</p>' . "\n";
 	echo '							<div id="colorpicker"></div>' . "\n";
-	echo '							<form id="fabristic_colorpicker">' . "\n";
-	echo '								<input type="text" id="colorselector" name="colorselector" value="#cccccc" />' . "\n";
-	echo '							</form>' . "\n";
+	echo '							<input type="text" id="colorselector" name="colorselector" value="#cccccc" />' . "\n";
 	echo '						</div>' . "\n";
 	echo '					</div>' . "\n";
 	echo '				</div>' . "\n";
