@@ -3,7 +3,7 @@
 Plugin Name: WEBphysiology Portfolio
 Plugin URI: http://webphysiology.com/redir/webphysiology-portfolio/
 Description: Provides a clean Portfolio listing with image, details and portfolio type taxonomy.  A [portfolio] shortcode is used to include the portfolio on any page.
-Version: 1.1.0
+Version: 1.1.1
 Author: Jeff Lambert
 Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 License: GPL2
