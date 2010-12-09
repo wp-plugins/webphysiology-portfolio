@@ -3,7 +3,7 @@
 Plugin Name: WEBphysiology Portfolio
 Plugin URI: http://webphysiology.com/redir/webphysiology-portfolio/
 Description: Provides a clean Portfolio listing with image, details and portfolio type taxonomy.  A [portfolio] shortcode is used to include the portfolio on any page.
-Version: 1.1.0
+Version: 1.1.2
 Author: Jeff Lambert
 Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 License: GPL2
@@ -27,6 +27,8 @@ License: GPL2
 
 /*  UPDATES
 
+    1.1.2 - updated included loop-portfolio.php file
+    1.1.1 - Bug fix - a form tag around the color selector was keeping the Portfolio Settings submit button from firing on Windows machines, so, removed it as it was unnecessary
     1.1.0 - several changes to this script were made in this release, including the following:
 			* Added a color picker to the Admin styling area to make color selections quicker
 			* Added the ability to change the detail data labels and their width

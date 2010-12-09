@@ -10,6 +10,8 @@
 /*  UPDATES
 
     1.1.0 - Added the ability to turn off the display of all detail data items should you want to store the values but not display the data to the user
+    1.1.2 - Added apply_filters() method to content retrieved with get_the_content() as, unlike the_content() method,
+            it does not apply_filters to the retrieved data, which results in any embedded [shortcodes] not being parsed
 	
 */
 
@@ -83,6 +85,8 @@ if ( $loop->have_posts() ) : while ( $loop->have_posts() ) : $loop->the_post();
 	$portfolio_output .= '        </div><!-- .entry-meta -->';
 	
 	if(!$description == '') {
+		$description = apply_filters('the_content', $description);
+		$description = str_replace(']]>', ']]>', $description);
 		$portfolio_output .= '            <div class="portfolio_description"><div class="value">' . $description . '</div></div>';
 	}
 	

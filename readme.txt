@@ -4,7 +4,7 @@ Donate link: http://webphysiology.com/redir/webphysiology-portfolio/donate/
 Tags: portfolio,gallery,posts,post,custom post type,custom taxonomy,webphysiology
 Requires at least: 3.0.0
 Tested up to: 3.0.2
-Stable tag: 1.1.1
+Stable tag: 1.1.2
 
 This plugin allows for the creation of an expanded-list styled page containing images and supporting detail, perfect for a portfolio presentation.
 
@@ -62,6 +62,8 @@ This happens on occasion.  Running the install a second time typically results i
 
 == Changelog ==
 
+= 1.1.2 =
+* Added apply_filters() to data retrieved with get_the_content() as that method does not include this, unlike the standard the_content() method
 = 1.1.1 =
 * Bug fix - a form tag around the color selector was keeping the Portfolio Settings submit button from firing on Windows machines
 = 1.1.0 =
