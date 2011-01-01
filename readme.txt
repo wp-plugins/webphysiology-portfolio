@@ -6,7 +6,7 @@ Requires at least: 3.0.0
 Tested up to: 3.0.4
 Stable tag: 1.1.3
 
-This plugin allows for the creation of an expanded-list styled or a grid-style page containing images and supporting detail, perfect for a portfolio presentation.
+Allows for the creation of an expanded-list styled or a grid-style page containing images and supporting detail, perfect for a portfolio presentation.
 
 == Description ==
 
@@ -40,9 +40,9 @@ More detailed information can be found here: http://webphysiology.com/plugins/we
 
 = How can I get support? =
 
-My intention, at a minimum, is to maintain this plugin such that it is defect free.  For more info visit our <a href="http://webphysiology.com/plugins/webphysiology-portfolio-plugin/">WEBphysiology Portfolio plugin page</a>.  If after reviewing the details here, and perhaps checking out the videos, you still aren't finding the answer, use our support system to log a ticket.
+My intention, at a minimum, is to maintain this plugin such that it is defect free.  For more info visit our <a href="http://webphysiology.com/plugins/webphysiology-portfolio-plugin/">WEBphysiology Portfolio plugin page</a>.  If after reviewing the details here, and perhaps checking out the videos, you still aren't finding the answer you're looking for, use our support system to log a ticket.
 
-= I get a "File Not Found" error when I try and install from WordPress plugin area
+= I get a "File Not Found" error when I try and install from WordPress plugin area =
 
 This happens on occasion.  Running the install a second time typically results in a successful install.
 
