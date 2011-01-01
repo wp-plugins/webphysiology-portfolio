@@ -8,7 +8,11 @@
 
 #portfolios {
 	float: left;
-	margin: 0 20px 20px 0;
+}
+#portfolios .grid {
+	float: none;
+	margin: 10px 0;
+	overflow: hidden;
 }
 .portfolio_page_content {
 	margin-bottom: 10px;
@@ -20,10 +24,24 @@
 #portfolios h1 {
 	font-size: 2em;
 }
+#portfolios ul.grid {
+	margin: 0 0;
+	padding: 0 0;
+	overflow: hidden;
+	clear: both;
+}
+#portfolios .grid li {
+	float: left;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
 #portfolios .portfolio_entry h2 {
 	margin-bottom: 10px;
-	padding-top: 10px;
 	font-size: 1.6em;
+}
+#portfolios .grid .portfolio_entry h2 {
+	font-size: 1.1em;
 }
 #portfolios .portfolio_entry {
 	clear: both;
@@ -39,6 +57,13 @@
 	float: right;
 	margin-right: 10px;
 	line-height: 1.5em;
+}
+#portfolios .grid .portfolio_details {
+	width: auto;
+}
+#portfolios .grid .portfolio_page_img {
+	text-align: center;
+	margin-bottom: 0;
 }
 #portfolios .portfolio_page_img img {
 	background-color: #000;
@@ -68,7 +93,6 @@
 	float: right;
 	margin: 0;
 	padding: 0;
-	list-style: none;
 	font-size: 1em;  /* added 2010-11-01 */
 }
 #portfolios .portfolio_nav.top ul {
@@ -79,6 +103,7 @@
 }
 #portfolios .portfolio_nav ul li {
 	float: left;
+	list-style: none;
 	background: url(../images/nav_button_right_selected.png) no-repeat scroll right top transparent;
 	margin: 0;
 	padding: 0;
@@ -96,19 +121,19 @@
 #portfolios .portfolio_nav a.selected, #portfolios .portfolio_nav a:hover {
 	background: url(../images/nav_button_left_unselected.png) no-repeat scroll left top transparent;
 }
-#portfolios #portfolio_credit {
+#portfolios .portfolio_credit {
 	margin: 0;
 	padding: 0;
 	text-align: right;
 }
-#portfolios #portfolio_credit em, #portfolios #portfolio_credit em a {
+#portfolios .portfolio_credit em, #portfolios .portfolio_credit em a {
 	font-style: italic;
 	opacity: .85;
 }
-#portfolios #portfolio_credit em {
+#portfolios .portfolio_credit em {
 	font-size: 0.8em;
 }
-#portfolios #portfolio_credit a {
+#portfolios .portfolio_credit a {
 	font-size: 0.95em;
 	text-decoration: none;
 }

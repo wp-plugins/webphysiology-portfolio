@@ -89,3 +89,24 @@
 .half_input {
 	width: 50%;
 }
+.display_and_label {
+	width: 600px;
+	height: 30px;
+	margin: 0;
+	padding: 0;
+}
+.display_attrib {
+	float: left;
+	width: 220px;
+	margin: 0;
+	padding: 0;
+}
+.label_attrib input[type="text"] {
+	margin: 5px 0 5px 10px;
+}
+.label_attrib {
+	float: right;
+	width: 360px;
+	margin: 0;
+	padding: 0;
+}
