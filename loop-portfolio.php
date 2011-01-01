@@ -12,6 +12,7 @@
     1.1.0 - Added the ability to turn off the display of all detail data items should you want to store the values but not display the data to the user
     1.1.2 - Added apply_filters() method to content retrieved with get_the_content() as, unlike the_content() method,
             it does not apply_filters to the retrieved data, which results in any embedded [shortcodes] not being parsed
+	1.1.3 - Added grid styling and code to handle new ability to turn off portfolio title and description
 	
 */
 
@@ -20,6 +21,8 @@ global $wp_query;
 global $portfolio_types;
 global $portfolio_output;
 
+$display_portfolio_title = get_option( 'webphysiology_portfolio_display_portfolio_title' ); //asterisk
+$display_portfolio_desc = get_option( 'webphysiology_portfolio_display_portfolio_desc' ); //asterisk
 $display_portfolio_type = get_option( 'webphysiology_portfolio_display_portfolio_type' );
 $display_created_on = get_option( 'webphysiology_portfolio_display_createdate' );
 $display_clientname = get_option( 'webphysiology_portfolio_display_clientname' );
@@ -28,13 +31,38 @@ $display_tech = get_option( 'webphysiology_portfolio_display_tech' );
 $detail_labels = get_option( 'webphysiology_portfolio_display_labels' );
 $portfolios_per_page = get_option( 'webphysiology_portfolio_items_per_page' );
 $display_credit = get_option( 'webphysiology_portfolio_display_credit' );
+$gridstyle = get_option( 'webphysiology_portfolio_gridstyle' ); //asterisk
 $paged = (get_query_var('paged')) ? get_query_var('paged') : 1;
 
+//asterisk
+// grid styling defaults
+$ul_open = '';
+$ul_close = '';
+$li_open_even = '';
+$li_open_odd = '';
+$li_close = '';
+$gridclass = '';
+if ($gridstyle == 'True') {
+	$portfolio_open = '<div id="portfolios" role="main">';
+	$ul_open = '<ul class="grid">';
+	$ul_close = '</ul>';
+	$li_open_even = '<li>';
+	$li_open_odd = '<li class="odd">';
+	$li_close = '</li>';
+	$gridclass = ' grid';
+} else {
+	$portfolio_open = '<div id="portfolios" role="main">';
+}
 $type_label = $detail_labels["Type"];
+if ($type_label != "") $type_label .= ": ";
 $created_label = $detail_labels["Created"];
+if ($created_label != "") $created_label .= ": ";
 $client_label = $detail_labels["Client"];
+if ($client_label != "") $client_label .= ": ";
 $siteURL_label = $detail_labels["SiteURL"];
+if ($siteURL_label != "") $siteURL_label .= ": ";
 $tech_label = $detail_labels["Tech"];
+if ($tech_label != "") $tech_label .= ": ";
 
 // if the portfolio shortcode had no portfolio types defined
 if ( $portfolio_types == '' ) {
@@ -44,28 +72,40 @@ if ( $portfolio_types == '' ) {
 	$loop = new WP_Query( array( 'post_type' => 'Portfolio', 'portfoliotype' => $portfolio_types, 'posts_per_page' => $portfolios_per_page, 'orderby' => 'meta_value_num', 'meta_key' => '_sortorder', 'order' => 'ASC', 'paged'=> $paged ) );
 }
 
+$portfolio_output .= $portfolio_open; //asterisk
+
 // Display page navigation when applicable
 nav_pages($loop, "top");
 
 // set odd/even indicator for portfolio background highlighting
 $odd = true;
 
+$portfolio_output .= $ul_open; //asterisk
+
 if ( $loop->have_posts() ) : while ( $loop->have_posts() ) : $loop->the_post();
 
 	if ($odd==true) {
 		$post_class = 'portfolio_entry odd';
+		$portfolio_output .= $li_open_odd;
 		$odd = false;
 	} else {
-		$post_class = 'portfolio_entry';
+		$post_class = 'portfolio_entry even';
+		$portfolio_output .= $li_open_even;
 		$odd = true;
 	}
 
 	$portfolio_output .= '<div id="post-' . get_the_ID() . '" class="' . implode(" ", get_post_class($post_class)) . '">';
-	$portfolio_output .= '    <div class="portfolio_page_img">';
+	$portfolio_output .= '    <div class="portfolio_page_img' . $gridclass . '">';
 	$portfolio_output .= '    	' . get_Loop_Site_Image();
-	$portfolio_output .= '    </div>';
-
-	$description = get_the_content();
+	
+//	if ($gridstyle != 'True') {
+		$portfolio_output .= '    </div>';
+//	}
+	
+	$desciption = ''; //asterisk
+	if ($display_portfolio_desc == 'True') {
+		$description = get_the_content();
+	}
 	$type = get_post_meta(get_the_ID(), "_portfolio_type", true);
 	$portfolio_type = get_term_by( 'slug', $type, 'portfolio_type' );
 	if (isset($portfolio_type->name)) {
@@ -79,10 +119,16 @@ if ( $loop->have_posts() ) : while ( $loop->have_posts() ) : $loop->the_post();
 	$siteurl = get_post_meta(get_the_ID(), "_siteurl", true);
 	$sortorder = get_post_meta(get_the_ID(), "_sortorder", true);
 
-	$portfolio_output .= '	<div class="portfolio_details">';
-	$portfolio_output .= '        <div class="portfolio_title">';
-	$portfolio_output .= '            ' . get_Loop_Portfolio_Title();
-	$portfolio_output .= '        </div><!-- .entry-meta -->';
+	if ($gridstyle != 'True') {
+		$portfolio_output .= '	<div class="portfolio_details">';
+	}
+	
+	//asterisk
+	if ($display_portfolio_title == 'True') {
+		$portfolio_output .= '        <div class="portfolio_title">';
+		$portfolio_output .= '            ' . get_Loop_Portfolio_Title();
+		$portfolio_output .= '        </div><!-- .entry-meta -->';
+	}
 	
 	if(!$description == '') {
 		$description = apply_filters('the_content', $description);
@@ -93,46 +139,61 @@ if ( $loop->have_posts() ) : while ( $loop->have_posts() ) : $loop->the_post();
 	$portfolio_output .= '		<div class="portfolio_meta">';
 	
 	if ((!$type == '') && ($display_portfolio_type == 'True')) {
-		$portfolio_output .= '            <div class="portfolio_type""><div class="key">' . $type_label . ': </div><div class="value">' . $type . '</div></div>';
+		$portfolio_output .= '            <div class="portfolio_type""><div class="key">' . $type_label . '</div><div class="value">' . $type . '</div></div>';
 	}
 	
 	if ((!$datecreate == '') && ($display_created_on == 'True')) {
-		$portfolio_output .= '            <div class="portfolio_datecreate"><div class="key">' . $created_label . ': </div><div class="value">' .$datecreate . '</div></div>';
+		$portfolio_output .= '            <div class="portfolio_datecreate"><div class="key">' . $created_label . '</div><div class="value">' .$datecreate . '</div></div>';
 	}
 	
 	if ((!$client == '') && ($display_clientname == 'True')) {
-		$portfolio_output .= '            <div class="portfolio_client"><div class="key">' . $client_label . ': </div><div class="value">' .$client . '</div></div>';
+		$portfolio_output .= '            <div class="portfolio_client"><div class="key">' . $client_label . '</div><div class="value">' .$client . '</div></div>';
 	}
 	
 	if ((!$siteurl == '') && ($display_siteurl == 'True')) {
-		$portfolio_output .= '            <div class="portfolio_siteurl"><div class="key">' . $siteURL_label . ': </div><div class="value"><a href="' . $siteurl . '">' . $siteurl . '</a></div></div>';
+		$portfolio_output .= '            <div class="portfolio_siteurl"><div class="key">' . $siteURL_label . '</div><div class="value"><a href="' . $siteurl . '">' . $siteurl . '</a></div></div>';
 	}
 	
 	if ((!$technical_details == '') && ($display_tech == 'True')) {
-		$portfolio_output .= '            <div class="portfolio_techdetails"><div class="key">' . $tech_label . ': </div><div class="value">' . $technical_details . '</div></div>';
+		$portfolio_output .= '            <div class="portfolio_techdetails"><div class="key">' . $tech_label . '</div><div class="value">' . $technical_details . '</div></div>';
 	}
 	
 	$portfolio_output .= '            ' . wp_link_pages( array( 'before' => '<div class="page-link">' . __( 'Pages:', 'webphysiology_portfolio' ), 'after' => '</div>' ) );
-	$portfolio_output .= '        </div>';
+	if ($gridstyle != 'True') {
+		$portfolio_output .= '        </div>';
+	}
 	$portfolio_output .= '    </div>';
+	
+	if ($gridstyle == 'True') {
+//		$portfolio_output .= '    </div>';
+	}
+	
 	$portfolio_output .= '</div><!-- #post-## -->';
+	$portfolio_output .= $li_close;
 	
 endwhile; else :
 	
+	$portfolio_output .= $li_open_odd;
 	$portfolio_output .= '<div id="post-0" class="post error404 not-found">';
     $portfolio_output .= '	<p>&nbsp;</p>';
 	$portfolio_output .= '	<div class="entry-content">';
 	$portfolio_output .= '		<p>' . __( 'Apologies, but no results were found for the requested portfolio records.', 'webphysiology_portfolio' ) . '</p>';
 	$portfolio_output .= '	</div>';
 	$portfolio_output .= '</div>';
+	$portfolio_output .= $li_close;
 	
 endif;
 
+$portfolio_output .= $ul_close;
+
 // Credit link
 if($display_credit == 'True') {
-	$portfolio_output .= '<div id="portfolio_credit"><em>powered by <a href="http://webphysiology.com/redir/webphysiology-portfolio/">WEBphysiology Portfolio</a></em></div>';
+	$portfolio_output .= '<div class="portfolio_credit"><em>powered by <a href="http://webphysiology.com/redir/webphysiology-portfolio/">WEBphysiology Portfolio</a></em></div>';
 }
 
 // Display page navigation when applicable
 nav_pages($loop, "bottom");
+
+$portfolio_output .= '</div><!-- #portfolios -->';
+
 ?>

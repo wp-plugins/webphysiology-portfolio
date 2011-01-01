@@ -3,7 +3,7 @@
 Plugin Name: WEBphysiology Portfolio
 Plugin URI: http://webphysiology.com/redir/webphysiology-portfolio/
 Description: Provides a clean Portfolio listing with image, details and portfolio type taxonomy.  A [portfolio] shortcode is used to include the portfolio on any page.
-Version: 1.1.2
+Version: 1.1.3
 Author: Jeff Lambert
 Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 License: GPL2
@@ -27,6 +27,7 @@ License: GPL2
 
 /*  UPDATES
 
+	1.1.3 - added grid styling and ability to turn off portfolio title and description
     1.1.2 - updated included loop-portfolio.php file
     1.1.1 - Bug fix - a form tag around the color selector was keeping the Portfolio Settings submit button from firing on Windows machines, so, removed it as it was unnecessary
     1.1.0 - several changes to this script were made in this release, including the following:
@@ -373,9 +374,7 @@ function portfolio_loop($atts, $content = null) {
 		$portfolio_output = '<div class="portfolio_page_content">' . $content . '</div>';
 	}
 	
-	$portfolio_output .= '<div id="portfolios" role="main">';
 	include('loop-portfolio.php');
-	$portfolio_output .= '</div><!-- #portfolios -->';
 	
 	return $portfolio_output;
 	
@@ -410,6 +409,8 @@ add_action( 'init', 'create_portfolio_type_taxonomy', 0 );
 function portfolio_install() {
 	
 	// create new Portfolio plugin database field
+	add_option("webphysiology_portfolio_display_portfolio_title", 'True'); // This is the default value for whether to display the Portfolio Title
+	add_option("webphysiology_portfolio_display_portfolio_desc", 'True'); // This is the default value for whether to display the Portfolio Description
 	add_option("webphysiology_portfolio_display_portfolio_type", 'True'); // This is the default value for whether to display the Portfolio Type
 	add_option("webphysiology_portfolio_display_createdate", 'True'); // This is the default value for whether to display the create date
 	add_option("webphysiology_portfolio_display_clientname", 'True'); // This is the default value for whether to display the client name
@@ -421,6 +422,8 @@ function portfolio_install() {
 	add_option("webphysiology_portfolio_display_labels", array("Type" => "Type", "Created" => "Created", "Client" => "For", "SiteURL" => "Site", "Tech" => "Tech")); // This is the default values for the field labels on the site UI
 	add_option("webphysiology_portfolio_items_per_page", '3'); // This is the default value for the number of portfolio items to display per page
 	add_option("webphysiology_portfolio_display_credit", "True"); // This is the default value for whether to display a plugin publisher credit
+	add_option("webphysiology_portfolio_gridstyle", "False"); // This is the default value for whether to display portfolio items in a grid format
+	add_option("webphysiology_portfolio_gridcolor", "#eeeeee"); // This is the default value for the grid background color
 	add_option("webphysiology_portfolio_delete_options", "False"); // This is the default value for whether to delete plugin options on plugin deactivation
 	add_option("webphysiology_portfolio_delete_data", "False"); // This is the default value for whether to delete Portfolio data on plugin deactivation
 	add_option("webphysiology_portfolio_use_css", 'True'); // This is the default value for the Portfolio CSS usage switch
@@ -429,7 +432,7 @@ function portfolio_install() {
 	add_option("webphysiology_portfolio_header_color", '#004813'); // This is the h1 and h2 color
 	add_option("webphysiology_portfolio_link_color", '#004813'); // This is the anchor link color
 	add_option("webphysiology_portfolio_odd_stripe_color", '#eeeeee'); // This is the portfolio list odd row stripe background color
-	add_option("webphysiology_portfolio_even_stripe_color", '#f5f5f5'); // This is the portfolio list even row stripe background color
+	add_option("webphysiology_portfolio_even_stripe_color", '#f9f9f9'); // This is the portfolio list even row stripe background color
 
 }
 register_activation_hook(__FILE__,'portfolio_install');
@@ -442,10 +445,20 @@ if (!is_admin()) {
 }
 
 If (is_admin()) {
-	// added in v1.0.3
-	if(get_option( 'webphysiology_portfolio_display_portfolio_type' ) == "") {
-		add_option("webphysiology_portfolio_display_portfolio_type", 'True'); // This is the default value for whether to display the Portfolio Type
+	// added in v1.1.3
+	if(get_option( 'webphysiology_portfolio_display_portfolio_title' ) == "") {
+		add_option("webphysiology_portfolio_display_portfolio_title", 'True'); // This is the default value for whether to display the Portfolio Title
 	}
+	if(get_option( 'webphysiology_portfolio_display_portfolio_desc' ) == "") {
+		add_option("webphysiology_portfolio_display_portfolio_desc", 'True'); // This is the default value for whether to display the Portfolio Description
+	}
+	if(get_option( 'webphysiology_portfolio_gridstyle' ) == "") {
+		add_option("webphysiology_portfolio_gridstyle", "False"); // This is the default value for whether to display the portfolio in a grid style
+	}
+	if(get_option( 'webphysiology_portfolio_gridcolor' ) == "") {
+		add_option("webphysiology_portfolio_gridcolor", "#eeeeee"); // This is the default value for the grid background color
+	}
+	// added in v1.0.3
 	if(get_option( 'webphysiology_portfolio_display_clientname' ) == "") {
 		add_option("webphysiology_portfolio_display_clientname", 'True'); // This is the default value for whether to display the client name
 	}
@@ -491,6 +504,8 @@ function portfolio_remove() {
 	if ( $deleteoptions == "true" ) {
 		
 		/* Deletes the Portfolio plugin database field */
+		delete_option('webphysiology_portfolio_display_portfolio_title');
+		delete_option('webphysiology_portfolio_display_portfolio_desc');
 		delete_option('webphysiology_portfolio_display_portfolio_type');
 		delete_option('webphysiology_portfolio_display_createdate');
 		delete_option('webphysiology_portfolio_display_clientname');
@@ -502,8 +517,8 @@ function portfolio_remove() {
 		delete_option('webphysiology_portfolio_display_labels');
 		delete_option('webphysiology_portfolio_items_per_page');
 		delete_option('webphysiology_portfolio_display_credit');
-		delete_option('webphysiology_portfolio_delete_options');
-		delete_option('webphysiology_portfolio_delete_data');
+		delete_option('webphysiology_portfolio_gridstyle');
+		delete_option('webphysiology_portfolio_gridcolor');
 		delete_option('webphysiology_portfolio_use_css');
 		delete_option('webphysiology_portfolio_overall_width');
 		delete_option('webphysiology_portfolio_image_width');
@@ -511,6 +526,8 @@ function portfolio_remove() {
 		delete_option('webphysiology_portfolio_link_color');
 		delete_option('webphysiology_portfolio_odd_stripe_color');
 		delete_option('webphysiology_portfolio_even_stripe_color');
+		delete_option('webphysiology_portfolio_delete_options');
+		delete_option('webphysiology_portfolio_delete_data');
 		
 	}
 	
@@ -772,6 +789,8 @@ function portfolio_plugin_page() {
 	
     // variables for the field and option names
 	$hidden_field_name = 'webphys_submit_hidden';
+	$display_portfolio_title = 'webphysiology_portfolio_display_portfolio_title'; // default true
+	$display_portfolio_desc = 'webphysiology_portfolio_display_portfolio_desc'; // default true
 	$display_portfolio_type = 'webphysiology_portfolio_display_portfolio_type'; // default true
 	$display_createdate = 'webphysiology_portfolio_display_createdate'; // default true
 	$display_clientname = 'webphysiology_portfolio_display_clientname'; // default true
@@ -785,15 +804,17 @@ function portfolio_plugin_page() {
 	$display_labels = 'webphysiology_portfolio_display_labels'; // default array("Type" => "Type","Created" => "Created","Client" => "For","SiteURL" => "Site","Tech" => "Tech")
 	$items_per_page = 'webphysiology_portfolio_items_per_page';  // default 3
 	$display_credit = 'webphysiology_portfolio_display_credit'; // default true
-	$delete_options = 'webphysiology_portfolio_delete_options'; // default false
-	$delete_data = 'webphysiology_portfolio_delete_data'; // default false
+	$gridstyle = 'webphysiology_portfolio_gridstyle'; // default false
+	$gridcolor = 'webphysiology_portfolio_gridcolor'; // default #eee
 	$use_css = 'webphysiology_portfolio_use_css'; // default true
 	$overall_width = 'webphysiology_portfolio_overall_width'; // default is 660px
 	$img_width = 'webphysiology_portfolio_image_width'; // default is 200px
 	$header_color = 'webphysiology_portfolio_header_color'; // default is #004813
 	$link_color = 'webphysiology_portfolio_link_color'; // default is #004813
 	$odd_stripe_color = 'webphysiology_portfolio_odd_stripe_color'; // default is #eee
-	$even_stripe_color = 'webphysiology_portfolio_even_stripe_color'; // default is #f5f5f5
+	$even_stripe_color = 'webphysiology_portfolio_even_stripe_color'; // default is #f9f9f9
+	$delete_options = 'webphysiology_portfolio_delete_options'; // default false
+	$delete_data = 'webphysiology_portfolio_delete_data'; // default false
 
 
     // See if the user has posted us some information.  If they did, this hidden field will be set to 'Y'.
@@ -802,6 +823,18 @@ function portfolio_plugin_page() {
 		if ($_POST["reset_form"] == "False") {
 		
 			// Read their posted value
+			if ( isset($_POST[ $display_portfolio_title ]) ) {
+				$opt_val_display_portfolio_title = $_POST[ $display_portfolio_title ];
+				if ($opt_val_display_portfolio_title == "") $opt_val_display_portfolio_title = "False";
+			} else {
+				$opt_val_display_portfolio_title = "False";
+			}
+			if ( isset($_POST[ $display_portfolio_desc ]) ) {
+				$opt_val_display_portfolio_desc = $_POST[ $display_portfolio_desc ];
+				if ($opt_val_display_portfolio_desc == "") $opt_val_display_portfolio_desc = "False";
+			} else {
+				$opt_val_display_portfolio_desc = "False";
+			}
 			if ( isset($_POST[ $display_portfolio_type ]) ) {
 				$opt_val_display_portfolio_type = $_POST[ $display_portfolio_type ];
 				if ($opt_val_display_portfolio_type == "") $opt_val_display_portfolio_type = "False";
@@ -851,10 +884,24 @@ function portfolio_plugin_page() {
 			$opt_val_items_per_page = $_POST[ $items_per_page ];
 			if ( isset($_POST[ $display_credit ]) ) {
 				$opt_val_display_credit = $_POST[ $display_credit ];
-				if ($opt_val_display_credit == "") $opt_val_display_credit = "False";
+				if ($opt_val_display_credit == "") $opt_val_display_credit = "True";
 			} else {
-				$opt_val_display_credit = "False";
+				$opt_val_display_credit = "True";
 			}
+			if (isset($_POST[ $gridstyle ])) {
+				$opt_val_gridstyle = $_POST[ $gridstyle ];
+				if ($opt_val_gridstyle == "") $opt_val_gridstyle = "False";
+			} else {
+				$opt_val_gridstyle = "False";
+			}
+			$opt_val_gridcolor = $_POST[ $gridcolor ];
+			$opt_val_css = $_POST[ $use_css ];
+			$opt_val_overall_width = $_POST[ $overall_width ];
+			$opt_val_img_width = $_POST[ $img_width ];
+			$opt_val_header_color = $_POST[ $header_color ];
+			$opt_val_link_color = $_POST[ $link_color ];
+			$opt_val_odd_stripe_color = $_POST[ $odd_stripe_color ];
+			$opt_val_even_stripe_color = $_POST[ $even_stripe_color ];
 			if ( isset($_POST[ $delete_options ]) ) {
 				$opt_val_delete_options = $_POST[ $delete_options ];
 				if ($opt_val_delete_options == "") $opt_val_delete_options = "False";
@@ -867,13 +914,6 @@ function portfolio_plugin_page() {
 			} else {
 				$opt_val_delete_data = "False";
 			}
-			$opt_val_css = $_POST[ $use_css ];
-			$opt_val_overall_width = $_POST[ $overall_width ];
-			$opt_val_img_width = $_POST[ $img_width ];
-			$opt_val_header_color = $_POST[ $header_color ];
-			$opt_val_link_color = $_POST[ $link_color ];
-			$opt_val_odd_stripe_color = $_POST[ $odd_stripe_color ];
-			$opt_val_even_stripe_color = $_POST[ $even_stripe_color ];
 			
 			$validated = true;
 			$validation_msg = __('settings saved', 'Portfolio' );
@@ -922,6 +962,8 @@ function portfolio_plugin_page() {
 		} else {  //if ($_POST["reset_form"] == "True") {
 			
 			// Reset to default settings
+			$opt_val_display_portfolio_title = "True";
+			$opt_val_display_portfolio_desc = "True";
 			$opt_val_display_portfolio_type = "True";
 			$opt_val_display_createdate = "True";
 			$opt_val_display_clientname = "True";
@@ -933,15 +975,17 @@ function portfolio_plugin_page() {
 			$opt_val_display_labels = array("Type" => "Type", "Created" => "Created", "Client" => "For", "SiteURL" => "Site", "Tech" => "Tech");
 			$opt_val_items_per_page = "3";
 			$opt_val_display_credit = "True";
-			$opt_val_delete_options = "False";
-			$opt_val_delete_data = "False";
+			$opt_val_gridstyle = "False";
+			$opt_val_gridcolor = "#eeeeee";
 			$opt_val_css = "True";
-			$opt_val_overall_width = "600";
+			$opt_val_overall_width = "660";
 			$opt_val_img_width = "200";
 			$opt_val_header_color = "#004813";
 			$opt_val_link_color = "#004813";
 			$opt_val_odd_stripe_color = "#eeeeee";
-			$opt_val_even_stripe_color = "#f5f5f5";
+			$opt_val_even_stripe_color = "#f9f9f9";
+			$opt_val_delete_options = "False";
+			$opt_val_delete_data = "False";
 			$validation_msg = __('successfully reset to default values', 'Portfolio' );
 			$validated = true;
 			
@@ -951,6 +995,8 @@ function portfolio_plugin_page() {
 		if ( $validated ) {
 			
 			// Save the posted value in the database
+			update_option( $display_portfolio_title, $opt_val_display_portfolio_title );
+			update_option( $display_portfolio_desc, $opt_val_display_portfolio_desc );
 			update_option( $display_portfolio_type, $opt_val_display_portfolio_type );
 			update_option( $display_createdate, $opt_val_display_createdate );
 			update_option( $display_clientname, $opt_val_display_clientname );
@@ -962,8 +1008,8 @@ function portfolio_plugin_page() {
 			update_option( $display_labels, $opt_val_display_labels );
 			update_option( $items_per_page, $opt_val_items_per_page );
 			update_option( $display_credit, $opt_val_display_credit );
-			update_option( $delete_options, $opt_val_delete_options );
-			update_option( $delete_data, $opt_val_delete_data );
+			update_option( $gridstyle, $opt_val_gridstyle );
+			update_option( $gridcolor, $opt_val_gridcolor );
 			update_option( $use_css, $opt_val_css );
 			update_option( $overall_width, $opt_val_overall_width );
 			update_option( $img_width, $opt_val_img_width );
@@ -971,6 +1017,8 @@ function portfolio_plugin_page() {
 			update_option( $link_color, $opt_val_link_color );
 			update_option( $odd_stripe_color, $opt_val_odd_stripe_color );
 			update_option( $even_stripe_color, $opt_val_even_stripe_color );
+			update_option( $delete_options, $opt_val_delete_options );
+			update_option( $delete_data, $opt_val_delete_data );
 			
 		}
 		
@@ -980,6 +1028,8 @@ function portfolio_plugin_page() {
 	} else {
 		
 		// Read in existing option value from database
+		$opt_val_display_portfolio_title = get_option( $display_portfolio_title );
+		$opt_val_display_portfolio_desc = get_option( $display_portfolio_desc );
 		$opt_val_display_portfolio_type = get_option( $display_portfolio_type );
 		$opt_val_display_createdate = get_option( $display_createdate );
 		$opt_val_display_clientname = get_option( $display_clientname );
@@ -991,8 +1041,8 @@ function portfolio_plugin_page() {
 		$opt_val_display_labels = get_option( $display_labels );
 		$opt_val_items_per_page = get_option( $items_per_page );
 		$opt_val_display_credit = get_option( $display_credit );
-		$opt_val_delete_options = get_option( $delete_options );
-		$opt_val_delete_data = get_option( $delete_data );
+		$opt_val_gridstyle = get_option( $gridstyle );
+		$opt_val_gridcolor = get_option( $gridcolor );
 		$opt_val_css = get_option( $use_css );
 		$opt_val_overall_width = get_option( $overall_width );
 		$opt_val_img_width = get_option( $img_width );
@@ -1000,9 +1050,13 @@ function portfolio_plugin_page() {
 		$opt_val_link_color = get_option( $link_color );
 		$opt_val_odd_stripe_color = get_option( $odd_stripe_color );
 		$opt_val_even_stripe_color = get_option( $even_stripe_color );
+		$opt_val_delete_options = get_option( $delete_options );
+		$opt_val_delete_data = get_option( $delete_data );
 		
 	}
 	
+	if ($opt_val_display_portfolio_title=="True" ) {$opt_val_display_portfolio_title="checked";}
+	if ($opt_val_display_portfolio_desc=="True" ) {$opt_val_display_portfolio_desc="checked";}
 	if ($opt_val_display_portfolio_type=="True" ) {$opt_val_display_portfolio_type="checked";}
 	if ($opt_val_display_createdate=="True" ) {$opt_val_display_createdate="checked";}
 	if ($opt_val_display_clientname=="True" ) {$opt_val_display_clientname="checked";}
@@ -1011,6 +1065,7 @@ function portfolio_plugin_page() {
 	if ($opt_val_img_click_behavior == "litebox") { $check_openlitebox = 'checked'; } else { $check_nav2page = 'checked'; }
 	if ($opt_val_css=="True" ) {$opt_val_css="checked";}
 	if ($opt_val_display_credit=="True" ) {$opt_val_display_credit="checked";}
+	if ($opt_val_gridstyle=="True" ) {$opt_val_gridstyle="checked";}
 	if ($opt_val_delete_options=="True" ) {$opt_val_delete_options="checked";}
 	if ($opt_val_delete_data=="True" ) {$opt_val_delete_data="checked";}
 	
@@ -1032,32 +1087,72 @@ function portfolio_plugin_page() {
 	echo '				<div id="pluginsettings" class="postbox">' . "\n";
 	echo '					<h3 class="hndle"><span>Portfolio Display Settings</span></h3>' . "\n";
 	echo '					<div class="inside">' . "\n";
-	echo '				    		<input type="checkbox" id="' . $display_portfolio_type . '" name="' . $display_portfolio_type . '" value="True" ' . $opt_val_display_portfolio_type . '/><label for="' . $display_portfolio_type . '">Display portfolio type</label><br/>' . "\n";
-	echo '				    		<input type="checkbox" id="' . $display_createdate . '" name="' . $display_createdate . '" value="True" ' . $opt_val_display_createdate . '/><label for="' . $display_createdate . '">Display date created</label><br/>' . "\n";
-	echo '				    		<input type="checkbox" id="' . $display_clientname . '" name="' . $display_clientname . '" value="True" ' . $opt_val_display_clientname . '/><label for="' . $display_clientname . '">Display client name</label><br/>' . "\n";
-	echo '				    		<input type="checkbox" id="' . $display_siteurl . '" name="' . $display_siteurl . '" value="True" ' . $opt_val_display_siteurl . '/><label for="' . $display_siteurl . '">Display portfolio web page</label><br/>' . "\n";
-	echo '				    		<input type="checkbox" id="' . $display_tech . '" name="' . $display_tech . '" value="True" ' . $opt_val_display_tech . '/><label for="' . $display_tech . '">Display technical details</label><br/>' . "\n";
-	echo '				    		<label for="' . $display_labels . '_Type">Portfolio type label:</label><input type="text" id="' . $display_labels . '_Type" name="' . $display_labels . '_Type" value="' . $opt_val_display_labels["Type"] . '" /><br />' . "\n";
-	echo '				    		<label for="' . $display_labels . '_Created">Date created label:</label><input type="text" id="' . $display_labels . '_Created" name="' . $display_labels . '_Created" value="' . $opt_val_display_labels["Created"] . '" /><br />' . "\n";
-	echo '				    		<label for="' . $display_labels . '_Client">Client name label:</label><input type="text" id="' . $display_labels . '_Client" name="' . $display_labels . '_Client" value="' . $opt_val_display_labels["Client"] . '" /><br />' . "\n";
-	echo '				    		<label for="' . $display_labels . '_SiteURL">Portfolio web page label:</label><input type="text" id="' . $display_labels . '_SiteURL" name="' . $display_labels . '_SiteURL" value="' . $opt_val_display_labels["SiteURL"] . '" /><br />' . "\n";
-	echo '				    		<label for="' . $display_labels . '_Tech">Technical details label:</label><input type="text" id="' . $display_labels . '_Tech" name="' . $display_labels . '_Tech" value="' . $opt_val_display_labels["Tech"] . '" /><br />' . "\n";
-	echo '				    		<label for="' . $label_width . '">Label width:</label><input type="text" id="' . $label_width . '" name="' . $label_width . '" value="' . $opt_val_label_width . '" /> pixels<br />' . "\n";
-	echo '				    		<label for="' . $missing_img_url . '">Missing image URL:</label><input type="text" id="' . $missing_img_url . '" name="' . $missing_img_url . '" value="' . $opt_val_missing_img_url . '" class="half_input shortbottom" /><br /><span class="attribute_instructions">note: url should be relative to this plugin\'s directory, be in the uploads directory (e.g., /uploads/2010/11/missing.jpg) or be the full URL path</span><br class="tallbottom" />' . "\n";
-	echo '							<label for="' . $img_click_behavior . '">Image click behavior: </label><input type="radio" name="' . $img_click_behavior . '" value="litebox" ' .  $check_openlitebox . ' /> Open fullsize image in a lite box&nbsp;&nbsp;<input type="radio" name="' . $img_click_behavior . '" value="nav2page" ' . $check_nav2page . ' /> Navigate to the portfolio web page URL<br/>' . "\n";
-	echo '				    		<label for="' . $items_per_page . '">Portfolio items per page:</label><input type="text" id="' . $items_per_page . '" name="' . $items_per_page . '" value="' . $opt_val_items_per_page . '" /><br />' . "\n";
-	echo '				    		<input type="checkbox" id="' . $display_credit . '" name="' . $display_credit . '" value="True" ' . $opt_val_display_credit . '/><label for="' . $display_credit . '">Display WEBphysiology credit and/or a donation would be nice (though neither is required).</label>' . "\n";
-	echo '				  	</div>' . "\n";
+	echo '						<input type="checkbox" id="' . $display_portfolio_title . '" name="' . $display_portfolio_title . '" value="True" ' . $opt_val_display_portfolio_title . '/><label for="' . $display_portfolio_title . '">Display portfolio title</label><br/>' . "\n";
+	echo '						<input type="checkbox" id="' . $display_portfolio_desc . '" name="' . $display_portfolio_desc . '" value="True" ' . $opt_val_display_portfolio_desc . '/><label for="' . $display_portfolio_desc . '">Display portfolio description</label><br />' . "\n";
+	echo '						<div class="display_and_label">' . "\n";
+	echo '							<div class="display_attrib">' . "\n";
+	echo '								<input type="checkbox" id="' . $display_portfolio_type . '" name="' . $display_portfolio_type . '" value="True" ' . $opt_val_display_portfolio_type . '/><label for="' . $display_portfolio_type . '">Display portfolio type</label><br/>' . "\n";
+	echo '							</div>' . "\n";
+	echo '							<div class="label_attrib">' . "\n";
+	echo '								<label for="' . $display_labels . '_Type">Portfolio type label:</label><input type="text" id="' . $display_labels . '_Type" name="' . $display_labels . '_Type" value="' . $opt_val_display_labels["Type"] . '" /><br />' . "\n";
+	echo '							</div>' . "\n";
+	echo '						</div>' . "\n";
+	echo '						<div class="display_and_label">' . "\n";
+	echo '							<div class="display_attrib">' . "\n";
+	echo '								<input type="checkbox" id="' . $display_createdate . '" name="' . $display_createdate . '" value="True" ' . $opt_val_display_createdate . '/><label for="' . $display_createdate . '">Display date created</label><br/>' . "\n";
+	echo '							</div>' . "\n";
+	echo '							<div class="label_attrib">' . "\n";
+	echo '								<label for="' . $display_labels . '_Created">Date created label:</label><input type="text" id="' . $display_labels . '_Created" name="' . $display_labels . '_Created" value="' . $opt_val_display_labels["Created"] . '" /><br />' . "\n";
+	echo '							</div>' . "\n";
+	echo '						</div>' . "\n";
+	echo '						<div class="display_and_label">' . "\n";
+	echo '							<div class="display_attrib">' . "\n";
+	echo '								<input type="checkbox" id="' . $display_clientname . '" name="' . $display_clientname . '" value="True" ' . $opt_val_display_clientname . '/><label for="' . $display_clientname . '">Display client name</label><br/>' . "\n";
+	echo '							</div>' . "\n";
+	echo '							<div class="label_attrib">' . "\n";
+	echo '								<label for="' . $display_labels . '_Client">Client name label:</label><input type="text" id="' . $display_labels . '_Client" name="' . $display_labels . '_Client" value="' . $opt_val_display_labels["Client"] . '" /><br />' . "\n";
+	echo '							</div>' . "\n";
+	echo '						</div>' . "\n";
+	echo '						<div class="display_and_label">' . "\n";
+	echo '							<div class="display_attrib">' . "\n";
+	echo '								<input type="checkbox" id="' . $display_siteurl . '" name="' . $display_siteurl . '" value="True" ' . $opt_val_display_siteurl . '/><label for="' . $display_siteurl . '">Display portfolio web page</label><br/>' . "\n";
+	echo '							</div>' . "\n";
+	echo '							<div class="label_attrib">' . "\n";
+	echo '								<label for="' . $display_labels . '_SiteURL">Portfolio web page label:</label><input type="text" id="' . $display_labels . '_SiteURL" name="' . $display_labels . '_SiteURL" value="' . $opt_val_display_labels["SiteURL"] . '" /><br />' . "\n";
+	echo '							</div>' . "\n";
+	echo '						</div>' . "\n";
+	echo '						<div class="display_and_label">' . "\n";
+	echo '							<div class="display_attrib">' . "\n";
+	echo '								<input type="checkbox" id="' . $display_tech . '" name="' . $display_tech . '" value="True" ' . $opt_val_display_tech . '/><label for="' . $display_tech . '">Display technical details</label><br/>' . "\n";
+	echo '							</div>' . "\n";
+	echo '							<div class="label_attrib">' . "\n";
+	echo '								<label for="' . $display_labels . '_Tech">Technical details label:</label><input type="text" id="' . $display_labels . '_Tech" name="' . $display_labels . '_Tech" value="' . $opt_val_display_labels["Tech"] . '" /><br />' . "\n";
+	echo '							</div>' . "\n";	
+	echo '						</div>' . "\n";	
+	echo '						<label for="' . $label_width . '">Label width:</label><input type="text" id="' . $label_width . '" name="' . $label_width . '" value="' . $opt_val_label_width . '" /> pixels<br />' . "\n";
+	echo '						<label for="' . $missing_img_url . '">Missing image URL:</label><input type="text" id="' . $missing_img_url . '" name="' . $missing_img_url . '" value="' . $opt_val_missing_img_url . '" class="half_input shortbottom" /><br /><span class="attribute_instructions">note: url should be relative to this plugin\'s directory, be in the uploads directory (e.g., /uploads/2010/11/missing.jpg) or be the full URL path</span><br class="tallbottom" />' . "\n";
+	echo '						<label for="' . $img_click_behavior . '">Image click behavior: </label><input type="radio" name="' . $img_click_behavior . '" value="litebox" ' .  $check_openlitebox . ' /> Open fullsize image in a lite box&nbsp;&nbsp;<input type="radio" name="' . $img_click_behavior . '" value="nav2page" ' . $check_nav2page . ' /> Navigate to the portfolio web page URL<br/>' . "\n";
+	echo '						<label for="' . $items_per_page . '">Portfolio items per page:</label><input type="text" id="' . $items_per_page . '" name="' . $items_per_page . '" value="' . $opt_val_items_per_page . '" /><br />' . "\n";
+	echo '						<input type="checkbox" id="' . $display_credit . '" name="' . $display_credit . '" value="True" ' . $opt_val_display_credit . '/><label for="' . $display_credit . '">Display WEBphysiology credit and/or a donation would be nice (though neither is required).</label>' . "\n";
+	echo '					</div>' . "\n";
 	echo '				</div>' . "\n";
 	echo '				<div id="pluginsettings" class="postbox">' . "\n";
 	echo '					<h3 class="hndle"><span>Portfolio Styling</span></h3>' . "\n";
 	echo '					<div class="inside" style="clear:both;overflow:hidden;">' . "\n";
 	echo '						<div class="portfolio_admin_style">' . "\n";
 	echo '							<input type="checkbox" id="' . $use_css . '" name="' . $use_css . '" value="True" ' . $opt_val_css . '/><label for="' . $use_css . '">Use Portfolio plugin CSS</label><br/>' . "\n";
+	echo '							<div class="display_and_label">' . "\n";
+	echo '								<div class="display_attrib">' . "\n";
+	echo '								<input type="checkbox" id="' . $gridstyle . '" name="' . $gridstyle . '" value="True" ' . $opt_val_gridstyle . '/><label for="' . $gridstyle . '">Use Grid Style layout</label><br/>' . "\n";
+	echo '								</div>' . "\n";
+	echo '								<div class="label_attrib">' . "\n";
+	echo '									<label for="' . $gridcolor . '">Grid background color:</label><input type="text" id="' . $gridcolor . '" name="' . $gridcolor . '" value="' . $opt_val_gridcolor . '" /><br />' . "\n";
+	echo '								</div>' . "\n";
+	echo '							</div>' . "\n";
 	echo '							<label for="' . $overall_width . '">Portfolio List - overall width:</label><input type="text" id="' . $overall_width . '" name="' . $overall_width . '" value="' . $opt_val_overall_width . '" /> pixels<br />' . "\n";
-	echo '							<label for="' . $img_width . '">Portfolio List - image width:</label><input type="text" id="' . $img_width . '" name="' . $img_width . '" value="' . $opt_val_img_width . '" /> pixels<br />' . "\n";
-	echo '							<label for="' . $header_color . '">Portfolio title color:</label><input type="text" id="' . $header_color . '" name="' . $header_color . '" value="' . $opt_val_header_color . '" /><span style="color:' . $opt_val_header_color . ';margin-left:10px;">title color</span><br />' . "\n";
-	echo '							<label for="' . $link_color . '">Portfolio nav link color:</label><input type="text" id="' . $link_color . '" name="' . $link_color . '" value="' . $opt_val_link_color . '" /><span style="color:' . $opt_val_link_color . ';margin-left:10px;">link color</span><br />' . "\n";
+	echo '							<label for="' . $img_width . '">Portfolio List - image width:</label><input type="text" id="' . $img_width . '" name="' . $img_width . '" value="' . $opt_val_img_width . '" /> pixels<br /><span class="attribute_instructions">note: if you use the Grid Style layout, this is your overall cell width</span><br class="tallbottom" />' . "\n";
+	echo '							<label for="' . $header_color . '">Portfolio Title color:</label><input type="text" id="' . $header_color . '" name="' . $header_color . '" value="' . $opt_val_header_color . '" /><span style="color:' . $opt_val_header_color . ';margin-left:10px;">title color</span><br />' . "\n";
+	echo '							<label for="' . $link_color . '">Portfolio Nav color:</label><input type="text" id="' . $link_color . '" name="' . $link_color . '" value="' . $opt_val_link_color . '" /><span style="color:' . $opt_val_link_color . ';margin-left:10px;">link color</span><br /><span class="attribute_instructions">note: this is the color of the page navigation numbers</span><br class="tallbottom" />' . "\n";
 	echo '							<label for="' . $odd_stripe_color . '">Portfolio odd stripe background color:</label><input type="text" id="' . $odd_stripe_color . '" name="' . $odd_stripe_color . '" value="' . $opt_val_odd_stripe_color . '" /><span style="background-color:' . $opt_val_odd_stripe_color . ';margin-left:10px;">odd stripe color</span><br />' . "\n";
 	echo '							<label for="' . $even_stripe_color . '">Portfolio even stripe background color:</label><input type="text" id="' . $even_stripe_color . '" name="' . $even_stripe_color . '" value="' . $opt_val_even_stripe_color . '" /><span style="background-color:' . $opt_val_even_stripe_color . ';margin-left:10px;">even stripe color</span><br/>' . "\n";
 	echo '						</div>' . "\n";
@@ -1199,14 +1294,18 @@ if ( !is_admin() ) {
 }
 
 function set_portfolio_css() {
-	
+	// asterisk
+	$gridstyle = 'webphysiology_portfolio_gridstyle'; // default false
+	$gridcolor = 'webphysiology_portfolio_gridcolor'; // default #eee
 	$overall_width = 'webphysiology_portfolio_overall_width'; // default is 660px
 	$img_width = 'webphysiology_portfolio_image_width'; // default is 200px
 	$meta_key_width = 'webphysiology_portfolio_label_width'; // default is 60px
 	$header_color = 'webphysiology_portfolio_header_color'; // default is #004813
 	$link_color = 'webphysiology_portfolio_link_color'; // default is #004813
 	$odd_stripe_color = 'webphysiology_portfolio_odd_stripe_color'; // default is #eee
-	$even_stripe_color = 'webphysiology_portfolio_even_stripe_color'; // default is #f5f5f5
+	$even_stripe_color = 'webphysiology_portfolio_even_stripe_color'; // default is #f9f9f9
+	$opt_val_gridstyle = get_option( $gridstyle );
+	$opt_val_gridcolor = get_option( $gridcolor );
 	$opt_val_overall_width = get_option( $overall_width );
 	$opt_val_img_width = get_option( $img_width );
 	$opt_val_meta_key_width = get_option( $meta_key_width );
@@ -1214,21 +1313,33 @@ function set_portfolio_css() {
 	$opt_val_link_color = get_option( $link_color );
 	$opt_val_odd_stripe_color = get_option( $odd_stripe_color );
 	$opt_val_even_stripe_color = get_option( $even_stripe_color );
-	$overall_image_width = $opt_val_img_width + 20;
-	$detail_width = $opt_val_overall_width - $overall_image_width - 30;
-	$meta_value_width = $detail_width - ($opt_val_meta_key_width + 4);
 	$portfolio_css_on = get_option('webphysiology_portfolio_use_css');
+	
+	$overall_image_width = $opt_val_img_width + 20;
+	if ($opt_val_gridstyle != 'True') {
+		$detail_width = $opt_val_overall_width - $overall_image_width - 30;
+		$meta_value_width = $detail_width - ($opt_val_meta_key_width + 4);
+		$class = '.portfolio_details';
+	} else {
+		$detail_width = $overall_image_width - 10;
+		$meta_value_width = $detail_width - ($opt_val_meta_key_width + 4);
+		$class = '.portfolio_entry';
+	}
+	$grid_image_width = $detail_width - 10;
 	
 	$embedded_css = "\n" .
 					'<style type="text/css" id="webphysiology_portfolio_embedded_css">' . "\n" .
 					'    #portfolios {	' . "\n" .
 					'        width: ' . $opt_val_overall_width . 'px;' . "\n" .
 					'    }' . "\n" .
-					'    #portfolios .portfolio_details {' . "\n" .
+					'    #portfolios ' . $class . ' {' . "\n" .
 					'        width: ' . $detail_width . 'px;' . "\n" .
 					'    }' . "\n" .
 					'    #portfolios .portfolio_page_img {' . "\n" .
 					'        width: ' . $overall_image_width . 'px;' . "\n" .
+					'    }' . "\n" .
+					'    #portfolios .grid .portfolio_page_img {' . "\n" .
+					'        width: ' . $detail_width . 'px;' . "\n" .
 					'    }' . "\n" .
 					'    #portfolios .portfolio_page_img img {' . "\n" .
 					'        width: ' . $opt_val_img_width . 'px;' . "\n" .
@@ -1240,7 +1351,10 @@ function set_portfolio_css() {
 					'    #portfolios .portfolio_meta .value {' . "\n" .
 					'        width: ' . $meta_value_width . 'px;' . "\n" .
 					'    }' . "\n" .
-					'    #portfolios h1, #portfolios h2 {' . "\n" .
+					'    #portfolios ul.grid {' . "\n" .
+					'    	background-color: ' . $opt_val_gridcolor . ';' . "\n" .
+					'    }' . "\n" .
+					'    #portfolios .portfolio_title h1, #portfolios .portfolio_title h2 {' . "\n" .
 					'        color: ' . $opt_val_header_color . ';' . "\n" .
 					'    }' . "\n" .
 					'    #portfolios .portfolio_nav a {' . "\n" .
