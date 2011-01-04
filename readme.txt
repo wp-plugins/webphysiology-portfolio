@@ -63,7 +63,7 @@ The styling behavior of the WEBphysiology Portfolio can vary from theme to theme
 
 == Changelog ==
 
-= 1.1.3 =
+= 1.1.4 =
 * Fixed a bug where the plugin credit could not be turned off.  Oops
 = 1.1.3 =
 * Added ability to suppress the display of the portfolio title and portfolio description
