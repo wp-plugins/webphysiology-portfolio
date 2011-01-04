@@ -95,4 +95,3 @@ The styling behavior of the WEBphysiology Portfolio can vary from theme to theme
 *** NOTE: If you get a "File Not Found" during installation from the WordPress site, simply run the installation again.
 
 I will do my best to correct any reported defects as soon as I can make time, but please understand that this is side work. That said, I also use this plugin and am keen to ensure it provides the intended functionality. As to requests for enhancements, feel free to make these. I'll do my best to respond to your requests and, for those requests that I feel would benefit the majority of users, I'll get them on the enhancement list. I can't say just how quickly these would be implemented but funding the request would definitely move it up in the queue.
-...
