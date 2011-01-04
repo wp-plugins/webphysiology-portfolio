@@ -3,7 +3,7 @@
 Plugin Name: WEBphysiology Portfolio
 Plugin URI: http://webphysiology.com/redir/webphysiology-portfolio/
 Description: Provides a clean Portfolio listing with image, details and portfolio type taxonomy.  A [portfolio] shortcode is used to include the portfolio on any page.
-Version: 1.1.3
+Version: 1.1.4
 Author: Jeff Lambert
 Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 License: GPL2
@@ -27,6 +27,7 @@ License: GPL2
 
 /*  UPDATES
 
+	1.1.4 - fixed a bug where the plugin credit could not be turned off
 	1.1.3 - added grid styling and ability to turn off portfolio title and description
     1.1.2 - updated included loop-portfolio.php file
     1.1.1 - Bug fix - a form tag around the color selector was keeping the Portfolio Settings submit button from firing on Windows machines, so, removed it as it was unnecessary
@@ -884,9 +885,9 @@ function portfolio_plugin_page() {
 			$opt_val_items_per_page = $_POST[ $items_per_page ];
 			if ( isset($_POST[ $display_credit ]) ) {
 				$opt_val_display_credit = $_POST[ $display_credit ];
-				if ($opt_val_display_credit == "") $opt_val_display_credit = "True";
+				if ($opt_val_display_credit == "") $opt_val_display_credit = "False";
 			} else {
-				$opt_val_display_credit = "True";
+				$opt_val_display_credit = "False";
 			}
 			if (isset($_POST[ $gridstyle ])) {
 				$opt_val_gridstyle = $_POST[ $gridstyle ];
