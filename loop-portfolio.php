@@ -13,6 +13,7 @@
     1.1.2 - Added apply_filters() method to content retrieved with get_the_content() as, unlike the_content() method,
             it does not apply_filters to the retrieved data, which results in any embedded [shortcodes] not being parsed
 	1.1.3 - Added grid styling and code to handle new ability to turn off portfolio title and description
+	1.1.5 - found a typo in a var name and also added new parm to nav_pages() method
 	
 */
 
@@ -21,8 +22,8 @@ global $wp_query;
 global $portfolio_types;
 global $portfolio_output;
 
-$display_portfolio_title = get_option( 'webphysiology_portfolio_display_portfolio_title' ); //asterisk
-$display_portfolio_desc = get_option( 'webphysiology_portfolio_display_portfolio_desc' ); //asterisk
+$display_portfolio_title = get_option( 'webphysiology_portfolio_display_portfolio_title' );
+$display_portfolio_desc = get_option( 'webphysiology_portfolio_display_portfolio_desc' );
 $display_portfolio_type = get_option( 'webphysiology_portfolio_display_portfolio_type' );
 $display_created_on = get_option( 'webphysiology_portfolio_display_createdate' );
 $display_clientname = get_option( 'webphysiology_portfolio_display_clientname' );
@@ -31,10 +32,10 @@ $display_tech = get_option( 'webphysiology_portfolio_display_tech' );
 $detail_labels = get_option( 'webphysiology_portfolio_display_labels' );
 $portfolios_per_page = get_option( 'webphysiology_portfolio_items_per_page' );
 $display_credit = get_option( 'webphysiology_portfolio_display_credit' );
-$gridstyle = get_option( 'webphysiology_portfolio_gridstyle' ); //asterisk
+$gridstyle = get_option( 'webphysiology_portfolio_gridstyle' );
 $paged = (get_query_var('paged')) ? get_query_var('paged') : 1;
+$currpageurl = get_permalink();
 
-//asterisk
 // grid styling defaults
 $ul_open = '';
 $ul_close = '';
@@ -72,15 +73,15 @@ if ( $portfolio_types == '' ) {
 	$loop = new WP_Query( array( 'post_type' => 'Portfolio', 'portfoliotype' => $portfolio_types, 'posts_per_page' => $portfolios_per_page, 'orderby' => 'meta_value_num', 'meta_key' => '_sortorder', 'order' => 'ASC', 'paged'=> $paged ) );
 }
 
-$portfolio_output .= $portfolio_open; //asterisk
+$portfolio_output .= $portfolio_open;
 
 // Display page navigation when applicable
-nav_pages($loop, "top");
+nav_pages($loop, $currpageurl, "top");
 
 // set odd/even indicator for portfolio background highlighting
 $odd = true;
 
-$portfolio_output .= $ul_open; //asterisk
+$portfolio_output .= $ul_open;
 
 if ( $loop->have_posts() ) : while ( $loop->have_posts() ) : $loop->the_post();
 
@@ -97,12 +98,9 @@ if ( $loop->have_posts() ) : while ( $loop->have_posts() ) : $loop->the_post();
 	$portfolio_output .= '<div id="post-' . get_the_ID() . '" class="' . implode(" ", get_post_class($post_class)) . '">';
 	$portfolio_output .= '    <div class="portfolio_page_img' . $gridclass . '">';
 	$portfolio_output .= '    	' . get_Loop_Site_Image();
+	$portfolio_output .= '    </div>';
 	
-//	if ($gridstyle != 'True') {
-		$portfolio_output .= '    </div>';
-//	}
-	
-	$desciption = ''; //asterisk
+	$description = '';
 	if ($display_portfolio_desc == 'True') {
 		$description = get_the_content();
 	}
@@ -123,7 +121,6 @@ if ( $loop->have_posts() ) : while ( $loop->have_posts() ) : $loop->the_post();
 		$portfolio_output .= '	<div class="portfolio_details">';
 	}
 	
-	//asterisk
 	if ($display_portfolio_title == 'True') {
 		$portfolio_output .= '        <div class="portfolio_title">';
 		$portfolio_output .= '            ' . get_Loop_Portfolio_Title();
@@ -192,7 +189,7 @@ if($display_credit == 'True') {
 }
 
 // Display page navigation when applicable
-nav_pages($loop, "bottom");
+nav_pages($loop, $currpageurl, "bottom");
 
 $portfolio_output .= '</div><!-- #portfolios -->';
 

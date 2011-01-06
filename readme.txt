@@ -4,7 +4,7 @@ Donate link: http://webphysiology.com/redir/webphysiology-portfolio/donate/
 Tags: portfolio,gallery,posts,post,custom post type,custom taxonomy,webphysiology
 Requires at least: 3.0.0
 Tested up to: 3.0.4
-Stable tag: 1.1.4
+Stable tag: 1.1.5
 
 Allows for the creation of an expanded-list styled or a grid-style page containing images and supporting detail, perfect for a portfolio presentation.
 
@@ -63,6 +63,10 @@ The styling behavior of the WEBphysiology Portfolio can vary from theme to theme
 
 == Changelog ==
 
+= 1.1.5 =
+* Updated nav_pages() method as it wasn't working when pretty permalinks were not being utilized
+* Enhanced nav control method so that it doesn't have to rebuild for the bottom nav, it just uses what was built for the top nav
+* Updated code to allow for portfolio images that are hosted o sites other than the current site
 = 1.1.4 =
 * Fixed a bug where the plugin credit could not be turned off.  Oops
 = 1.1.3 =

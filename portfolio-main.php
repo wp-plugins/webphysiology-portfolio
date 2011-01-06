@@ -3,7 +3,7 @@
 Plugin Name: WEBphysiology Portfolio
 Plugin URI: http://webphysiology.com/redir/webphysiology-portfolio/
 Description: Provides a clean Portfolio listing with image, details and portfolio type taxonomy.  A [portfolio] shortcode is used to include the portfolio on any page.
-Version: 1.1.4
+Version: 1.1.5
 Author: Jeff Lambert
 Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 License: GPL2
@@ -27,6 +27,9 @@ License: GPL2
 
 /*  UPDATES
 
+	1.1.5 - * updated nav_pages() method as it wasn't working when pretty permalinks were not being utilized
+	        * enhanced nav control method so that it doesn't have to rebuild for the bottom nav, it just uses what was built for the top nav
+			* updated code to allow for portfolio images that are hosted on sites other than the current site
 	1.1.4 - fixed a bug where the plugin credit could not be turned off
 	1.1.3 - added grid styling and ability to turn off portfolio title and description
     1.1.2 - updated included loop-portfolio.php file
@@ -64,7 +67,6 @@ License: GPL2
 // break functionality into separate scripts
 // add ability to include / exlude multiple variations of Portfolio Types
 // image gallery widget or shortcode
-// ability to specify the missing image file
 // add sort order to quick edit
 **********/
 
@@ -349,7 +351,7 @@ function portfolio_admin_styles() {
 	}
 }
 
-if (is_admin() ) {
+if ( is_admin() ) {
 	add_action('admin_print_scripts', 'portfolio_admin_scripts');
 	add_action('admin_print_styles', 'portfolio_admin_styles');
 }
@@ -418,6 +420,7 @@ function portfolio_install() {
 	add_option("webphysiology_portfolio_display_siteurl", 'True'); // This is the default value for whether to display the site URL
 	add_option("webphysiology_portfolio_display_tech", 'True'); // This is the default value for whether to display the technical data
 	add_option("webphysiology_portfolio_missing_image_url", 'images/empty_window.png'); // This is the default value for the missing image url
+	add_option("webphysiology_portfolio_allowed_image_sites","flickr.com,picasa.com,blogger.com,wordpress.com,img.youtube.com"); // This is the default value for the allowed image sites
 	add_option("webphysiology_portfolio_image_click_behavior", 'litebox'); // This is the default value for whether to display the image in a lite box or navigate to the associated site
 	add_option("webphysiology_portfolio_label_width", "60"); // This is the default value for the label width
 	add_option("webphysiology_portfolio_display_labels", array("Type" => "Type", "Created" => "Created", "Client" => "For", "SiteURL" => "Site", "Tech" => "Tech")); // This is the default values for the field labels on the site UI
@@ -446,6 +449,10 @@ if (!is_admin()) {
 }
 
 If (is_admin()) {
+	// added in v1.1.5
+	if(get_option( 'webphysiology_portfolio_allowed_image_sites' ) == "") {
+		add_option("webphysiology_portfolio_allowed_image_sites", "flickr.com,picasa.com,blogger.com,wordpress.com,img.youtube.com"); // This is the default value for the allowed image sites
+	}
 	// added in v1.1.3
 	if(get_option( 'webphysiology_portfolio_display_portfolio_title' ) == "") {
 		add_option("webphysiology_portfolio_display_portfolio_title", 'True'); // This is the default value for whether to display the Portfolio Title
@@ -476,7 +483,10 @@ If (is_admin()) {
 		add_option("webphysiology_portfolio_display_labels", array("Type" => "Type","Created" => "Created","Client" => "For","SiteURL" => "Site","Tech" => "Tech")); // This is the default values for the field labels on the site UI
 	}
 	if(get_option( 'webphysiology_portfolio_missing_image_url' ) == "") {
-		add_option("webphysiology_portfolio_missing_image_url", "images/empty_window.png"); // This is the default value for the detail label width
+		add_option("webphysiology_portfolio_missing_image_url", "images/empty_window.png"); // This is the default value for the missing image path
+	}
+	if(get_option( 'webphysiology_portfolio_allowed_image_sites' ) == "") {
+		add_option("webphysiology_portfolio_allowed_image_sites", "flickr.com,picasa.com,blogger.com,wordpress.com,img.youtube.com"); // This is the default value for the allowed image sites
 	}
 	if(get_option( 'webphysiology_portfolio_image_click_behavior' ) == "") {
 		add_option("webphysiology_portfolio_image_click_behavior", 'litebox'); // This is the default value for whether to display the image in a lite box or navigate to the associated site
@@ -513,6 +523,7 @@ function portfolio_remove() {
 		delete_option('webphysiology_portfolio_display_siteurl');
 		delete_option('webphysiology_portfolio_display_tech');
 		delete_option('webphysiology_portfolio_missing_image_url');
+		delete_option('webphysiology_portfolio_allowed_image_sites');
 		delete_option('webphysiology_portfolio_image_click_behavior');
 		delete_option('webphysiology_portfolio_label_width');
 		delete_option('webphysiology_portfolio_display_labels');
@@ -798,6 +809,7 @@ function portfolio_plugin_page() {
 	$display_siteurl = 'webphysiology_portfolio_display_siteurl'; // default true
 	$display_tech = 'webphysiology_portfolio_display_tech'; // default true
 	$missing_img_url = 'webphysiology_portfolio_missing_image_url'; // default images/empty_window.png
+	$allowed_sites = 'webphysiology_portfolio_allowed_image_sites'; // default flickr.com,picasa.com,blogger.com,wordpress.com,img.youtube.com
 	$img_click_behavior = 'webphysiology_portfolio_image_click_behavior'; // default litebox
 	$check_openlitebox = '';
 	$check_nav2page = '';
@@ -882,6 +894,7 @@ function portfolio_plugin_page() {
 			} else {
 				$opt_val_missing_img_url = 'images/empty_window.png';
 			}
+			$opt_val_allowed_sites = $_POST[ $allowed_sites ];
 			$opt_val_items_per_page = $_POST[ $items_per_page ];
 			if ( isset($_POST[ $display_credit ]) ) {
 				$opt_val_display_credit = $_POST[ $display_credit ];
@@ -970,7 +983,8 @@ function portfolio_plugin_page() {
 			$opt_val_display_clientname = "True";
 			$opt_val_display_siteurl = "True";
 			$opt_val_display_tech = "True";
-			$opt_val_missing_img_url = 'images/empty_window.png';
+			$opt_val_missing_img_url = "images/empty_window.png";
+			$opt_val_allowed_sites = "flickr.com,picasa.com,blogger.com,wordpress.com,img.youtube.com";
 			$opt_val_img_click_behavior = "litebox";
 			$opt_val_label_width = "60";
 			$opt_val_display_labels = array("Type" => "Type", "Created" => "Created", "Client" => "For", "SiteURL" => "Site", "Tech" => "Tech");
@@ -1004,6 +1018,7 @@ function portfolio_plugin_page() {
 			update_option( $display_siteurl, $opt_val_display_siteurl );
 			update_option( $display_tech, $opt_val_display_tech );
 			update_option( $missing_img_url, $opt_val_missing_img_url );
+			update_option( $allowed_sites, $opt_val_allowed_sites );
 			update_option( $img_click_behavior, $opt_val_img_click_behavior );
 			update_option( $label_width, $opt_val_label_width );
 			update_option( $display_labels, $opt_val_display_labels );
@@ -1037,6 +1052,7 @@ function portfolio_plugin_page() {
 		$opt_val_display_siteurl = get_option( $display_siteurl );
 		$opt_val_display_tech = get_option( $display_tech );
 		$opt_val_missing_img_url = get_option( $missing_img_url );
+		$opt_val_allowed_sites = get_option( $allowed_sites );
 		$opt_val_img_click_behavior = get_option( $img_click_behavior );
 		$opt_val_label_width = get_option( $label_width );
 		$opt_val_display_labels = get_option( $display_labels );
@@ -1132,6 +1148,7 @@ function portfolio_plugin_page() {
 	echo '						</div>' . "\n";	
 	echo '						<label for="' . $label_width . '">Label width:</label><input type="text" id="' . $label_width . '" name="' . $label_width . '" value="' . $opt_val_label_width . '" /> pixels<br />' . "\n";
 	echo '						<label for="' . $missing_img_url . '">Missing image URL:</label><input type="text" id="' . $missing_img_url . '" name="' . $missing_img_url . '" value="' . $opt_val_missing_img_url . '" class="half_input shortbottom" /><br /><span class="attribute_instructions">note: url should be relative to this plugin\'s directory, be in the uploads directory (e.g., /uploads/2010/11/missing.jpg) or be the full URL path</span><br class="tallbottom" />' . "\n";
+	echo '						<label for="' . $allowed_sites . '">Allowed image sites:</label><input type="text" id="' . $allowed_sites . '" name="' . $allowed_sites . '" value="' . $opt_val_allowed_sites . '" class="half_input shortbottom" /><br /><span class="attribute_instructions">note: add allowed domain separated with commas (e.g., flickr.com,picasa.com,blogger.com,wordpress.com,img.youtube.com)</span><br class="tallbottom" />' . "\n";
 	echo '						<label for="' . $img_click_behavior . '">Image click behavior: </label><input type="radio" name="' . $img_click_behavior . '" value="litebox" ' .  $check_openlitebox . ' /> Open fullsize image in a lite box&nbsp;&nbsp;<input type="radio" name="' . $img_click_behavior . '" value="nav2page" ' . $check_nav2page . ' /> Navigate to the portfolio web page URL<br/>' . "\n";
 	echo '						<label for="' . $items_per_page . '">Portfolio items per page:</label><input type="text" id="' . $items_per_page . '" name="' . $items_per_page . '" value="' . $opt_val_items_per_page . '" /><br />' . "\n";
 	echo '						<input type="checkbox" id="' . $display_credit . '" name="' . $display_credit . '" value="True" ' . $opt_val_display_credit . '/><label for="' . $display_credit . '">Display WEBphysiology credit and/or a donation would be nice (though neither is required).</label>' . "\n";
@@ -1238,11 +1255,21 @@ function get_Loop_Site_Image() {
 	if ($opt_val_img_width == "") {$opt_val_img_width = '150';}
 	
 	if (!empty($full_size_img_url)) {
-		$img = clean_source($full_size_img_url);
-		if (!file_exists($img)) {
-			$full_size_img_url = "";
+		
+		$img_url = clean_source($full_size_img_url);
+		
+		// if there was an issue with the image url
+		if ($img_url == "") { $full_size_img_url = ""; }
+		
+		// if the image url was cleaned and not cleared, check that it really exists
+		if (($img_url != $full_size_img_url) && ($img_url != "")) {
+			if (!file_exists(dirname ( __FILE__ ) . '/' . $img_url)) {
+				$full_size_img_url = "";
+			}
 		}
 	}
+	
+	// if the image was not specified or was cleared due to issues, use the default empty image
 	if ($full_size_img_url == '') {
 		$img_url = get_option( 'webphysiology_portfolio_missing_image_url' );
 		if (!isset($img_url)) { $img_url = 'images/empty_window.png'; }
@@ -1295,7 +1322,7 @@ if ( !is_admin() ) {
 }
 
 function set_portfolio_css() {
-	// asterisk
+	
 	$gridstyle = 'webphysiology_portfolio_gridstyle'; // default false
 	$gridcolor = 'webphysiology_portfolio_gridcolor'; // default #eee
 	$overall_width = 'webphysiology_portfolio_overall_width'; // default is 660px
@@ -1425,16 +1452,33 @@ if (!is_admin()) {
 
 
 /* Build out the navigation elements for paging through the Portfolio pages */
-function nav_pages($qryloop, $class) {
+function nav_pages($qryloop, $pageurl, $class) {
 	
 	global $nav_spread;
 	global $portfolio_output;
+	global $navcontrol;
 	
 	// get total number of pages in the query results
 	$pages = $qryloop->max_num_pages;
 	
 	// if there is more than one page of Portfolio query results
 	if($pages>1) {
+		
+		// if this is the bottom nav then there is no point in rebuilding everything, just take what we
+		// built for the top nav and put it in the bottom nav <div>
+		if ( ($class == "bottom") && ( !$navcontrol == "") ) {
+			$portfolio_output .= '<div class="portfolio_nav ' . $class . '">' . $navcontrol . '</div>';
+			$navcontrol = "";
+			return $portfolio_output;
+		}
+		
+		// if the user is not using pretty permalinks, then the nav page reference is a second parameter
+		// 1.1.5 - also building out a full URL to the particular page
+		if ( strpos($pageurl, "?page_id=") > 0 ) {
+			$paged = $pageurl . "&paged=";
+		} else {
+			$paged = $pageurl . "?paged=";
+		}
 		
 		// get current page number
 		intval(get_query_var('paged')) == 0 ? $curpage=1 : $curpage = intval(get_query_var('paged'));
@@ -1463,33 +1507,36 @@ function nav_pages($qryloop, $class) {
 		}
 		
 		// now build out the navigation page elements
-		$portfolio_output .= '<div class="portfolio_nav ' . $class . '">';
-		$portfolio_output .= '<ul>';
+		$nav = '<ul>';
 		
 		if($start-1>1) {
-			$portfolio_output .= '<li><a href="?paged=1">&laquo;</a></li>'; //next link
+			$nav .= '<li><a href="' . $nav . '1">&laquo;</a></li>'; //next link
 		}
 		if($start>1) {
-			$portfolio_output .= '<li><a href="?paged=' . ($start-1) . '">&lt;</a></li>'; //next link
-		}
-		
+			$nav .= '<li><a href="' . $paged . ($start-1) . '">&lt;</a></li>'; //next link
+		}		
 		for ($i=$start;$i<=$end;$i++) {
 			if ($curpage!=$i) {
-				$portfolio_output .= '<li><a href="?paged=' . $i .'"';
+				$nav .= '<li><a href="' . $paged . $i .'"';
 			} else {
-				$portfolio_output .= '<li class="selected"><a href="?paged=' . $i .'" class="selected"';
+				$nav .= '<li class="selected"><a href="' . $paged . $i .'" class="selected"';
 			}
-			$portfolio_output .= '>' . $i . '</a></li>';
+			$nav .= '>' . $i . '</a></li>';
 		}
 		
 		if($end<$pages) {
-			$portfolio_output .= '<li><a href="?paged=' . $i . '">&gt;</a></li>';
+			$nav .= '<li><a href="' . $paged . $i . '">&gt;</a></li>';
 		}
 		if($end<$pages-1) {
-			$portfolio_output .= '<li><a href="?paged=' . $pages . '">&raquo;</a></li>';
+			$nav .= '<li><a href="' . $paged . $pages . '">&raquo;</a></li>';
 		}
-		$portfolio_output .= '</ul>';
-		$portfolio_output .= '</div>';
+		$nav .= '</ul>';
+		
+		$portfolio_output .= '<div class="portfolio_nav ' . $class . '">' . $nav . '</div>';
+		
+		if ($class == "top") {
+			$navcontrol = $nav;
+		}
 		
 	}
 	
@@ -1531,7 +1578,6 @@ add_action('template_redirect', 'use_portfolio_template');
 //*************************************************//
 //*************************************************//
 
-
 /**
  * tidy up the image source url
  *
@@ -1539,76 +1585,145 @@ add_action('template_redirect', 'use_portfolio_template');
  * @return string
  */
 function clean_source ($src) {
-
+	
+	$orig_src = "";
+	
+	// if the image file is on the current server, grab the path as we'll be setting it back to this if all is good
+	if (strpos($src,$_SERVER['HTTP_HOST']) > 0) {
+		$orig_src = $src;
+	}
+	
 	$host = str_replace ('www.', '', $_SERVER['HTTP_HOST']);
 	$regex = "/^((ht|f)tp(s|):\/\/)(www\.|)" . $host . "/i";
-
 	$src = preg_replace ($regex, '', $src);
 	$src = strip_tags ($src);
-    $src = check_external ($src);
-
+	$src = check_external ($src);
+	
+	if ($src == "") {return $src;}
+	
     // remove slash from start of string
     if (strpos ($src, '/') === 0) {
         $src = substr ($src, -(strlen ($src) - 1));
     }
-
+	
     // don't allow users the ability to use '../'
     // in order to gain access to files below document root
     $src = preg_replace ("/\.\.+\//", "", $src);
-
-    // get path to image on file system
-    $src = get_document_root ($src) . '/' . $src;
-
+	
+	// get path to image on file system
+	if (substr($src,0,4) != 'temp') {
+    	$src = get_document_root ($src) . '/' . $src;
+	}
+	
+	if ($orig_src != "") {
+		if (file_exists($src)) {
+			$src = $orig_src;
+		} else {
+			$src = "";
+		}
+	}
+	
     return $src;
 
 }
 
 /**
- *
- * @global array $allowedSites
  * @param string $src
  * @return string
  */
 function check_external ($src) {
 
+	// external domains that are allowed to be displayed on your website
+	$allowedSites = explode (",", get_option( 'webphysiology_portfolio_allowed_image_sites' ));
+	
+	$error = false;
+	
     if (preg_match ('/http:\/\//', $src) == true) {
 
         $url_info = parse_url ($src);
-		$fileDetails = pathinfo ($src);
-		$ext = strtolower ($fileDetails['extension']);
-		$filename = md5 ($src);
-		$local_filepath = DIRECTORY_TEMP . '/' . $filename . '.' . $ext;
 
-		if (!file_exists ($local_filepath)) {
+        $isAllowedSite = false;
+        foreach ($allowedSites as $site) {
+			$site = '/' . addslashes ($site) . '/';
+            if (preg_match ($site, $url_info['host']) == true) {
+                $isAllowedSite = true;
+            }
+		}
 
-			if (function_exists ('curl_init')) {
+		if ($isAllowedSite) {
 
-				$fh = fopen ($local_filepath, 'w');
-				$ch = curl_init ($src);
+			$fileDetails = pathinfo ($src);
+			$ext = strtolower ($fileDetails['extension']);
 
-				curl_setopt ($ch, CURLOPT_URL, $src);
-				curl_setopt ($ch, CURLOPT_RETURNTRANSFER, TRUE);
-				curl_setopt ($ch, CURLOPT_FOLLOWLOCATION, 1);
-				curl_setopt ($ch, CURLOPT_HEADER, 0);
-				curl_setopt ($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.7.5) Gecko/20041107 Firefox/1.0');
-				curl_setopt ($ch, CURLOPT_FILE, $fh);
+			$filename = md5 ($src);
+			$newsrc = 'temp/' . $filename . '.' . $ext;
+			
+			$local_filepath = dirname ( __FILE__ ) . '/' . $newsrc;
+			
+			if (!file_exists ($local_filepath)) {
 
-				if (curl_exec ($ch) === FALSE) {
-					if (file_exists ($local_filepath)) {
-						unlink ($local_filepath);
+				if (function_exists ('curl_init')) {
+
+					$fh = fopen ($local_filepath, 'w');
+					$ch = curl_init ($src);
+
+					curl_setopt ($ch, CURLOPT_URL, $src);
+					curl_setopt ($ch, CURLOPT_RETURNTRANSFER, TRUE);
+					curl_setopt ($ch, CURLOPT_FOLLOWLOCATION, 1);
+					curl_setopt ($ch, CURLOPT_HEADER, 0);
+					curl_setopt ($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.7.5) Gecko/20041107 Firefox/1.0');
+					curl_setopt ($ch, CURLOPT_FILE, $fh);
+
+					if (curl_exec ($ch) === FALSE) {
+						if (file_exists ($local_filepath)) {
+							unlink ($local_filepath);
+						}
+						display_error ('error reading file ' . $src . ' from remote host: ' . curl_error($ch));
+						$error = true;
 					}
+
+					curl_close ($ch);
+					fclose ($fh);
+
+                } else {
+
+					if (!$img = file_get_contents($src)) {
+						display_error('remote file for ' . $src . ' can not be accessed. It is likely that the file permissions are restricted');
+						$error = true;
+					}
+
+					if (file_put_contents ($local_filepath, $img) == FALSE) {
+						display_error ('error writing temporary file');
+						$error = true;
+					}
+
 				}
 
-				curl_close ($ch);
-				fclose ($fh);
+				if (!file_exists($local_filepath)) {
+					display_error('local file for ' . $src . ' can not be created');
+					$error = true;
+				}
+
 			}
+			
+			if ((!$error) && ($newsrc!="")) {
+				$src = $newsrc;
+			} else {
+				$src = "";
+			}
+
+		} else {
+
+			display_error('remote host "' . $url_info['host'] . '" not allowed');
+			$src = "";
+
 		}
-		$src = $local_filepath;
+
     }
 
     return $src;
-}
 
+}
 
 /**
  *
@@ -1650,7 +1765,7 @@ function get_document_root ($src) {
         }
     }
 
-    // special check for microsoft servers
+	// special check for microsoft servers
     if (!isset ($_SERVER['DOCUMENT_ROOT'])) {
         $path = str_replace ("/", "\\", $_SERVER['ORIG_PATH_INFO']);
         $path = str_replace ($path, "", $_SERVER['SCRIPT_FILENAME']);
@@ -1659,6 +1774,12 @@ function get_document_root ($src) {
             return $path;
         }
     }
+
+}
+
+function display_error ($errorString = '') {
+
+	echo '<pre>' . htmlentities($errorString) . '</pre>';
 
 }
 
