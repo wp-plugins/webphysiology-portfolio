@@ -8,6 +8,11 @@
  *
  * adjusted by: Jeff Lambert, WEBphysiology.com
  * adjusted on: 2010-01-09
+ *
+ * updated by: Jeff Lambert, WEBphysiology.com
+ * updated on: 2010-01-11
+ * updated   : added use of CURL when it is available to get the XML from ShrinkTheWeb.com
+ *             added error reporting if thumbnail isn't retrieved
  * 
  * @author Entraspan, Based in part on STW sample code
  * @copyright Open Source/Creative Commons
@@ -130,6 +135,14 @@ abstract class AppSTW {
 		
         $line = self::make_http_request($request_url);
 		
+		$check = strtolower($line);
+		
+		if ( strpos($check, 'fix_and_retry') > 0 || strpos($check, 'invalid credentials') > 0 ) {
+			$errorString = 'Unable to retrieve thumbnail from ShrinkTheWeb.com';
+			echo '<pre>' . htmlentities($errorString) . '</pre>';
+			return null;
+		}
+		
         if ($debug) {
             echo '<pre style=font-size:10px>';
             unset($args["stwaccesskeyid"]);
@@ -142,7 +155,7 @@ abstract class AppSTW {
         }
 
         $regex = '/<[^:]*:Thumbnail\\s*(?:Exists=\"((?:true)|(?:false))\")?[^>]*>([^<]*)<\//';
-
+		
         if (preg_match($regex, $line, $matches) == 1 && $matches[1] == "true") {
             return $matches[2];
 		}
@@ -150,10 +163,26 @@ abstract class AppSTW {
         return null;
     }
 	
-	private static function make_http_request($url){
-		$lines = file($url);
-        return implode("", $lines);
-    }
+    private static function make_http_request($url){
+	
+        // get file
+		if (function_exists ('curl_init')) {
+			
+			$ch = curl_init($url);
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER,1); // forces response into return string, not echo
+			curl_setopt($ch, CURLOPT_HEADER, 0);
+			curl_setopt($ch, CURLOPT_HTTPHEADER, Array("User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.15) Gecko/20080623 Firefox/2.0.0.15") );
+			$return = curl_exec($ch);
+			curl_close($ch);
+			
+		} else {
+			
+			$lines = file($url);
+			$return = implode("", $lines);
+			
+		}
+		return $return;
+}
 }
 
 ?>
