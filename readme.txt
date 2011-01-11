@@ -1,22 +1,22 @@
 === Plugin Name ===
 Contributors: lambje
 Donate link: http://webphysiology.com/redir/webphysiology-portfolio/donate/
-Tags: portfolio,gallery,posts,post,custom post type,custom taxonomy,webphysiology
+Tags: portfolio,gallery,list,grid,posts,post,custom post type,custom taxonomy,shrinktheweb,shrink the web,webphysiology
 Requires at least: 3.0.0
 Tested up to: 3.0.4
-Stable tag: 1.1.5
+Stable tag: 1.2.0
 
 Allows for the creation of an expanded-list styled or a grid-style page containing images and supporting detail, perfect for a portfolio presentation.
 
 == Description ==
 
-The WEBphysiology Portfolio plugin was built to provide a clean, current look in situations where an expanded list-style or grid-style portfolio layout is appropriate. The plugin is implemented via a [shortcode] that supports specifying one-or-more portfolio types, all portfolio-types or all but one excluded portfolio type.
+The WEBphysiology Portfolio plugin was built to provide a clean, current look in situations where an expanded list-style or grid-style portfolio layout is appropriate. The plugin is implemented via a [shortcode] that supports specifying one-or-more portfolio types, all portfolio types, all but specifically excluded portfolio types or any combination of portfolio types to include or exclude.
 
 The plugin utilizes a Custom Post Type as well as a Custom Taxonomy. It provides a Settings page for specifying some customizable options, like the number of entries to display per page. It also allows one to turn off the provided CSS in place of implementing their own.
 
-The Portfolio entry screen is highly customized to include just the items that make up a Portfolio entry. Attributes that aren’t populated will not be displayed on the end user interface. Attaching an image to a Portfolio entry also has been made relatively painless.
+The Portfolio entry screen is highly customized to include just the items that make up a Portfolio entry. Attributes that aren’t populated will not be displayed on the end user interface. Attaching an image to a Portfolio entry also has been made relatively painless.  With the release of version 1.2.0, the ability to utilize ShrinkTheWeb.com has been added.
 
-The end user interface can be adjusted using the Portfolio (Admin) Settings values or via your own CSS. It also incorporates the TimThumb.php code in order to scale the images displayed in the portfolio. The benefit here is to decrease the page weight while maintaining an acceptable quality image, plus the fact that you only need to load one image for use in the portfolio thumbnail and expanded view. The end user interface also utilizes FancyBox to present the full-sized image in a litebox when you click on the image or you can go to a URL on an image click.
+The end user interface can be adjusted using the Portfolio (Admin) Settings values or via your own CSS. It also incorporates the TimThumb.php code in order to scale the images displayed in the portfolio. The benefit here is to decrease the page weight while maintaining an acceptable quality image, plus the fact that you only need to load one image for use in the portfolio thumbnail and expanded view.  Managing how things work within the end user interface is very customizable. Images can come from a saved image or from ShrinkTheWeb.com, clicking an image can open it up in a thickbox or it can take you to the supplied website URL....
 
 == Installation ==
 
@@ -42,6 +42,10 @@ More detailed information can be found here: http://webphysiology.com/plugins/we
 
 My intention, at a minimum, is to maintain this plugin such that it is defect free.  For more info visit our <a href="http://webphysiology.com/plugins/webphysiology-portfolio-plugin/">WEBphysiology Portfolio plugin page</a>.  If after reviewing the details here, and perhaps checking out the videos, you still aren't finding the answer you're looking for, use our support system to log a ticket.
 
+= The website URL I've specified is not being displayed as the ShrinkTheWeb.com generated thumbnail =
+
+If you are specifying an inside page within your URL, then you must specifically subscribe to that level of service on your ShrinkTheWeb.com account.
+
 = I get a "File Not Found" error when I try and install from WordPress plugin area =
 
 This happens on occasion.  Running the install a second time typically results in a successful install.
@@ -63,10 +67,17 @@ The styling behavior of the WEBphysiology Portfolio can vary from theme to theme
 
 == Changelog ==
 
+= 1.2.0 =
+* Added support for ShrinkTheWeb.com
+* Removed the empty "temp" directory from the plugin package and replaced it with code that will create it should it not exist
+* Enhanced the portfolio search to handle any amount of included and excluded portfolio types and in any order
+* Updated nav control code to handle multiple [portfolio] shortcodes being used on one page
+* Updated CSS to handle multiple [portfolio] shortcodes being used on one page
+* NOTE: The "portfolios" element ID will be deprecated in a later release.  CSS for the Class "webphysiology_portfolio" has been added in version 1.1.6 to replace the ID CSS.
 = 1.1.5 =
 * Updated nav_pages() method as it wasn't working when pretty permalinks were not being utilized
 * Enhanced nav control method so that it doesn't have to rebuild for the bottom nav, it just uses what was built for the top nav
-* Updated code to allow for portfolio images that are hosted o sites other than the current site
+* Updated code to allow for portfolio images that are hosted on sites other than the current site
 = 1.1.4 =
 * Fixed a bug where the plugin credit could not be turned off.  Oops
 = 1.1.3 =
@@ -97,5 +108,6 @@ The styling behavior of the WEBphysiology Portfolio can vary from theme to theme
 == Support ==
 
 *** NOTE: If you get a "File Not Found" during installation from the WordPress site, simply run the installation again.
+*** NOTE: CSS DEPRECATION ALERT: The "portfolios" element ID will be deprecated in a later release.  CSS for the Class "webphysiology_portfolio" has been added in version 1.1.6 to replace the ID CSS.
 
 I will do my best to correct any reported defects as soon as I can make time, but please understand that this is side work. That said, I also use this plugin and am keen to ensure it provides the intended functionality. As to requests for enhancements, feel free to make these. I'll do my best to respond to your requests and, for those requests that I feel would benefit the majority of users, I'll get them on the enhancement list. I can't say just how quickly these would be implemented but funding the request would definitely move it up in the queue.

@@ -14,6 +14,11 @@
             it does not apply_filters to the retrieved data, which results in any embedded [shortcodes] not being parsed
 	1.1.3 - Added grid styling and code to handle new ability to turn off portfolio title and description
 	1.1.5 - found a typo in a var name and also added new parm to nav_pages() method
+	1.2.0 - found that if more than one [portfolio] shortcode is used on a page, and subsequent uses result in a nav control, it picks up the
+			wrong page within the nav URL, so, only set the current page variable the first time into this script as it is now set in a global var.
+	      - enhanced code to better handle instances of no portfolios being returned, it essentially creates the required empty divs and no nav control.
+		    this was most helpful where more than one [portfolio] shortcode is used on a page and some have records and others don't, especially on
+			subsequent portfolio pages
 	
 */
 
@@ -21,6 +26,8 @@ global $loop;
 global $wp_query;
 global $portfolio_types;
 global $portfolio_output;
+global $currpageurl;
+global $port;
 
 $display_portfolio_title = get_option( 'webphysiology_portfolio_display_portfolio_title' );
 $display_portfolio_desc = get_option( 'webphysiology_portfolio_display_portfolio_desc' );
@@ -34,7 +41,19 @@ $portfolios_per_page = get_option( 'webphysiology_portfolio_items_per_page' );
 $display_credit = get_option( 'webphysiology_portfolio_display_credit' );
 $gridstyle = get_option( 'webphysiology_portfolio_gridstyle' );
 $paged = (get_query_var('paged')) ? get_query_var('paged') : 1;
-$currpageurl = get_permalink();
+$portfolio_open_empty = "";
+$ul_open_empty = "";
+$li_open_odd_empty = "";
+$post_class = "portfolio_entry odd";
+
+if (!isset($currpageurl)) {
+	$currpageurl = get_permalink();
+	$port = 0;
+	$portnum = "";
+} else {
+	$port ++;
+	$portnum = "-" . $port;
+}
 
 // grid styling defaults
 $ul_open = '';
@@ -44,15 +63,18 @@ $li_open_odd = '';
 $li_close = '';
 $gridclass = '';
 if ($gridstyle == 'True') {
-	$portfolio_open = '<div id="portfolios" role="main">';
+	$portfolio_open = '<div id="portfolios' . $portnum . '" class="webphysiology_portfolio" " role="main">';
+	$portfolio_open_empty = '<div id="portfolios' . $portnum . '" class="webphysiology_portfolio empty" " role="main">';
 	$ul_open = '<ul class="grid">';
+	$ul_open_empty = '<ul class="grid empty">';
 	$ul_close = '</ul>';
 	$li_open_even = '<li>';
 	$li_open_odd = '<li class="odd">';
+	$li_open_odd_empty = '<li class="odd empty">';
 	$li_close = '</li>';
 	$gridclass = ' grid';
 } else {
-	$portfolio_open = '<div id="portfolios" role="main">';
+	$portfolio_open = '<div id="portfolios' . $portnum . '" class="webphysiology_portfolio" " role="main">';
 }
 $type_label = $detail_labels["Type"];
 if ($type_label != "") $type_label .= ": ";
@@ -73,17 +95,23 @@ if ( $portfolio_types == '' ) {
 	$loop = new WP_Query( array( 'post_type' => 'Portfolio', 'portfoliotype' => $portfolio_types, 'posts_per_page' => $portfolios_per_page, 'orderby' => 'meta_value_num', 'meta_key' => '_sortorder', 'order' => 'ASC', 'paged'=> $paged ) );
 }
 
-$portfolio_output .= $portfolio_open;
+if ( $loop->have_posts() ) {
+	
+	$portfolio_output .= $portfolio_open;
 
-// Display page navigation when applicable
-nav_pages($loop, $currpageurl, "top");
+	// Display page navigation when applicable
+	nav_pages($loop, $currpageurl, "top");
+	
+	// set odd/even indicator for portfolio background highlighting
+	$odd = true;
+	
+	$portfolio_output .= $ul_open;
+	
+	while ( $loop->have_posts() ) {
+		
+		$loop->the_post();
 
-// set odd/even indicator for portfolio background highlighting
-$odd = true;
 
-$portfolio_output .= $ul_open;
-
-if ( $loop->have_posts() ) : while ( $loop->have_posts() ) : $loop->the_post();
 
 	if ($odd==true) {
 		$post_class = 'portfolio_entry odd';
@@ -168,29 +196,32 @@ if ( $loop->have_posts() ) : while ( $loop->have_posts() ) : $loop->the_post();
 	$portfolio_output .= '</div><!-- #post-## -->';
 	$portfolio_output .= $li_close;
 	
-endwhile; else :
+	} // endwhile;
 	
-	$portfolio_output .= $li_open_odd;
-	$portfolio_output .= '<div id="post-0" class="post error404 not-found">';
-    $portfolio_output .= '	<p>&nbsp;</p>';
-	$portfolio_output .= '	<div class="entry-content">';
-	$portfolio_output .= '		<p>' . __( 'Apologies, but no results were found for the requested portfolio records.', 'webphysiology_portfolio' ) . '</p>';
-	$portfolio_output .= '	</div>';
+
+	$portfolio_output .= $ul_close;
+	
+	// Credit link
+	if($display_credit == 'True') {
+		$portfolio_output .= '<div class="portfolio_credit"><em>powered by <a href="http://webphysiology.com/redir/webphysiology-portfolio/">WEBphysiology Portfolio</a></em></div>';
+	}
+	
+	// Display page navigation when applicable
+	nav_pages($loop, $currpageurl, "bottom");
+	
+} else {
+	
+	$portfolio_output .= $portfolio_open_empty;
+	$portfolio_output .= $ul_open_empty;
+	$portfolio_output .= $li_open_odd_empty;
+	$portfolio_output .= '<div class="' . implode(" ", get_post_class($post_class)) . ' empty">';
+	$portfolio_output .= '	<div class="portfolio_page_img">&nbsp;</div>';
 	$portfolio_output .= '</div>';
 	$portfolio_output .= $li_close;
+	$portfolio_output .= $ul_close;
 	
-endif;
-
-$portfolio_output .= $ul_close;
-
-// Credit link
-if($display_credit == 'True') {
-	$portfolio_output .= '<div class="portfolio_credit"><em>powered by <a href="http://webphysiology.com/redir/webphysiology-portfolio/">WEBphysiology Portfolio</a></em></div>';
 }
-
-// Display page navigation when applicable
-nav_pages($loop, $currpageurl, "bottom");
-
+	
 $portfolio_output .= '</div><!-- #portfolios -->';
 
 ?>

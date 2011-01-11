@@ -2,14 +2,27 @@
 
 /* Portfolio CSS Document */
 
-
-/* Portfolio Styling
+/* WEBphysiology Portfolio Styling
 -------------------------------------------------------------- */
 
-#portfolios {
+/*
+ ************************************
+ 
+ NOTE:   #portfolios
+ 
+ will be deprecated and replaced by
+ 
+         .webphysiology_portfolio
+ 
+ ************************************/
+ 
+
+#portfolios,
+.webphysiology_portfolio {
 	float: left;
 }
-#portfolios .grid {
+#portfolios .grid,
+.webphysiology_portfolio .grid {
 	float: none;
 	margin: 10px 0;
 	overflow: hidden;
@@ -17,91 +30,114 @@
 .portfolio_page_content {
 	margin-bottom: 10px;
 }
-#portfolios h1, #portfolios h2 {
+#portfolios h1, #portfolios h2,
+.webphysiology_portfolio h1, .webphysiology_portfolio h2 {
 	font-weight: bold;
 	margin: 0 0 20px 0;
 }
-#portfolios h1 {
+#portfolios h1,
+.webphysiology_portfolio h1 {
 	font-size: 2em;
 }
-#portfolios ul.grid {
+#portfolios ul.grid,
+.webphysiology_portfolio ul.grid {
 	margin: 0 0;
 	padding: 0 0;
 	overflow: hidden;
 	clear: both;
 }
-#portfolios .grid li {
+#portfolios .grid li,
+.webphysiology_portfolio .grid li {
 	float: left;
 	margin: 0;
 	padding: 0;
 	list-style: none;
 }
-#portfolios .portfolio_entry h2 {
+#portfolios .portfolio_entry h2,
+.webphysiology_portfolio .portfolio_entry h2 {
 	margin-bottom: 10px;
 	font-size: 1.6em;
 }
-#portfolios .grid .portfolio_entry h2 {
+#portfolios .grid .portfolio_entry h2,
+.webphysiology_portfolio .grid .portfolio_entry h2 {
 	font-size: 1.1em;
 }
-#portfolios .portfolio_entry {
+#portfolios .portfolio_entry,
+.webphysiology_portfolio .portfolio_entry {
 	clear: both;
 	overflow: hidden;
 	margin: 0 0 10px 0;
 	margin: 0;
 	padding: 10px;
 }
-#portfolios .portfolio_page_img {
+#portfolios .portfolio_page_img,
+.webphysiology_portfolio .portfolio_page_img {
 	float: left;
 }
-#portfolios .portfolio_details {
+#portfolios .portfolio_details,
+.webphysiology_portfolio .portfolio_details {
 	float: right;
 	margin-right: 10px;
 	line-height: 1.5em;
 }
-#portfolios .grid .portfolio_details {
+#portfolios .grid .portfolio_details,
+.webphysiology_portfolio .grid .portfolio_details {
 	width: auto;
 }
-#portfolios .grid .portfolio_page_img {
+#portfolios .grid .portfolio_page_img,
+.webphysiology_portfolio .grid .portfolio_page_img {
 	text-align: center;
 	margin-bottom: 0;
 }
-#portfolios .portfolio_page_img img {
+#portfolios .portfolio_page_img img,
+.webphysiology_portfolio .portfolio_page_img img {
 	background-color: #000;
 	border: solid 3px #fff;
 	height: auto;
 	margin: 0;
 	padding: 2px 2px;
 }
-#portfolios .portfolio_description {
+#portfolios .portfolio_description,
+.webphysiology_portfolio .portfolio_description {
 	margin-bottom: 10px;
 }
-#portfolios .portfolio_meta .key {
+#portfolios .portfolio_meta,
+.webphysiology_portfolio .portfolio_meta {
+	overflow: hidden;
+}
+#portfolios .portfolio_meta .key,
+.webphysiology_portfolio .portfolio_meta .key {
 	float: left;
 	font-weight: bold;
-	clear: both;
 }
-#portfolios .portfolio_meta .value {
+#portfolios .portfolio_meta .value,
+.webphysiology_portfolio .portfolio_meta .value {
 	float: right;
 }
-#portfolios .portfolio_nav {
+#portfolios .portfolio_nav,
+.webphysiology_portfolio .portfolio_nav {
 	float: right;
 	width: 100%;
 	font-size: 93%;
 	line-height: normal;
 }
-#portfolios .portfolio_nav ul {
+#portfolios .portfolio_nav ul,
+.webphysiology_portfolio .portfolio_nav ul {
 	float: right;
 	margin: 0;
 	padding: 0;
 	font-size: 1em;  /* added 2010-11-01 */
 }
-#portfolios .portfolio_nav.top ul {
+#portfolios .portfolio_nav.top ul,
+.webphysiology_portfolio .portfolio_nav.top ul {
 	margin-bottom: 10px;
 }
-#portfolios .portfolio_nav.bottom ul {
+#portfolios .portfolio_nav.bottom ul,
+.webphysiology_portfolio .portfolio_nav.bottom ul {
 	margin-top: 10px;
 }
-#portfolios .portfolio_nav ul li {
+#portfolios .portfolio_nav ul li,
+.webphysiology_portfolio .portfolio_nav ul li {
 	float: left;
 	list-style: none;
 	background: url(../images/nav_button_right_selected.png) no-repeat scroll right top transparent;
@@ -109,31 +145,38 @@
 	padding: 0;
 	margin-left: 5px;
 }
-#portfolios .portfolio_nav ul li.selected, #portfolios .portfolio_nav ul li:hover {
+#portfolios .portfolio_nav ul li.selected, #portfolios .portfolio_nav ul li:hover,
+.webphysiology_portfolio .portfolio_nav ul li.selected, .webphysiology_portfolio .portfolio_nav ul li:hover {
 	background: url(../images/nav_button_right_unselected.png) no-repeat scroll right top transparent;
 }
-#portfolios .portfolio_nav ul li a {
+#portfolios .portfolio_nav ul li a,
+.webphysiology_portfolio .portfolio_nav ul li a {
 	display: block;
 	background: url(../images/nav_button_left_selected.png) no-repeat scroll left top transparent;
 	padding: 0 4px 1px 5px;
 	text-decoration: none;
 }
-#portfolios .portfolio_nav a.selected, #portfolios .portfolio_nav a:hover {
+#portfolios .portfolio_nav a.selected, #portfolios .portfolio_nav a:hover,
+.webphysiology_portfolio .portfolio_nav a.selected, .webphysiology_portfolio .portfolio_nav a:hover {
 	background: url(../images/nav_button_left_unselected.png) no-repeat scroll left top transparent;
 }
-#portfolios .portfolio_credit {
+#portfolios .portfolio_credit,
+.webphysiology_portfolio .portfolio_credit {
 	margin: 0;
 	padding: 0;
 	text-align: right;
 }
-#portfolios .portfolio_credit em, #portfolios .portfolio_credit em a {
+#portfolios .portfolio_credit em, #portfolios .portfolio_credit em a,
+.webphysiology_portfolio .portfolio_credit em, .webphysiology_portfolio .portfolio_credit em a {
 	font-style: italic;
 	opacity: .85;
 }
-#portfolios .portfolio_credit em {
+#portfolios .portfolio_credit em,
+.webphysiology_portfolio .portfolio_credit em {
 	font-size: 0.8em;
 }
-#portfolios .portfolio_credit a {
+#portfolios .portfolio_credit a,
+.webphysiology_portfolio .portfolio_credit a, {
 	font-size: 0.95em;
 	text-decoration: none;
 }

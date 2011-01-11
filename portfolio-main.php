@@ -3,7 +3,7 @@
 Plugin Name: WEBphysiology Portfolio
 Plugin URI: http://webphysiology.com/redir/webphysiology-portfolio/
 Description: Provides a clean Portfolio listing with image, details and portfolio type taxonomy.  A [portfolio] shortcode is used to include the portfolio on any page.
-Version: 1.1.5
+Version: 1.2.0
 Author: Jeff Lambert
 Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 License: GPL2
@@ -27,6 +27,14 @@ License: GPL2
 
 /*  UPDATES
 
+	1.2.0 - * added support for ShrinkTheWeb.com
+	        * am removing the empty "temp" directory from the plugin package and replacing it with code that will create it should it not exist
+	        * updated the portfolio_search_where() function to handle any amount of included and excluded portfolio types and in any order
+			* updated nav control code to handle multiple [portfolio] shortcodes being used on one page
+			* updated embedded CSS to include new "webphysiology_portfolio" Class, which is identical to what the "portfolios" ID was. this was
+			  necessary as the ID was invalid in that using the [portfolio] shortcode more than once on a page would result in duplicate IDs.
+			  The first [portfolio] shortcode will still use the "portfolios" ID but subsequent ones will have a number appended to the ID and
+			  at some point the #portfolios entries in the CSS files will be removed, defaulting to just the "webphysiology_portfolio" class
 	1.1.5 - * updated nav_pages() method as it wasn't working when pretty permalinks were not being utilized
 	        * enhanced nav control method so that it doesn't have to rebuild for the bottom nav, it just uses what was built for the top nav
 			* updated code to allow for portfolio images that are hosted on sites other than the current site
@@ -158,7 +166,7 @@ function portfolio_search_join( $join )
 	global $wpdb, $wp_query;
 	
 	// if the portfolio type has been defined in the search vars
-	if( isset( $wp_query->query_vars['portfoliotype'] )) {
+	if ( !empty( $wp_query->query_vars['portfoliotype'] )) {
 		
 		// if the JOIN statement currently is not empty append a 'LEFT OUTER JOIN'
 		if (!empty($join)) $join .= " LEFT OUTER JOIN ";
@@ -171,33 +179,54 @@ function portfolio_search_join( $join )
 	return $join;
 }
 
-
 // augment the WHERE clause if a Portfolio Type is part of the search
 function portfolio_search_where( $where )
 {
-	global $wp_query;
-	
-	// if the portfolio type has been defined in the search vars
-	if( isset( $wp_query->query_vars['portfoliotype'] )) {
+	// this code should not be running within the admin
+	if (!is_admin()) {
 		
-		$types = get_query_var('portfoliotype');
+		global $wp_query;
 		
-		// if the WHERE statement currently is not empty append an 'AND'
-		if (!empty($where)) $where .= " AND ";
-		
-		
-		// * asterisk - my code follow-up flag *
-		//  at some time in the future I hope to further the search conditions to allow for a mixed set of portfolios where
-		//   some are defined to be included and others excluded.  for now one may specify one or more to include OR one to exclude
-		
-		
-		// if the specified Portfolio Type does NOT lead with a '-', which would indicate a NOT EQUAL search
-		if (substr($types, 0, 1) != '-' ) {
-			$where .= " port.meta_value IN ('" . str_replace(',', "','", $types) . "')";
-		} else {
-			$where .= " IFNULL(port.meta_value,'BLAHBLAH') != '" . substr($types, 1) . "'";
+		// if the portfolio type has been defined in the search vars
+		if ( !empty( $wp_query->query_vars['portfoliotype'] )) {
+			
+			// clear out our portfolio type buckets
+			$IN = "";
+			$OUT = "";
+			
+			$types = get_query_var('portfoliotype');
+			
+			// place the portfolio types into an array so that it is easier to process them
+			$ptypes = explode(",",$types);
+			
+			// loop through the portfolio array
+			foreach ($ptypes as &$value) {
+				
+				// if the portfolio type is not lead by a minus sign then add it to the IN bucket
+				if (substr($value, 0, 1) != '-') {
+					if ( !empty($IN) ) $IN .= ",";
+					$IN .= $value;
+				} else { // otherwise, add it to the OUT bucket
+					if ( !empty($OUT) ) $OUT .= ",";
+					$OUT .= substr($value, 1);
+				}
+			}
+			
+			// if some of the portfolio types were flagged for inclusion then add an IN() clause
+			if ( !empty($IN) ) {
+				if (!empty($where)) $where .= " AND ";
+				$where .= " port.meta_value IN ('" . str_replace(',', "','", $IN) . "')";
+			}
+			
+			// if some of the portfolio types were flagged for exclusion then add a NOT IN() clause
+			if ( !empty($OUT) ) {
+				if (!empty($where)) $where .= " AND ";
+				$where .= " port.meta_value NOT IN ('" . str_replace(',', "','", $OUT) . "')";
+			}
+			
 		}
-	}
+		
+	} // (!is_admin())
 	
 	return $where;
 }
@@ -268,7 +297,7 @@ function webphys_portfolio_edit_init() {
     echo '<select name="_portfolio_type" id="_portfolio_type">';
         echo '<!-- Display portfolio types as options -->';
             echo '<option class="portfolio_type_option" value=""';
-            if( !count($portfolio_type_list) || is_wp_error($portfolio_type) || empty($portfolio_type)) echo 'selected>None</option>';
+            if ( !count($portfolio_type_list) || is_wp_error($portfolio_type) || empty($portfolio_type) ) echo 'selected>None</option>';
         foreach ($portfolio_type_list as $portfolio_item) {
             if ($portfolio_item->slug == $portfolio_type) {
                 echo '<option class="portfolio_type_option" value="' . $portfolio_item->slug . '" selected>' . $portfolio_item->name . '</option>\n'; 
@@ -289,7 +318,7 @@ function webphys_portfolio_edit_init() {
     echo '<p><label for="_imageurl">Enter Portfolio Image URL: </label>';
 	echo '<input id="upload_portfolio_image_button" type="button" value="Upload Image" /><br />';
 	echo '<input type="text" id="_imageurl" name="_imageurl" value="' . $imageurl . '" class="widefat shortbottom" /><br />';
-	echo '<span class="attribute_instructions">Enter the URL for the portfolio image. Clicking "Insert into Post" from &lt;Upload Image&gt; will paste the inserted image\'s URL (take care what size is selected).</span></p>';
+	echo '<span class="attribute_instructions">Enter the URL for the portfolio image. Clicking "Insert into Post" from &lt;Upload Image&gt; will paste the inserted image\'s URL.</span></p>';
     echo '<p><label for="_sortorder">Enter site sort order: </label>';
 	echo '<input type="text" id="_sortorder" name="_sortorder" value="' . $sortorder . '" class="code" /></p>';
 
@@ -309,7 +338,7 @@ function portfolio_admin_scripts() {
 	
 	// don't include the media upload script if we are not on a portfolio edit page, otherwise,
 	// the standard image upload will be hijacked and not work on other post and page admin pages
-	if (isset($post)) {
+	if (!empty($post)) {
 		if (strtolower($post->post_type) == "portfolio") {
 			$continue = "True";
 		}
@@ -334,7 +363,7 @@ function portfolio_admin_styles() {
 	
 	// don't include the media upload script if we are not on a portfolio edit page, otherwise,
 	// the standard image upload will be hijacked and not work on other post and page admin pages
-	if (isset($post)) {
+	if (!empty($post)) {
 		if (strtolower($post->post_type) == "portfolio") {
 			$continue = "True";
 		}
@@ -421,6 +450,9 @@ function portfolio_install() {
 	add_option("webphysiology_portfolio_display_tech", 'True'); // This is the default value for whether to display the technical data
 	add_option("webphysiology_portfolio_missing_image_url", 'images/empty_window.png'); // This is the default value for the missing image url
 	add_option("webphysiology_portfolio_allowed_image_sites","flickr.com,picasa.com,blogger.com,wordpress.com,img.youtube.com"); // This is the default value for the allowed image sites
+	add_option("webphysiology_portfolio_use_stw", 'False'); // This is the default value for whether to display images using ShrinkTheWeb.com
+	add_option("webphysiology_portfolio_stw_ak", "not set"); // This is the default value for the ShrinkTheWeb.com Access Key
+	add_option("webphysiology_portfolio_stw_sk", "not set"); // This is the default value for the ShrinkTheWeb.com Security Key
 	add_option("webphysiology_portfolio_image_click_behavior", 'litebox'); // This is the default value for whether to display the image in a lite box or navigate to the associated site
 	add_option("webphysiology_portfolio_label_width", "60"); // This is the default value for the label width
 	add_option("webphysiology_portfolio_display_labels", array("Type" => "Type", "Created" => "Created", "Client" => "For", "SiteURL" => "Site", "Tech" => "Tech")); // This is the default values for the field labels on the site UI
@@ -449,56 +481,82 @@ if (!is_admin()) {
 }
 
 If (is_admin()) {
+	// added in v1.1.6
+	check_temp_dir(); // check to see that the temp directory exists, as this is needed when images from different domains are utilized
+	$return = get_option('webphysiology_portfolio_use_stw');
+	if ( empty($return) ) {
+		add_option("webphysiology_portfolio_use_stw", 'False'); // This is the default value for whether to display images using ShrinkTheWeb.com
+	}
+	$return = get_option('webphysiology_portfolio_stw_ak');
+	if ( empty($return) ) {
+		add_option("webphysiology_portfolio_stw_ak", "not set"); // This is the default value for the ShrinkTheWeb.com Access Key
+	}
+	$return = get_option('webphysiology_portfolio_stw_sk');
+	if ( empty($return) ) {
+		add_option("webphysiology_portfolio_stw_sk", "not set"); // This is the default value for the ShrinkTheWeb.com Security Key
+	}
 	// added in v1.1.5
-	if(get_option( 'webphysiology_portfolio_allowed_image_sites' ) == "") {
+	$return = get_option('webphysiology_portfolio_allowed_image_sites');
+	if ( empty($return) ) {
 		add_option("webphysiology_portfolio_allowed_image_sites", "flickr.com,picasa.com,blogger.com,wordpress.com,img.youtube.com"); // This is the default value for the allowed image sites
 	}
 	// added in v1.1.3
-	if(get_option( 'webphysiology_portfolio_display_portfolio_title' ) == "") {
+	$return = get_option('webphysiology_portfolio_display_portfolio_title');
+	if ( empty($return) ) {
 		add_option("webphysiology_portfolio_display_portfolio_title", 'True'); // This is the default value for whether to display the Portfolio Title
 	}
-	if(get_option( 'webphysiology_portfolio_display_portfolio_desc' ) == "") {
+	$return = get_option('webphysiology_portfolio_display_portfolio_desc');
+	if ( empty($return) ) {
 		add_option("webphysiology_portfolio_display_portfolio_desc", 'True'); // This is the default value for whether to display the Portfolio Description
 	}
-	if(get_option( 'webphysiology_portfolio_gridstyle' ) == "") {
+	$return = get_option('webphysiology_portfolio_gridstyle');
+	if ( empty($return) ) {
 		add_option("webphysiology_portfolio_gridstyle", "False"); // This is the default value for whether to display the portfolio in a grid style
 	}
-	if(get_option( 'webphysiology_portfolio_gridcolor' ) == "") {
+	$return = get_option('webphysiology_portfolio_gridcolor');
+	if ( empty($return) ) {
 		add_option("webphysiology_portfolio_gridcolor", "#eeeeee"); // This is the default value for the grid background color
 	}
 	// added in v1.0.3
-	if(get_option( 'webphysiology_portfolio_display_clientname' ) == "") {
+	$return = get_option('webphysiology_portfolio_display_clientname');
+	if ( empty($return) ) {
 		add_option("webphysiology_portfolio_display_clientname", 'True'); // This is the default value for whether to display the client name
 	}
-	if(get_option( 'webphysiology_portfolio_display_siteurl' ) == "") {
+	$return = get_option('webphysiology_portfolio_display_siteurl');
+	if ( empty($return) ) {
 		add_option("webphysiology_portfolio_display_siteurl", 'True'); // This is the default value for whether to display the site URL
 	}
-	if(get_option( 'webphysiology_portfolio_display_tech' ) == "") {
+	$return = get_option('webphysiology_portfolio_display_tech');
+	if ( empty($return) ) {
 		add_option("webphysiology_portfolio_display_tech", 'True'); // This is the default value for whether to display the technical data
 	}
-	if(get_option( 'webphysiology_portfolio_label_width' ) == "") {
+	$return = get_option('webphysiology_portfolio_label_width');
+	if ( empty($return) ) {
 		add_option("webphysiology_portfolio_label_width", "60"); // This is the default value for the detail label width
 	}
-	if(get_option( 'webphysiology_portfolio_display_labels' ) == "") {
+	$return = get_option('webphysiology_portfolio_display_labels');
+	if ( empty($return) ) {
 		add_option("webphysiology_portfolio_display_labels", array("Type" => "Type","Created" => "Created","Client" => "For","SiteURL" => "Site","Tech" => "Tech")); // This is the default values for the field labels on the site UI
 	}
-	if(get_option( 'webphysiology_portfolio_missing_image_url' ) == "") {
+	$return = get_option('webphysiology_portfolio_missing_image_url');
+	if ( empty($return) ) {
 		add_option("webphysiology_portfolio_missing_image_url", "images/empty_window.png"); // This is the default value for the missing image path
 	}
-	if(get_option( 'webphysiology_portfolio_allowed_image_sites' ) == "") {
-		add_option("webphysiology_portfolio_allowed_image_sites", "flickr.com,picasa.com,blogger.com,wordpress.com,img.youtube.com"); // This is the default value for the allowed image sites
-	}
-	if(get_option( 'webphysiology_portfolio_image_click_behavior' ) == "") {
+	$return = get_option('webphysiology_portfolio_image_click_behavior');
+	if ( empty($return) ) {
 		add_option("webphysiology_portfolio_image_click_behavior", 'litebox'); // This is the default value for whether to display the image in a lite box or navigate to the associated site
 	}
 	// added in v1.0.0
-	if(get_option( 'webphysiology_portfolio_display_credit' ) == "") {
+	$return = get_option('webphysiology_portfolio_display_credit');
+	if ( empty($return) ) {
 		add_option("webphysiology_portfolio_display_credit", "True"); // This is the default value for whether to display a plugin publisher credit
 	}
-	if(get_option( 'webphysiology_portfolio_delete_options' ) == "") {
+	$return = get_option('webphysiology_portfolio_delete_options');
+	if ( empty($return) ) {
 		add_option("webphysiology_portfolio_delete_options", "False"); // This is the default value for whether to delete plugin options on plugin deactivation
 	}
-	if(get_option( 'webphysiology_portfolio_delete_data' ) == "") {
+	$return = get_option('webphysiology_portfolio_delete_data');
+	if ( empty($return) ) {
 		add_option("webphysiology_portfolio_delete_data", "False"); // This is the default value for whether to delete Portfolio data on plugin deactivation
 	}
 }
@@ -524,6 +582,9 @@ function portfolio_remove() {
 		delete_option('webphysiology_portfolio_display_tech');
 		delete_option('webphysiology_portfolio_missing_image_url');
 		delete_option('webphysiology_portfolio_allowed_image_sites');
+		delete_option('webphysiology_portfolio_use_stw');
+		delete_option('webphysiology_portfolio_stw_ak');
+		delete_option('webphysiology_portfolio_stw_sk');
 		delete_option('webphysiology_portfolio_image_click_behavior');
 		delete_option('webphysiology_portfolio_label_width');
 		delete_option('webphysiology_portfolio_display_labels');
@@ -635,14 +696,14 @@ function save_portfolio_meta($post_id, $post) {
 	// Add values of $portfolio_meta as custom fields
  
 	foreach ($portfolio_meta as $key => $value) { // Cycle through the $portfolio_meta array!
-		if( $post->post_type == 'revision' ) return; // Don't store custom data twice
+		if ( $post->post_type == 'revision' ) return; // Don't store custom data twice
 		$value = implode(',', (array)$value); // If $value is an array, make it a CSV (unlikely)
-		if(get_post_meta($post->ID, $key, FALSE)) { // If the custom field already has a value
+		if (get_post_meta($post->ID, $key, FALSE)) { // If the custom field already has a value
 			update_post_meta($post->ID, $key, $value);
 		} else { // If the custom field doesn't have a value
 			add_post_meta($post->ID, $key, $value);
 		}
-		if(!$value) delete_post_meta($post->ID, $key); // Delete if blank
+		if (!$value) delete_post_meta($post->ID, $key); // Delete if blank
 	}
  
 }
@@ -712,7 +773,7 @@ function manage_portfolio_columns($column_name, $id) {
 		// Get the Portfolio Type
 		$type = get_post_meta( $id , '_portfolio_type' , true );
 		$portfolio_type = get_term_by( 'slug', $type, 'portfolio_type' );
-		if (isset($portfolio_type->name)) {
+		if (!empty($portfolio_type->name)) {
 			echo $portfolio_type->name;
 		} else {
 			echo "";
@@ -810,6 +871,9 @@ function portfolio_plugin_page() {
 	$display_tech = 'webphysiology_portfolio_display_tech'; // default true
 	$missing_img_url = 'webphysiology_portfolio_missing_image_url'; // default images/empty_window.png
 	$allowed_sites = 'webphysiology_portfolio_allowed_image_sites'; // default flickr.com,picasa.com,blogger.com,wordpress.com,img.youtube.com
+	$use_stw = 'webphysiology_portfolio_use_stw'; // default false
+	$stw_ak = 'webphysiology_portfolio_stw_ak'; // default "not set"
+	$stw_sk = 'webphysiology_portfolio_stw_sk'; // default "not set"
 	$img_click_behavior = 'webphysiology_portfolio_image_click_behavior'; // default litebox
 	$check_openlitebox = '';
 	$check_nav2page = '';
@@ -831,54 +895,54 @@ function portfolio_plugin_page() {
 
 
     // See if the user has posted us some information.  If they did, this hidden field will be set to 'Y'.
-    if( isset($_POST[ $hidden_field_name ]) && $_POST[ $hidden_field_name ] == 'Y' ) {
+    if ( !empty($_POST[ $hidden_field_name ]) && $_POST[ $hidden_field_name ] == 'Y' ) {
 		
 		if ($_POST["reset_form"] == "False") {
 		
 			// Read their posted value
-			if ( isset($_POST[ $display_portfolio_title ]) ) {
+			if ( !empty($_POST[ $display_portfolio_title ]) ) {
 				$opt_val_display_portfolio_title = $_POST[ $display_portfolio_title ];
-				if ($opt_val_display_portfolio_title == "") $opt_val_display_portfolio_title = "False";
+//				if ( empty($opt_val_display_portfolio_title) ) $opt_val_display_portfolio_title = "False";
 			} else {
 				$opt_val_display_portfolio_title = "False";
 			}
-			if ( isset($_POST[ $display_portfolio_desc ]) ) {
+			if ( !empty($_POST[ $display_portfolio_desc ]) ) {
 				$opt_val_display_portfolio_desc = $_POST[ $display_portfolio_desc ];
-				if ($opt_val_display_portfolio_desc == "") $opt_val_display_portfolio_desc = "False";
+//				if ( empty($opt_val_display_portfolio_desc) ) $opt_val_display_portfolio_desc = "False";
 			} else {
 				$opt_val_display_portfolio_desc = "False";
 			}
-			if ( isset($_POST[ $display_portfolio_type ]) ) {
+			if ( !empty($_POST[ $display_portfolio_type ]) ) {
 				$opt_val_display_portfolio_type = $_POST[ $display_portfolio_type ];
-				if ($opt_val_display_portfolio_type == "") $opt_val_display_portfolio_type = "False";
+//				if ( empty($opt_val_display_portfolio_type) ) $opt_val_display_portfolio_type = "False";
 			} else {
 				$opt_val_display_portfolio_type = "False";
 			}
-			if ( isset($_POST[ $display_createdate ]) ) {
+			if ( !empty($_POST[ $display_createdate ]) ) {
 				$opt_val_display_createdate = $_POST[ $display_createdate ];
-				if ($opt_val_display_createdate == "") $opt_val_display_createdate = "False";
+//				if ( empty($opt_val_display_createdate) ) $opt_val_display_createdate = "False";
 			} else {
 				$opt_val_display_createdate = "False";
 			}
-			if ( isset($_POST[ $display_clientname ]) ) {
+			if ( !empty($_POST[ $display_clientname ]) ) {
 				$opt_val_display_clientname = $_POST[ $display_clientname ];
-				if ($opt_val_display_clientname == "") $opt_val_display_clientname = "False";
+//				if ( empty($opt_val_display_clientname) ) $opt_val_display_clientname = "False";
 			} else {
 				$opt_val_display_clientname = "False";
 			}
-			if ( isset($_POST[ $display_siteurl ]) ) {
+			if ( !empty($_POST[ $display_siteurl ]) ) {
 				$opt_val_display_siteurl = $_POST[ $display_siteurl ];
-				if ($opt_val_display_siteurl == "") $opt_val_display_siteurl = "False";
+//				if ( empty($opt_val_display_siteurl) ) $opt_val_display_siteurl = "False";
 			} else {
 				$opt_val_display_siteurl = "False";
 			}
-			if ( isset($_POST[ $display_tech ]) ) {
+			if ( !empty($_POST[ $display_tech ]) ) {
 				$opt_val_display_tech = $_POST[ $display_tech ];
-				if ($opt_val_display_tech == "") $opt_val_display_tech = "False";
+//				if ( empty($opt_val_display_tech) ) $opt_val_display_tech = "False";
 			} else {
 				$opt_val_display_tech = "False";
 			}
-			if (isset($_POST[ $img_click_behavior ])) {
+			if (!empty($_POST[ $img_click_behavior ])) {
 				$opt_val_img_click_behavior = $_POST[ $img_click_behavior ];
 			} else {
 				$opt_val_img_click_behavior = 'litebox';
@@ -889,22 +953,30 @@ function portfolio_plugin_page() {
 			$opt_val_display_labels["Client"] = $_POST[ $display_labels . '_Client' ];
 			$opt_val_display_labels["SiteURL"] = $_POST[ $display_labels . '_SiteURL' ];
 			$opt_val_display_labels["Tech"] = $_POST[ $display_labels . '_Tech' ];
-			if (isset($_POST[ $missing_img_url ])) {
+			if (!empty($_POST[ $missing_img_url ])) {
 				$opt_val_missing_img_url = $_POST[ $missing_img_url ];
 			} else {
 				$opt_val_missing_img_url = 'images/empty_window.png';
 			}
 			$opt_val_allowed_sites = $_POST[ $allowed_sites ];
+			if ( !empty($_POST[ $use_stw ]) ) {
+				$opt_val_use_stw = $_POST[ $use_stw ];
+//				if ( empty($opt_val_use_stw) ) $opt_val_use_stw = "False";
+			} else {
+				$opt_val_use_stw = "False";
+			}
+			$opt_val_stw_ak = $_POST[ $stw_ak ];
+			$opt_val_stw_sk = $_POST[ $stw_sk ];
 			$opt_val_items_per_page = $_POST[ $items_per_page ];
-			if ( isset($_POST[ $display_credit ]) ) {
+			if ( !empty($_POST[ $display_credit ]) ) {
 				$opt_val_display_credit = $_POST[ $display_credit ];
-				if ($opt_val_display_credit == "") $opt_val_display_credit = "False";
+//				if ( empty($opt_val_display_credit) ) $opt_val_display_credit = "False";
 			} else {
 				$opt_val_display_credit = "False";
 			}
-			if (isset($_POST[ $gridstyle ])) {
+			if (!empty($_POST[ $gridstyle ])) {
 				$opt_val_gridstyle = $_POST[ $gridstyle ];
-				if ($opt_val_gridstyle == "") $opt_val_gridstyle = "False";
+//				if ( empty($opt_val_gridstyle) ) $opt_val_gridstyle = "False";
 			} else {
 				$opt_val_gridstyle = "False";
 			}
@@ -916,15 +988,15 @@ function portfolio_plugin_page() {
 			$opt_val_link_color = $_POST[ $link_color ];
 			$opt_val_odd_stripe_color = $_POST[ $odd_stripe_color ];
 			$opt_val_even_stripe_color = $_POST[ $even_stripe_color ];
-			if ( isset($_POST[ $delete_options ]) ) {
+			if ( !empty($_POST[ $delete_options ]) ) {
 				$opt_val_delete_options = $_POST[ $delete_options ];
-				if ($opt_val_delete_options == "") $opt_val_delete_options = "False";
+//				if ( empty($opt_val_delete_options) ) $opt_val_delete_options = "False";
 			} else {
 				$opt_val_delete_options = "False";
 			}
-			if ( isset($_POST[ $delete_data ]) ) {
+			if ( !empty($_POST[ $delete_data ]) ) {
 				$opt_val_delete_data = $_POST[ $delete_data ];
-				if ($opt_val_delete_data == "") $opt_val_delete_data = "False";
+//				if ( empty($opt_val_delete_data) ) $opt_val_delete_data = "False";
 			} else {
 				$opt_val_delete_data = "False";
 			}
@@ -945,6 +1017,9 @@ function portfolio_plugin_page() {
 			} elseif ($opt_val_overall_width < 250) {
 				$validated = false;
 				$validation_msg = __('settings NOT saved - overall width cannot be narrower than 250 pixels.', 'Portfolio' );
+			} elseif ( ($opt_val_use_stw == "True") && ( (empty($opt_val_stw_ak)) || ($opt_val_stw_ak == "not set") || (empty($opt_val_stw_sk)) || ($opt_val_stw_sk == "not set") )) {
+				$validated = false;
+				$validation_msg = __('settings NOT saved - ShrinkTheWeb.com settings are incomplete.', 'Portfolio' );
 			} elseif ( !check_admin_referer('portfolio_config', 'portolio-nonce') ) {
 				$validated = false;
 				$validation_msg = __('settings NOT saved - authentication error.', 'Portfolio' );
@@ -985,6 +1060,9 @@ function portfolio_plugin_page() {
 			$opt_val_display_tech = "True";
 			$opt_val_missing_img_url = "images/empty_window.png";
 			$opt_val_allowed_sites = "flickr.com,picasa.com,blogger.com,wordpress.com,img.youtube.com";
+			$opt_val_use_stw = "False";
+			$opt_val_stw_ak = "not set";
+			$opt_val_stw_sk = "not set";
 			$opt_val_img_click_behavior = "litebox";
 			$opt_val_label_width = "60";
 			$opt_val_display_labels = array("Type" => "Type", "Created" => "Created", "Client" => "For", "SiteURL" => "Site", "Tech" => "Tech");
@@ -1019,6 +1097,9 @@ function portfolio_plugin_page() {
 			update_option( $display_tech, $opt_val_display_tech );
 			update_option( $missing_img_url, $opt_val_missing_img_url );
 			update_option( $allowed_sites, $opt_val_allowed_sites );
+			update_option( $use_stw, $opt_val_use_stw );
+			update_option( $stw_ak, $opt_val_stw_ak );
+			update_option( $stw_sk, $opt_val_stw_sk );
 			update_option( $img_click_behavior, $opt_val_img_click_behavior );
 			update_option( $label_width, $opt_val_label_width );
 			update_option( $display_labels, $opt_val_display_labels );
@@ -1053,6 +1134,9 @@ function portfolio_plugin_page() {
 		$opt_val_display_tech = get_option( $display_tech );
 		$opt_val_missing_img_url = get_option( $missing_img_url );
 		$opt_val_allowed_sites = get_option( $allowed_sites );
+		$opt_val_use_stw = get_option( $use_stw );
+		$opt_val_stw_ak = get_option( $stw_ak );
+		$opt_val_stw_sk = get_option( $stw_sk );
 		$opt_val_img_click_behavior = get_option( $img_click_behavior );
 		$opt_val_label_width = get_option( $label_width );
 		$opt_val_display_labels = get_option( $display_labels );
@@ -1079,6 +1163,7 @@ function portfolio_plugin_page() {
 	if ($opt_val_display_clientname=="True" ) {$opt_val_display_clientname="checked";}
 	if ($opt_val_display_siteurl=="True" ) {$opt_val_display_siteurl="checked";}
 	if ($opt_val_display_tech=="True" ) {$opt_val_display_tech="checked";}
+	if ($opt_val_use_stw=="True" ) {$opt_val_use_stw="checked";} else {$opt_val_use_stw="";}
 	if ($opt_val_img_click_behavior == "litebox") { $check_openlitebox = 'checked'; } else { $check_nav2page = 'checked'; }
 	if ($opt_val_css=="True" ) {$opt_val_css="checked";}
 	if ($opt_val_display_credit=="True" ) {$opt_val_display_credit="checked";}
@@ -1149,6 +1234,10 @@ function portfolio_plugin_page() {
 	echo '						<label for="' . $label_width . '">Label width:</label><input type="text" id="' . $label_width . '" name="' . $label_width . '" value="' . $opt_val_label_width . '" /> pixels<br />' . "\n";
 	echo '						<label for="' . $missing_img_url . '">Missing image URL:</label><input type="text" id="' . $missing_img_url . '" name="' . $missing_img_url . '" value="' . $opt_val_missing_img_url . '" class="half_input shortbottom" /><br /><span class="attribute_instructions">note: url should be relative to this plugin\'s directory, be in the uploads directory (e.g., /uploads/2010/11/missing.jpg) or be the full URL path</span><br class="tallbottom" />' . "\n";
 	echo '						<label for="' . $allowed_sites . '">Allowed image sites:</label><input type="text" id="' . $allowed_sites . '" name="' . $allowed_sites . '" value="' . $opt_val_allowed_sites . '" class="half_input shortbottom" /><br /><span class="attribute_instructions">note: add allowed domain separated with commas (e.g., flickr.com,picasa.com,blogger.com,wordpress.com,img.youtube.com)</span><br class="tallbottom" />' . "\n";
+	echo '								<input type="checkbox" id="' . $use_stw . '" name="' . $use_stw . '" value="True" ' . $opt_val_use_stw . ' /><label for="' . $use_stw . '" class="half_input shortbottom">Use ShrinkTheWeb.com</label>&nbsp;&nbsp;&nbsp;' . "\n";
+	echo '							<label for="' . $stw_ak . '">Access key:</label><input type="text" id="' . $stw_ak . '" name="' . $stw_ak . '" value="' . $opt_val_stw_ak . '" />&nbsp;&nbsp;&nbsp;' . "\n";
+	echo '							<label for="' . $stw_sk . '">Secret key:</label><input type="text" id="' . $stw_sk . '" name="' . $stw_sk . '" value="' . $opt_val_stw_sk . '" /><br />' . "\n";
+	echo '						<span class="attribute_instructions">Get your own <a href="http://www.shrinktheweb.com">Website Preview from ShrinkTheWeb</a></span><br class="tallbottom"/>' . "\n";
 	echo '						<label for="' . $img_click_behavior . '">Image click behavior: </label><input type="radio" name="' . $img_click_behavior . '" value="litebox" ' .  $check_openlitebox . ' /> Open fullsize image in a lite box&nbsp;&nbsp;<input type="radio" name="' . $img_click_behavior . '" value="nav2page" ' . $check_nav2page . ' /> Navigate to the portfolio web page URL<br/>' . "\n";
 	echo '						<label for="' . $items_per_page . '">Portfolio items per page:</label><input type="text" id="' . $items_per_page . '" name="' . $items_per_page . '" value="' . $opt_val_items_per_page . '" /><br />' . "\n";
 	echo '						<input type="checkbox" id="' . $display_credit . '" name="' . $display_credit . '" value="True" ' . $opt_val_display_credit . '/><label for="' . $display_credit . '">Display WEBphysiology credit and/or a donation would be nice (though neither is required).</label>' . "\n";
@@ -1159,14 +1248,8 @@ function portfolio_plugin_page() {
 	echo '					<div class="inside" style="clear:both;overflow:hidden;">' . "\n";
 	echo '						<div class="portfolio_admin_style">' . "\n";
 	echo '							<input type="checkbox" id="' . $use_css . '" name="' . $use_css . '" value="True" ' . $opt_val_css . '/><label for="' . $use_css . '">Use Portfolio plugin CSS</label><br/>' . "\n";
-	echo '							<div class="display_and_label">' . "\n";
-	echo '								<div class="display_attrib">' . "\n";
-	echo '								<input type="checkbox" id="' . $gridstyle . '" name="' . $gridstyle . '" value="True" ' . $opt_val_gridstyle . '/><label for="' . $gridstyle . '">Use Grid Style layout</label><br/>' . "\n";
-	echo '								</div>' . "\n";
-	echo '								<div class="label_attrib">' . "\n";
+	echo '								<input type="checkbox" id="' . $gridstyle . '" name="' . $gridstyle . '" value="True" ' . $opt_val_gridstyle . '/><label for="' . $gridstyle . '">Use Grid Style layout</label>&nbsp;&nbsp;&nbsp;' . "\n"; //<br/>' . "\n";
 	echo '									<label for="' . $gridcolor . '">Grid background color:</label><input type="text" id="' . $gridcolor . '" name="' . $gridcolor . '" value="' . $opt_val_gridcolor . '" /><br />' . "\n";
-	echo '								</div>' . "\n";
-	echo '							</div>' . "\n";
 	echo '							<label for="' . $overall_width . '">Portfolio List - overall width:</label><input type="text" id="' . $overall_width . '" name="' . $overall_width . '" value="' . $opt_val_overall_width . '" /> pixels<br />' . "\n";
 	echo '							<label for="' . $img_width . '">Portfolio List - image width:</label><input type="text" id="' . $img_width . '" name="' . $img_width . '" value="' . $opt_val_img_width . '" /> pixels<br /><span class="attribute_instructions">note: if you use the Grid Style layout, this is your overall cell width</span><br class="tallbottom" />' . "\n";
 	echo '							<label for="' . $header_color . '">Portfolio Title color:</label><input type="text" id="' . $header_color . '" name="' . $header_color . '" value="' . $opt_val_header_color . '" /><span style="color:' . $opt_val_header_color . ';margin-left:10px;">title color</span><br />' . "\n";
@@ -1238,9 +1321,19 @@ function portfolio_plugin_page() {
 
 
 // Grab the Portfolio image for the current Portfolio in the loop
+function showImage($label, $src)
+{
+    if (!$src) {
+        $path = ""; // use some default image
+	}
+	
+	return $path;
+}
 
 if ( ! function_exists( 'get_Loop_Site_Image' ) ) :
 function get_Loop_Site_Image() {
+	
+	require_once("scripts/stw/stw.php");
 	
 	$anchor_open = '';
 	$anchor_close = '';
@@ -1252,17 +1345,22 @@ function get_Loop_Site_Image() {
 	
 	$opt_val_img_width = get_option( 'webphysiology_portfolio_image_width' );
 	
-	if ($opt_val_img_width == "") {$opt_val_img_width = '150';}
+	if ( empty($opt_val_img_width) ) {$opt_val_img_width = '150';}
 	
-	if (!empty($full_size_img_url)) {
+	// If using ShrinkTheWeb, no image URL is specified and a site URL is assigned
+	if ( empty($img_url) && (strtolower(get_option( 'webphysiology_portfolio_use_stw' )) == "true") && !empty($site_url) ) {
+		$full_size_img_url = AppSTW::getScaledThumbnail($site_url, 640, 480);
+	}
+	
+	if ( !empty($full_size_img_url) ) {
 		
 		$img_url = clean_source($full_size_img_url);
 		
 		// if there was an issue with the image url
-		if ($img_url == "") { $full_size_img_url = ""; }
+		if ( empty($img_url) ) { $full_size_img_url = ""; }
 		
 		// if the image url was cleaned and not cleared, check that it really exists
-		if (($img_url != $full_size_img_url) && ($img_url != "")) {
+		if ( ($img_url != $full_size_img_url) && ( !empty($img_url)) ) {
 			if (!file_exists(dirname ( __FILE__ ) . '/' . $img_url)) {
 				$full_size_img_url = "";
 			}
@@ -1272,7 +1370,7 @@ function get_Loop_Site_Image() {
 	// if the image was not specified or was cleared due to issues, use the default empty image
 	if ($full_size_img_url == '') {
 		$img_url = get_option( 'webphysiology_portfolio_missing_image_url' );
-		if (!isset($img_url)) { $img_url = 'images/empty_window.png'; }
+		if (!!empty($img_url)) { $img_url = 'images/empty_window.png'; }
 		$class = ' class="missing"';
 	}
 	
@@ -1357,45 +1455,55 @@ function set_portfolio_css() {
 	
 	$embedded_css = "\n" .
 					'<style type="text/css" id="webphysiology_portfolio_embedded_css">' . "\n" .
-					'    #portfolios {	' . "\n" .
+					'    #portfolios, .webphysiology_portfolio {	' . "\n" .
 					'        width: ' . $opt_val_overall_width . 'px;' . "\n" .
 					'    }' . "\n" .
-					'    #portfolios ' . $class . ' {' . "\n" .
+					'    #portfolios ' . $class . ',' . "\n" .
+					'    .webphysiology_portfolio ' . $class . ' {' . "\n" .
 					'        width: ' . $detail_width . 'px;' . "\n" .
 					'    }' . "\n" .
-					'    #portfolios .portfolio_page_img {' . "\n" .
+					'    #portfolios .portfolio_page_img,' . "\n" .
+					'    .webphysiology_portfolio .portfolio_page_img {' . "\n" .
 					'        width: ' . $overall_image_width . 'px;' . "\n" .
 					'    }' . "\n" .
-					'    #portfolios .grid .portfolio_page_img {' . "\n" .
+					'    #portfolios .grid .portfolio_page_img,' . "\n" .
+					'    .webphysiology_portfolio .grid .portfolio_page_img {' . "\n" .
 					'        width: ' . $detail_width . 'px;' . "\n" .
 					'    }' . "\n" .
-					'    #portfolios .portfolio_page_img img {' . "\n" .
+					'    #portfolios .portfolio_page_img img,' . "\n" .
+					'    .webphysiology_portfolio .portfolio_page_img img {' . "\n" .
 					'        width: ' . $opt_val_img_width . 'px;' . "\n" .
 					'        max-width: ' . $opt_val_img_width . 'px;' . "\n" .
 					'    }' . "\n" .
-					'    #portfolios .portfolio_meta .key {' . "\n" .
+					'    #portfolios .portfolio_meta .key,' . "\n" .
+					'    .webphysiology_portfolio .portfolio_meta .key {' . "\n" .
 					'    	width: ' . $opt_val_meta_key_width . 'px;' . "\n" .
 					'    }' . "\n" .
-					'    #portfolios .portfolio_meta .value {' . "\n" .
+					'    #portfolios .portfolio_meta .value,' . "\n" .
+					'    .webphysiology_portfolio .portfolio_meta .value {' . "\n" .
 					'        width: ' . $meta_value_width . 'px;' . "\n" .
 					'    }' . "\n" .
-					'    #portfolios ul.grid {' . "\n" .
+					'    #portfolios ul.grid,' . "\n" .
+					'    .webphysiology_portfolio ul.grid {' . "\n" .
 					'    	background-color: ' . $opt_val_gridcolor . ';' . "\n" .
 					'    }' . "\n" .
-					'    #portfolios .portfolio_title h1, #portfolios .portfolio_title h2 {' . "\n" .
+					'    #portfolios .portfolio_title h1, #portfolios .portfolio_title h2,' . "\n" .
+					'    .webphysiology_portfolio .portfolio_title h1, .webphysiology_portfolio .portfolio_title h2 {' . "\n" .
 					'        color: ' . $opt_val_header_color . ';' . "\n" .
 					'    }' . "\n" .
-					'    #portfolios .portfolio_nav a {' . "\n" .
+					'    #portfolios .portfolio_nav a,' . "\n" .
+					'    .webphysiology_portfolio .portfolio_nav a {' . "\n" .
 					'        color: ' . $opt_val_link_color . ';' . "\n" .
 					'    }' . "\n" .
-					'    #portfolios .portfolio_entry {' . "\n" .
+					'    #portfolios .portfolio_entry,' . "\n" .
+					'    .webphysiology_portfolio .portfolio_entry {' . "\n" .
 					'        background-color: ' . $opt_val_even_stripe_color . ';' . "\n" .
 					'    }' . "\n" .
-					'    #portfolios .portfolio_entry.odd {' . "\n" .
+					'    #portfolios .portfolio_entry.odd,' . "\n" .
+					'    .webphysiology_portfolio .portfolio_entry.odd {' . "\n" .
 					'        background-color: ' . $opt_val_odd_stripe_color . ';' . "\n" .
 					'    }' . "\n" .
 					'</style>' . "\n";
-//	#portfolios .portfolio_meta .key
 	
 	if (is_wp_error($portfolio_css_on) || $portfolio_css_on=='True') {
 		
@@ -1462,13 +1570,13 @@ function nav_pages($qryloop, $pageurl, $class) {
 	$pages = $qryloop->max_num_pages;
 	
 	// if there is more than one page of Portfolio query results
-	if($pages>1) {
+	if ($pages>1) {
 		
 		// if this is the bottom nav then there is no point in rebuilding everything, just take what we
 		// built for the top nav and put it in the bottom nav <div>
-		if ( ($class == "bottom") && ( !$navcontrol == "") ) {
+		if ( ($class == "bottom") && ( !empty($navcontrol) ) ) {
 			$portfolio_output .= '<div class="portfolio_nav ' . $class . '">' . $navcontrol . '</div>';
-			$navcontrol = "";
+			$navcontrol = array();
 			return $portfolio_output;
 		}
 		
@@ -1509,10 +1617,10 @@ function nav_pages($qryloop, $pageurl, $class) {
 		// now build out the navigation page elements
 		$nav = '<ul>';
 		
-		if($start-1>1) {
+		if ($start-1>1) {
 			$nav .= '<li><a href="' . $nav . '1">&laquo;</a></li>'; //next link
 		}
-		if($start>1) {
+		if ($start>1) {
 			$nav .= '<li><a href="' . $paged . ($start-1) . '">&lt;</a></li>'; //next link
 		}		
 		for ($i=$start;$i<=$end;$i++) {
@@ -1524,10 +1632,10 @@ function nav_pages($qryloop, $pageurl, $class) {
 			$nav .= '>' . $i . '</a></li>';
 		}
 		
-		if($end<$pages) {
+		if ($end<$pages) {
 			$nav .= '<li><a href="' . $paged . $i . '">&gt;</a></li>';
 		}
-		if($end<$pages-1) {
+		if ($end<$pages-1) {
 			$nav .= '<li><a href="' . $paged . $pages . '">&raquo;</a></li>';
 		}
 		$nav .= '</ul>';
@@ -1599,7 +1707,7 @@ function clean_source ($src) {
 	$src = strip_tags ($src);
 	$src = check_external ($src);
 	
-	if ($src == "") {return $src;}
+	if ( empty($src) ) {return $src;}
 	
     // remove slash from start of string
     if (strpos ($src, '/') === 0) {
@@ -1615,7 +1723,7 @@ function clean_source ($src) {
     	$src = get_document_root ($src) . '/' . $src;
 	}
 	
-	if ($orig_src != "") {
+	if ( !empty($orig_src) ) {
 		if (file_exists($src)) {
 			$src = $orig_src;
 		} else {
@@ -1651,7 +1759,7 @@ function check_external ($src) {
 		}
 
 		if ($isAllowedSite) {
-
+			
 			$fileDetails = pathinfo ($src);
 			$ext = strtolower ($fileDetails['extension']);
 
@@ -1723,6 +1831,21 @@ function check_external ($src) {
 
     return $src;
 
+}
+
+function check_temp_dir() {
+	
+	// define the temp folder's local path
+	$tempdir = dirname ( __FILE__ ) . '/temp';
+	
+	// make sure temp directory exists. if it doesn't, create it
+	if (!file_exists ($tempdir)) {
+		// give 777 permissions so that developer can overwrite
+		// files created by web server user
+		mkdir ($tempdir);
+		chmod ($tempdir, 0755);
+	}
+	
 }
 
 /**

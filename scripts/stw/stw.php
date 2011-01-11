@@ -1,0 +1,159 @@
+<?php
+/**
+ * Implements sourcing thumbnails from http://www.shrinktheweb.com
+ *
+ * Dependent on PHP5, but could be easily back-ported.  All config
+ * information is defined in constants.  No reason to ever create
+ * an instance of this class, hence abstract.
+ *
+ * adjusted by: Jeff Lambert, WEBphysiology.com
+ * adjusted on: 2010-01-09
+ * 
+ * @author Entraspan, Based in part on STW sample code
+ * @copyright Open Source/Creative Commons
+ */
+
+abstract class AppSTW {
+	
+    const THUMBNAIL_DIR = "/cache";
+    const CACHE_DAYS = 3; // used 7 for Alexa!
+
+    /**
+     * Refreshes the thumbnail if it is expired or creates it if it does
+     * not exist.  There is no cleanup of the thumbnails for ones that don't
+     * get used again, e.g. find /static/images/thumbnails -type f -mtime +7 -delete
+     *
+     * Every combination of url and call arguments results in a unique filename
+     * through a MD5 hash.  The size argument can also be an array where you can
+     * add any parameter you wish to the request, or override any default.
+     *
+     * It is up to the calling function to decide what to do with the results when
+     * a null is returned.  I often store the src in a database with a timestamp so
+     * that I do not bombard the server with repeated requests for a thumbnail that
+     * doesn't yet exist, although STW is very fast at processing.
+     *
+     * @param string $url URL to get thumbnail for
+     * @param array $args Array of parameters to use
+     * @param boolean $force Force call to bypass cache, was used for debugging
+     * @return string Local SRC URI for the thumbnail.
+     */
+    public static function getThumbnail($url, $args = null, $force = false) {
+		
+        $args = $args ? $args : array("stwsize"=>"lg");
+		$src = '/'.md5($url.serialize($args)).".jpg";
+        $path = dirname( __FILE__ ) . self::THUMBNAIL_DIR.$src;
+        $cutoff = time() - 3600 * 24 * self::CACHE_DAYS;
+		
+        if ($force || !file_exists($path) || filemtime($path) <= $cutoff) {
+            if (($jpgurl = self::queryRemoteThumbnail($url, $args))) {
+                if (($im = imagecreatefromjpeg($jpgurl))) {
+					imagejpeg($im, $path, 100);
+				}
+			}
+		}
+		
+        if (file_exists($path)) {
+            return plugin_dir_url(__FILE__) . substr(self::THUMBNAIL_DIR, 1) . $src;
+		}
+
+        return null;
+    }
+
+    /**
+     * Always retrieves the X-Large thumbnail from STW, then uses
+     * local gd library to create arbitrary sized thumbnails.
+     *
+     * By passing the same arguments used for small/large should
+     * generate cache hits so the only size ever retrieved would
+     * be xlg.
+     *
+     * @param string $url URL to get thumbnail for
+     * @param string $width The desired image width
+     * @param string $height The desired image height
+     * @param string $args Used to make name same as sm/lg fetches.
+     */
+    public static function getScaledThumbnail($url, $width, $height, $args = null, $force = false) {
+		
+        $args = $args ? $args : array("width"=>$width, "height"=>$height);
+        $src = '/'.md5($url.serialize($args)).".jpg";
+        $path = dirname( __FILE__ ) . self::THUMBNAIL_DIR.$src;
+        $cutoff = time() - 3600 * 24 * self::CACHE_DAYS;
+		
+        if ( ($force || !file_exists($path) || filemtime($path) <= $cutoff) ) {
+			if ( $xlg = self::getThumbnail($url, array("stwsize"=>"xlg")) ) {
+				if ( $im = imagecreatefromjpeg($xlg) ) {
+					
+                    list($xw, $xh) = getimagesize($xlg);
+                    $scaled = imagecreatetruecolor($width, $height);
+
+                    if (imagecopyresampled($scaled, $im, 0, 0, 0, 0, $width, $height, $xw, $xh)) {
+                        imagejpeg($scaled, $path, 100);
+					}
+                }
+			}
+		}
+		
+        if (file_exists($path)) {
+			return plugin_dir_url(__FILE__) . substr(self::THUMBNAIL_DIR, 1) . $src;
+		}
+		
+        return null;
+		
+    }
+	
+    /**
+     * Calls through the API and processes the results based on the
+     * original sample code from STW.
+     *
+     * It is common for this routine to return a null value when the
+     * thumbnail does not yet exist and is queued up for processing.
+     *
+     * @param string $url URL to get thumbnail for
+     * @param array $args Array of parameters to use
+     * @return string full remote URL to the thumbnail
+     */
+    private static function queryRemoteThumbnail($url, $args = null, $debug = false) {
+		
+        $args = is_array($args) ? $args : array();
+        $defaults["stwaccesskeyid"] = get_option( 'webphysiology_portfolio_stw_ak' );
+        $defaults["stwu"] = get_option( 'webphysiology_portfolio_stw_sk' );
+
+        foreach ($defaults as $k=>$v) {
+            if (!isset($args[$k])) {
+                $args[$k] = $v;
+			}
+		}
+
+		$args["stwurl"] = $url;
+		
+        $request_url = "http://images.shrinktheweb.com/xino.php?".http_build_query($args);
+		
+        $line = self::make_http_request($request_url);
+		
+        if ($debug) {
+            echo '<pre style=font-size:10px>';
+            unset($args["stwaccesskeyid"]);
+            unset($args["stwu"]);
+            print_r($args);
+            echo '</pre>';
+            echo '<div style=font-size:10px>';
+            highlight_string($line);
+            echo '</div>';
+        }
+
+        $regex = '/<[^:]*:Thumbnail\\s*(?:Exists=\"((?:true)|(?:false))\")?[^>]*>([^<]*)<\//';
+
+        if (preg_match($regex, $line, $matches) == 1 && $matches[1] == "true") {
+            return $matches[2];
+		}
+
+        return null;
+    }
+	
+	private static function make_http_request($url){
+		$lines = file($url);
+        return implode("", $lines);
+    }
+}
+
+?>
