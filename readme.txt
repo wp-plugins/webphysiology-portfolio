@@ -73,7 +73,7 @@ The styling behavior of the WEBphysiology Portfolio can vary from theme to theme
 * Enhanced the portfolio search to handle any amount of included and excluded portfolio types and in any order
 * Updated nav control code to handle multiple [portfolio] shortcodes being used on one page
 * Updated CSS to handle multiple [portfolio] shortcodes being used on one page
-* NOTE: The "portfolios" element ID will be deprecated in a later release.  CSS for the Class "webphysiology_portfolio" has been added in version 1.1.6 to replace the ID CSS.
+* NOTE: The "portfolios" element ID will be deprecated in a later release.  CSS for the Class "webphysiology_portfolio" has been added in version 1.2.0 to replace the ID CSS.
 = 1.1.5 =
 * Updated nav_pages() method as it wasn't working when pretty permalinks were not being utilized
 * Enhanced nav control method so that it doesn't have to rebuild for the bottom nav, it just uses what was built for the top nav
@@ -109,6 +109,6 @@ The styling behavior of the WEBphysiology Portfolio can vary from theme to theme
 
 NOTE: If you get a "File Not Found" during installation from the WordPress site, simply run the installation again.
 
-NOTE: CSS DEPRECATION ALERT: The "portfolios" element ID will be deprecated in a later release.  CSS for the Class "webphysiology_portfolio" has been added in version 1.1.6 to replace the ID CSS.
+NOTE: CSS DEPRECATION ALERT: The "portfolios" element ID will be deprecated in a later release.  CSS for the Class "webphysiology_portfolio" has been added in version 1.2.0 to replace the ID CSS.
 
 I will do my best to correct any reported defects as soon as I can make time, but please understand that this is side work. That said, I also use this plugin and am keen to ensure it provides the intended functionality. As to requests for enhancements, feel free to make these. I'll do my best to respond to your requests and, for those requests that I feel would benefit the majority of users, I'll get them on the enhancement list. I can't say just how quickly these would be implemented but funding the request would definitely move it up in the queue.
