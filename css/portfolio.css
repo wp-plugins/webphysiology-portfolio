@@ -101,10 +101,12 @@
 .webphysiology_portfolio .portfolio_description {
 	margin-bottom: 10px;
 }
+/*
 #portfolios .portfolio_meta,
 .webphysiology_portfolio .portfolio_meta {
 	overflow: hidden;
 }
+*/
 #portfolios .portfolio_meta .key,
 .webphysiology_portfolio .portfolio_meta .key {
 	float: left;
