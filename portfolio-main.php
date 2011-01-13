@@ -1602,7 +1602,7 @@ function nav_pages($qryloop, $pageurl, $class) {
 		// determine the starting page number of the nav control
 		
 		// figure out where to start and end the nav control numbering as well as what arrow elements we need on each end, if any
-		$start = $curpage - round(($for/2),0,PHP_ROUND_HALF_UP) + 1;
+		$start = $curpage - round(($for/2),0) + 1;
 		if ( ($start + $for) > $pages ) { $start = $pages - $for + 1; }
 		if ($start < 1) { $start = 1; }
 		if ( ($start + $for) > $pages ) { $for = $pages - $start + 1; }
