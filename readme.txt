@@ -22,6 +22,7 @@ The end user interface can be adjusted using the Portfolio (Admin) Settings valu
 
 This section describes how to install the plugin and get it working.
 
+0. You must be running at least v3 of WordPress and PHP 5 or better
 1. Extract the WEBphysiology Portfolio ZIP file and place the `webphysiology-portfolio` folder into the `/wp-content/plugins/` directory
 2. Activate the plugin through the 'Plugins' menu in WordPress
 3. Add the necessary Portfolio Types via it's menu under the Portfolio section
