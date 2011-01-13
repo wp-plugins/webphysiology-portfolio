@@ -3,7 +3,7 @@
 Plugin Name: WEBphysiology Portfolio
 Plugin URI: http://webphysiology.com/redir/webphysiology-portfolio/
 Description: Provides a clean Portfolio listing with image, details and portfolio type taxonomy.  A [portfolio] shortcode is used to include the portfolio on any page.
-Version: 1.2.0
+Version: 1.2.1
 Author: Jeff Lambert
 Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 License: GPL2
@@ -27,6 +27,8 @@ License: GPL2
 
 /*  UPDATES
 
+	1.2.1 - * made some changes to the navigation control, nav_pages(), as it wasn't always accurately drawn
+	        * removed an errant character from a line of code
 	1.2.0 - * added support for ShrinkTheWeb.com
 	        * am removing the empty "temp" directory from the plugin package and replacing it with code that will create it should it not exist
 	        * updated the portfolio_search_where() function to handle any amount of included and excluded portfolio types and in any order
@@ -200,7 +202,7 @@ function portfolio_search_where( $where )
 			$ptypes = explode(",",$types);
 			
 			// loop through the portfolio array
-			foreach ($ptypes as &$value) {
+			foreach ($ptypes as $value) {
 				
 				// if the portfolio type is not lead by a minus sign then add it to the IN bucket
 				if (substr($value, 0, 1) != '-') {
@@ -389,7 +391,7 @@ if ( is_admin() ) {
 /* define the Portfolio ShortCode and set defaults for available arguments */
 function portfolio_loop($atts, $content = null) {
 	
-	global $nav_spread;
+	global $for;
 	global $portfolio_types;
 	global $portfolio_output;
 	
@@ -398,7 +400,7 @@ function portfolio_loop($atts, $content = null) {
 	  'portfolio_type' => '',
       ), $atts ) );
 	
-	$nav_spread = $max_nav_spread;
+	$for = $max_nav_spread;
 	$portfolio_types = $portfolio_type;
 	$portfolio_output = '';
 	
@@ -1562,7 +1564,7 @@ if (!is_admin()) {
 /* Build out the navigation elements for paging through the Portfolio pages */
 function nav_pages($qryloop, $pageurl, $class) {
 	
-	global $nav_spread;
+	global $for;
 	global $portfolio_output;
 	global $navcontrol;
 	
@@ -1570,7 +1572,7 @@ function nav_pages($qryloop, $pageurl, $class) {
 	$pages = $qryloop->max_num_pages;
 	
 	// if there is more than one page of Portfolio query results
-	if ($pages>1) {
+	if ($pages > 1) {
 		
 		// if this is the bottom nav then there is no point in rebuilding everything, just take what we
 		// built for the top nav and put it in the bottom nav <div>
@@ -1586,44 +1588,40 @@ function nav_pages($qryloop, $pageurl, $class) {
 			$paged = $pageurl . "&paged=";
 		} else {
 			$paged = $pageurl . "?paged=";
-		}
+		}		
 		
 		// get current page number
 		intval(get_query_var('paged')) == 0 ? $curpage=1 : $curpage = intval(get_query_var('paged'));
 		
 		// determine the starting page number of the nav control
-		if ($curpage-$nav_spread<-2) {
-			$start = 1;
-		} elseif ($curpage+$nav_spread>$pages) {
-			if ($curpage-2<$pages-$nav_spread+1) {
-				$start = $curpage-2;
-			} else {
-				$start = $pages-$nav_spread+1;
-			}
-		} else {
-			$start = $curpage-2;
-		}
-		if ($start < 1) {
-			$start = 1;
-		}
 		
-		// set the ending page number of the nav control
-		if ($start+$nav_spread-1<$pages) {
-			$end = $start+$nav_spread-1;
-		} else {
-			$end = $pages;
+		// figure out where to start and end the nav control numbering as well as what arrow elements we need on each end, if any
+		$start = $curpage - round(($for/2),0,PHP_ROUND_HALF_UP) + 1;
+		if ( ($start + $for) > $pages ) { $start = $pages - $for + 1; }
+		if ($start < 1) { $start = 1; }
+		if ( ($start + $for) > $pages ) { $for = $pages - $start + 1; }
+		$before = 0;
+		if ($start > 2) {
+			$before = 2;
+		} elseif ($start > 1) {
+			$before = 1;
 		}
-		
-		// now build out the navigation page elements
-		$nav = '<ul>';
-		
-		if ($start-1>1) {
-			$nav .= '<li><a href="' . $nav . '1">&laquo;</a></li>'; //next link
-		}
-		if ($start>1) {
-			$nav .= '<li><a href="' . $paged . ($start-1) . '">&lt;</a></li>'; //next link
+		$after = $pages - ($start + $for - 1);
+		if ($after > 2) {
+			$after = 2;
+		} elseif ( $after < 0) {
+			$after = 0;
 		}		
-		for ($i=$start;$i<=$end;$i++) {
+		
+		// now build out the navigation page control elements
+		$nav = '<ul>';
+		if ($before == 1) {
+			$nav .= '<li><a href="' . $paged . ($start - 1) . '">&lt;</a></li>';
+		} elseif ($before == 2) {
+			$nav .= '<li><a href="' . $paged . '1">&laquo;</a></li>';
+			$nav .= '<li><a href="' . $paged . ($start - 1) . '">&lt;</a></li>';
+		}
+		for ($i=$start;$i<=($start+$for-1);$i++) {
 			if ($curpage!=$i) {
 				$nav .= '<li><a href="' . $paged . $i .'"';
 			} else {
@@ -1631,12 +1629,11 @@ function nav_pages($qryloop, $pageurl, $class) {
 			}
 			$nav .= '>' . $i . '</a></li>';
 		}
-		
-		if ($end<$pages) {
-			$nav .= '<li><a href="' . $paged . $i . '">&gt;</a></li>';
-		}
-		if ($end<$pages-1) {
-			$nav .= '<li><a href="' . $paged . $pages . '">&raquo;</a></li>';
+		if ($after == 1) {
+			$nav .= '<li><a href="' . $paged . ($start + $for) . '">&gt;</a></li>';
+		} elseif ($after == 2) {
+			$nav .= '<li><a href="' . $paged . ($start + $for) . '">&gt;</a></li>';
+			$nav .= '<li><a href="' . $paged . $pages . '">&raquo</a></li>';
 		}
 		$nav .= '</ul>';
 		

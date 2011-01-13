@@ -4,7 +4,7 @@ Donate link: http://webphysiology.com/redir/webphysiology-portfolio/donate/
 Tags: portfolio,gallery,list,grid,posts,post,custom post type,custom taxonomy,shrinktheweb,shrink the web,webphysiology
 Requires at least: 3.0.0
 Tested up to: 3.0.4
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 
 Allows for the creation of an expanded-list styled or a grid-style page containing images and supporting detail, perfect for a portfolio presentation.
 
@@ -67,6 +67,9 @@ The styling behavior of the WEBphysiology Portfolio can vary from theme to theme
 
 == Changelog ==
 
+= 1.2.1 =
+* Made some changes to the navigation control, nav_pages(), as it wasn't always accurately drawn
+* Removed an errant character from a line of code
 = 1.2.0 =
 * Added support for ShrinkTheWeb.com
 * Removed the empty "temp" directory from the plugin package and replaced it with code that will create it should it not exist
