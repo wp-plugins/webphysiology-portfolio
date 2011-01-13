@@ -29,6 +29,7 @@ License: GPL2
 
 	1.2.1 - * made some changes to the navigation control, nav_pages(), as it wasn't always accurately drawn
 	        * removed an errant character from a line of code
+			* added note to Portfolio edit screen when ShrinkTheWeb is used to let the user know that entering an image URL will override the use of ShrinkTheWeb for that Portfolio
 	1.2.0 - * added support for ShrinkTheWeb.com
 	        * am removing the empty "temp" directory from the plugin package and replacing it with code that will create it should it not exist
 	        * updated the portfolio_search_where() function to handle any amount of included and excluded portfolio types and in any order
@@ -293,6 +294,11 @@ function webphys_portfolio_edit_init() {
 	$clientname = $detail_labels["Client"];
 	$siteURL = $detail_labels["SiteURL"];
 	$tech = $detail_labels["Tech"];
+	$stwcomments = '';
+	
+	if ( strtolower( get_option('webphysiology_portfolio_use_stw')) == 'true' ) {
+		$stwcomments = '</span><br /><span class="attribute_instructions">note: entering an image path will override the use of ShrinkTheWeb.com. Reveiw "<a href="http://webphysiology.com/plugins/webphysiology-portfolio-plugin/#options" title="WEBphysiology Portfolio Documentation" target="_blank">Use ShrinkTheWeb.com</a>" option documentation for more details.';
+	}
 	
 	echo '<p><label for="_portfolio_type">Select Portfolio Type (' . $type . '): </label> ';
 
@@ -320,7 +326,7 @@ function webphys_portfolio_edit_init() {
     echo '<p><label for="_imageurl">Enter Portfolio Image URL: </label>';
 	echo '<input id="upload_portfolio_image_button" type="button" value="Upload Image" /><br />';
 	echo '<input type="text" id="_imageurl" name="_imageurl" value="' . $imageurl . '" class="widefat shortbottom" /><br />';
-	echo '<span class="attribute_instructions">Enter the URL for the portfolio image. Clicking "Insert into Post" from &lt;Upload Image&gt; will paste the inserted image\'s URL.</span></p>';
+	echo '<span class="attribute_instructions">Enter the URL for the portfolio image. Clicking "Insert into Post" from &lt;Upload Image&gt; will paste the inserted image\'s URL.' . $stwcomments . '</span></p>';
     echo '<p><label for="_sortorder">Enter site sort order: </label>';
 	echo '<input type="text" id="_sortorder" name="_sortorder" value="' . $sortorder . '" class="code" /></p>';
 
