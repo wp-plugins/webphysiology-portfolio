@@ -19,6 +19,7 @@
 	      - enhanced code to better handle instances of no portfolios being returned, it essentially creates the required empty divs and no nav control.
 		    this was most helpful where more than one [portfolio] shortcode is used on a page and some have records and others don't, especially on
 			subsequent portfolio pages
+	1.2.2 - added ability to sort portfolio items alphanumerically
 	
 */
 
@@ -40,6 +41,12 @@ $detail_labels = get_option( 'webphysiology_portfolio_display_labels' );
 $portfolios_per_page = get_option( 'webphysiology_portfolio_items_per_page' );
 $display_credit = get_option( 'webphysiology_portfolio_display_credit' );
 $gridstyle = get_option( 'webphysiology_portfolio_gridstyle' );
+$sort_numerically = get_option( 'webphysiology_portfolio_sort_numerically' );
+if ($sort_numerically == 'True') {
+	$sort_numerically = "_num";
+} else {
+	$sort_numerically = "";
+}
 $paged = (get_query_var('paged')) ? get_query_var('paged') : 1;
 $portfolio_open_empty = "";
 $ul_open_empty = "";
@@ -89,13 +96,15 @@ if ($tech_label != "") $tech_label .= ": ";
 
 // if the portfolio shortcode had no portfolio types defined
 if ( $portfolio_types == '' ) {
-	$loop = new WP_Query( array( 'post_type' => 'Portfolio', 'posts_per_page' => $portfolios_per_page, 'orderby' => 'meta_value_num', 'meta_key' => '_sortorder', 'order' => 'ASC', 'paged'=> $paged ) );
+	$loop = new WP_Query( array( 'post_type' => 'Portfolio', 'posts_per_page' => $portfolios_per_page, 'orderby' => 'meta_value' . $sort_numerically, 'meta_key' => '_sortorder', 'order' => 'ASC', 'paged'=> $paged ) );
 } else {
 	$wp_query->query_vars['portfoliotype'] = $portfolio_types;
-	$loop = new WP_Query( array( 'post_type' => 'Portfolio', 'portfoliotype' => $portfolio_types, 'posts_per_page' => $portfolios_per_page, 'orderby' => 'meta_value_num', 'meta_key' => '_sortorder', 'order' => 'ASC', 'paged'=> $paged ) );
+	$loop = new WP_Query( array( 'post_type' => 'Portfolio', 'portfoliotype' => $portfolio_types, 'posts_per_page' => $portfolios_per_page, 'orderby' => 'meta_value' . $sort_numerically, 'meta_key' => '_sortorder', 'order' => 'ASC', 'paged'=> $paged ) );
 }
 
 if ( $loop->have_posts() ) {
+	
+//	echo $loop->request . '<br />';  //asterisk
 	
 	$portfolio_output .= $portfolio_open;
 
@@ -182,7 +191,7 @@ if ( $loop->have_posts() ) {
 	if ((!$technical_details == '') && ($display_tech == 'True')) {
 		$portfolio_output .= '            <div class="portfolio_techdetails"><div class="key">' . $tech_label . '</div><div class="value">' . $technical_details . '</div></div>';
 	}
-	
+$portfolio_output .= '<div><div class="key">Sort:</div><div class="value">' . $sortorder . '</div></div>'; //asterisk
 	$portfolio_output .= '            ' . wp_link_pages( array( 'before' => '<div class="page-link">' . __( 'Pages:', 'webphysiology_portfolio' ), 'after' => '</div>' ) );
 	if ($gridstyle != 'True') {
 		$portfolio_output .= '        </div>';
