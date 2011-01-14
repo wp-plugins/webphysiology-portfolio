@@ -191,7 +191,6 @@ if ( $loop->have_posts() ) {
 	if ((!$technical_details == '') && ($display_tech == 'True')) {
 		$portfolio_output .= '            <div class="portfolio_techdetails"><div class="key">' . $tech_label . '</div><div class="value">' . $technical_details . '</div></div>';
 	}
-$portfolio_output .= '<div><div class="key">Sort:</div><div class="value">' . $sortorder . '</div></div>'; //asterisk
 	$portfolio_output .= '            ' . wp_link_pages( array( 'before' => '<div class="page-link">' . __( 'Pages:', 'webphysiology_portfolio' ), 'after' => '</div>' ) );
 	if ($gridstyle != 'True') {
 		$portfolio_output .= '        </div>';
