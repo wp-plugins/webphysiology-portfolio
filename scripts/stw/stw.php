@@ -8,7 +8,13 @@
  *
  * adjusted by: Jeff Lambert, WEBphysiology.com
  * adjusted on: 2010-01-09
- *
+ * 
+ * updated by: Jeff Lambert, WEBphysiology.com
+ * updated on: 2010-01-21
+ * updated   : added the "&inside=1" parameter so that URLs can be deeper than the primary domain
+ *             this does require that the user purchase a higher level of ShrinkTheWeb subscription
+ *             beyond Free
+ * 
  * updated by: Jeff Lambert, WEBphysiology.com
  * updated on: 2010-01-11
  * updated   : added use of CURL when it is available to get the XML from ShrinkTheWeb.com
@@ -56,7 +62,6 @@ abstract class AppSTW {
 				}
 			}
 		}
-		
         if (file_exists($path)) {
             return plugin_dir_url(__FILE__) . substr(self::THUMBNAIL_DIR, 1) . $src;
 		}
@@ -119,22 +124,24 @@ abstract class AppSTW {
      */
     private static function queryRemoteThumbnail($url, $args = null, $debug = false) {
 		
+		$url_depth = strpos($url, ".", strlen($url) - 6);
+
         $args = is_array($args) ? $args : array();
         $defaults["stwaccesskeyid"] = get_option( 'webphysiology_portfolio_stw_ak' );
         $defaults["stwu"] = get_option( 'webphysiology_portfolio_stw_sk' );
-
-        foreach ($defaults as $k=>$v) {
+		if (empty($url_depth)) {
+			$defaults["inside"] = "1";
+		}
+		
+		foreach ($defaults as $k=>$v) {
             if (!isset($args[$k])) {
                 $args[$k] = $v;
 			}
 		}
-
+		
 		$args["stwurl"] = $url;
-		
         $request_url = "http://images.shrinktheweb.com/xino.php?".http_build_query($args);
-		
         $line = self::make_http_request($request_url);
-		
 		$check = strtolower($line);
 		
 		if ( strpos($check, 'fix_and_retry') > 0 || strpos($check, 'invalid credentials') > 0 ) {
