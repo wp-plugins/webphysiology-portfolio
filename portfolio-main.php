@@ -3,7 +3,7 @@
 Plugin Name: WEBphysiology Portfolio
 Plugin URI: http://webphysiology.com/redir/webphysiology-portfolio/
 Description: Provides a clean Portfolio listing with image, details and portfolio type taxonomy.  A [portfolio] shortcode is used to include the portfolio on any page.
-Version: 1.2.2
+Version: 1.2.3
 Author: Jeff Lambert
 Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 License: GPL2
@@ -27,6 +27,15 @@ License: GPL2
 
 /*  UPDATES
 
+	1.2.3 - * added code to trap for autosave and quick edit saves such that custom Portfolio save script does not execute and, in the case of the
+	          quick edit save, keep it from completing
+			* removed the "view" option within the Portfolio admin listing as there is no individual Portfolio view
+			* updated Portfolio Listing column labels to those set in the Portfolio options
+			* updated Portfolio Listing to hide Portfolio Types as QuickEdit does not utilize a select list
+			* removed the "preview" button from the Portfolio edit screen
+			* changed the ShrinkTheWeb secret key input to a type Password to mask the value
+			* added environment check to ensure the current host meets the minimum requirements of this plugin
+			* added a setting to allow clicks on links to open in a new tab (target="_blank")
 	1.2.2 - * removed the forcing of the sort field to be numeric and added an option to sort alphabetically (by turning off "sort numerically")
 	1.2.1 - * made some changes to the navigation control, nav_pages(), as it wasn't always accurately drawn
 	        * removed an errant character from a line of code
@@ -247,19 +256,16 @@ function portfolio_updated_messages( $messages ) {
 	
 	$messages['portfolio'] = array(
 		0 => '', // Unused. Messages start at index 1.
-		1 => sprintf( __('Portolios updated. <a href="%s">View portfolio</a>'), esc_url( get_permalink($post_ID) ) ),
+		1 => __('Portolios updated.'),
 		2 => __('Custom field updated.'),
 		3 => __('Custom field deleted.'),
 		4 => __('Portfolio updated.'),
-		/* translators: %s: date and time of the revision */
 		5 => isset($_GET['revision']) ? sprintf( __('Portfolio restored to revision from %s'), wp_post_revision_title( (int) $_GET['revision'], false ) ) : false,
-		6 => sprintf( __('Portfolio published. <a href="%s">View Portfolio</a>'), esc_url( get_permalink($post_ID) ) ),
+		6 => __('Portfolio published.'),
 		7 => __('Portfolio saved.'),
-		8 => sprintf( __('Portfolio submitted. <a target="_blank" href="%s">Preview portfolio</a>'), esc_url( add_query_arg( 'preview', 'true', get_permalink($post_ID) ) ) ),
-		9 => sprintf( __('Portfolio scheduled for: <strong>%1$s</strong>. <a target="_blank" href="%2$s">Preview portfolio</a>'),
-		  // translators: Publish box date format, see http://php.net/date
-		  date_i18n( __( 'M j, Y @ G:i' ), strtotime( $post->post_date ) ), esc_url( get_permalink($post_ID) ) ),
-		10 => sprintf( __('Portfolio draft updated. <a target="_blank" href="%s">Preview portfolio</a>'), esc_url( add_query_arg( 'preview', 'true', get_permalink($post_ID) ) ) ),
+		8 => __('Portfolio submitted.'),
+		9 => sprintf( __('Portfolio scheduled for: <strong>%1$s</strong>.'), date_i18n( __( 'M j, Y @ G:i' ), strtotime( $post->post_date ) ) ),
+		10 => __('Portfolio draft updated.'),
 	);
 	
 	return $messages;
@@ -297,14 +303,17 @@ function webphys_portfolio_edit_init() {
 	$tech = $detail_labels["Tech"];
 	$stwcomments = '';
 	$sortcomments = "";
-	
+	//inline-edit-tags
 	if ( strtolower( get_option('webphysiology_portfolio_use_stw')) == 'true' ) {
-		$stwcomments = '</span><br /><span class="attribute_instructions"><strong>note</strong>: entering an image path will override the use of ShrinkTheWeb.com. Reveiw "<a href="http://webphysiology.com/plugins/webphysiology-portfolio-plugin/#options" title="WEBphysiology Portfolio Documentation" target="_blank">Use ShrinkTheWeb.com</a>" option</span><br /><span class="attribute_instructions">documentation for more details.';
+		$stwcomments = '</span><br /><span class="attribute_instructions"><strong>note</strong>: entering an image path will override the use of ShrinkTheWeb.com. Review "<a href="http://webphysiology.com/plugins/webphysiology-portfolio-plugin/#options" title="WEBphysiology Portfolio Documentation" target="_blank">Use ShrinkTheWeb.com</a>" option</span><br /><span class="attribute_instructions">documentation for more details.';
 	}
 	if ( strtolower( get_option('webphysiology_portfolio_sort_numerically')) != 'true' ) {
 		$sortcomments = '<br /><span class="attribute_instructions"><strong>note</strong>: you are sorting alphanumerically</span>';
 	}
 	
+	// hide the Portfolio edit screen Preview button
+	echo "\n" . '<style type="text/css" id="webphysiology_portfolio_hide_preview_css">' . "\n" . '	#preview-action { display: none; } ' . "\n" . '</style>' . "\n";
+
 	echo '<p><label for="_portfolio_type">Select Portfolio Type (' . $type . '): </label> ';
 
     echo '<select name="_portfolio_type" id="_portfolio_type">';
@@ -332,8 +341,9 @@ function webphys_portfolio_edit_init() {
 	echo '<input id="upload_portfolio_image_button" type="button" value="Upload Image" /><br />';
 	echo '<input type="text" id="_imageurl" name="_imageurl" value="' . $imageurl . '" class="widefat shortbottom" /><br />';
 	echo '<span class="attribute_instructions">Enter the URL for the portfolio image. Clicking "Insert into Post" from &lt;Upload Image&gt; will paste the inserted image\'s URL.' . $stwcomments . '</span></p>';
-    echo '<p><label for="_sortorder">Enter site sort order: </label>';
-	echo '<input type="text" id="_sortorder" name="_sortorder" value="' . $sortorder . '" class="code" />' . $sortcomments . '</p>';
+    echo '<p><label for="_sortorder">Enter Site Sort Order: </label>';
+	echo '<input type="text" id="_sortorder" name="_sortorder" value="' . $sortorder . '" class="code" />';
+	echo '<input type="hidden" name="autosave_quickedit_check" value="true" />'. $sortcomments . '</p>';
 
 }
 
@@ -464,9 +474,10 @@ function portfolio_install() {
 	add_option("webphysiology_portfolio_missing_image_url", 'images/empty_window.png'); // This is the default value for the missing image url
 	add_option("webphysiology_portfolio_allowed_image_sites","flickr.com,picasa.com,blogger.com,wordpress.com,img.youtube.com"); // This is the default value for the allowed image sites
 	add_option("webphysiology_portfolio_use_stw", 'False'); // This is the default value for whether to display images using ShrinkTheWeb.com
-	add_option("webphysiology_portfolio_stw_ak", "not set"); // This is the default value for the ShrinkTheWeb.com Access Key
-	add_option("webphysiology_portfolio_stw_sk", "not set"); // This is the default value for the ShrinkTheWeb.com Security Key
-	add_option("webphysiology_portfolio_image_click_behavior", 'litebox'); // This is the default value for whether to display the image in a lite box or navigate to the associated site
+	add_option("webphysiology_portfolio_stw_ak", ""); // This is the default value for the ShrinkTheWeb.com Access Key
+	add_option("webphysiology_portfolio_stw_sk", ""); // This is the default value for the ShrinkTheWeb.com Security Key
+	add_option("webphysiology_portfolio_image_click_behavior", 'litebox'); // This is the default value for whether to display the image in a thickbox or navigate to the associated site
+	add_option("webphysiology_portfolio_anchor_click_behavior", 'False'); // This is the default value for whether to open links in a new window
 	add_option("webphysiology_portfolio_label_width", "60"); // This is the default value for the label width
 	add_option("webphysiology_portfolio_display_labels", array("Type" => "Type", "Created" => "Created", "Client" => "For", "SiteURL" => "Site", "Tech" => "Tech")); // This is the default values for the field labels on the site UI
 	add_option("webphysiology_portfolio_items_per_page", '3'); // This is the default value for the number of portfolio items to display per page
@@ -495,6 +506,11 @@ if (!is_admin()) {
 }
 
 If (is_admin()) {
+	// added in v1.2.3
+	$return = get_option('webphysiology_portfolio_anchor_click_behavior');
+	if ( empty($return) ) {
+		add_option("webphysiology_portfolio_anchor_click_behavior", 'False'); // This is the default value for whether to open links in a new tab
+	}
 	// added in v1.2.2
 	$return = get_option('webphysiology_portfolio_sort_numerically');
 	if ( empty($return) ) {
@@ -508,11 +524,11 @@ If (is_admin()) {
 	}
 	$return = get_option('webphysiology_portfolio_stw_ak');
 	if ( empty($return) ) {
-		add_option("webphysiology_portfolio_stw_ak", "not set"); // This is the default value for the ShrinkTheWeb.com Access Key
+		add_option("webphysiology_portfolio_stw_ak", ""); // This is the default value for the ShrinkTheWeb.com Access Key
 	}
 	$return = get_option('webphysiology_portfolio_stw_sk');
 	if ( empty($return) ) {
-		add_option("webphysiology_portfolio_stw_sk", "not set"); // This is the default value for the ShrinkTheWeb.com Security Key
+		add_option("webphysiology_portfolio_stw_sk", ""); // This is the default value for the ShrinkTheWeb.com Security Key
 	}
 	// added in v1.1.5
 	$return = get_option('webphysiology_portfolio_allowed_image_sites');
@@ -563,7 +579,7 @@ If (is_admin()) {
 	}
 	$return = get_option('webphysiology_portfolio_image_click_behavior');
 	if ( empty($return) ) {
-		add_option("webphysiology_portfolio_image_click_behavior", 'litebox'); // This is the default value for whether to display the image in a lite box or navigate to the associated site
+		add_option("webphysiology_portfolio_image_click_behavior", 'litebox'); // This is the default value for whether to display the image in a thickbox or navigate to the associated site
 	}
 	// added in v1.0.0
 	$return = get_option('webphysiology_portfolio_display_credit');
@@ -605,6 +621,7 @@ function portfolio_remove() {
 		delete_option('webphysiology_portfolio_stw_ak');
 		delete_option('webphysiology_portfolio_stw_sk');
 		delete_option('webphysiology_portfolio_image_click_behavior');
+		delete_option('webphysiology_portfolio_anchor_click_behavior');
 		delete_option('webphysiology_portfolio_label_width');
 		delete_option('webphysiology_portfolio_display_labels');
 		delete_option('webphysiology_portfolio_items_per_page');
@@ -677,6 +694,11 @@ register_deactivation_hook( __FILE__, 'portfolio_remove' );
 // Define the Save Metabox Data routine
 function save_portfolio_meta($post_id, $post) {
 	
+	// if the save was initiated by an autosave or a quick edit, exit out as the Portfolio fields being updated here may get over written or hang the save
+	if (!isset($_POST['autosave_quickedit_check'])) {
+		return $post->ID;
+	}
+	
 	// verify this call is the result of a POST
 	if ( empty($_POST) ) {
 		return $post->ID;
@@ -696,7 +718,7 @@ function save_portfolio_meta($post_id, $post) {
 	if ( !current_user_can( 'edit_post', $post->ID )) {
 		return $post->ID;
 	}
- 
+	
 	// OK, we're authenticated: we need to find and save the data
 	// We'll put it into an array to make it easier to loop though.
  	
@@ -732,8 +754,10 @@ function save_portfolio_meta($post_id, $post) {
 add_action('save_post', 'save_portfolio_meta', 1, 2); // save the custom fields
 	
 // remove the Porfolio Type tag sidebar widget from the Portfolio edit screen as the Portfolio Type dropdown manages this
+// also remove author dropdown list as this really doesn't apply to Portfolios
 function remove_post_custom_fields() {
 	remove_meta_box( 'tagsdiv-portfolio_type' , 'Portfolio' , 'side' );
+	remove_meta_box( 'authordiv' , 'Portfolio' , 'content' );
 }
 if (is_admin()) {
 	add_action( 'admin_menu' , 'remove_post_custom_fields' );
@@ -751,13 +775,40 @@ if (is_admin()) {
 /* Register the Portfolio columns to display in the Portfolio Admin listing */
 function add_new_portfolio_columns($columns) {
 	
+	// hide the Portfolio edit screen Preview button
+	echo "\n" . '<style type="text/css" id="webphysiology_portfolio_hide_preview_css">' . "\n" . '	.row-actions { width: 120%; } ' . "\n" . '	label.inline-edit-tags { display: none !important; } ' . "\n" . '</style>' . "\n";
+	$detail_labels = get_option( 'webphysiology_portfolio_display_labels' );
+	$type = $detail_labels["Type"];
+	$createdate = $detail_labels["Created"];
+	$clientname = $detail_labels["Client"];
+	$siteURL = $detail_labels["SiteURL"];
+	$tech = $detail_labels["Tech"];
+	
+	if (empty($type)) {
+		$type = 'Type';
+	}
+	if (empty($createdate)) {
+		$createdate = 'Create Date';
+	}
+	if (empty($clientname)) {
+		$clientname = 'Client';
+	}
+	if (empty($siteURL)) {
+		$siteURL = 'Website URL';
+	}
+	if (empty($tech)) {
+		$tech = 'Technical Details';
+	}
+	
+	// perhaps update column names (e.g., _clientname) to make them more unique (e.g., _webphys_clientname)
+	
 	// note: columns in the listing are ordered in line with where they are created below
 	$new_columns['title'] = _x('Portfolio Name', 'column name');
-	$new_columns['_createdate'] = _x( 'Create Date', 'column name' );
-	$new_columns['_clientname'] = _x( 'Client', 'column name' );
-	$new_columns['_technical_details'] = _x( 'Technical Details', 'column name' );
-	$new_columns['_siteurl'] = _x( 'Website URL', 'column name' );
-	$new_columns['_portfolio_type'] = _x( 'Type', 'column name' );
+	$new_columns['_createdate'] = _x( $createdate, 'column name' );
+	$new_columns['_clientname'] = _x( $clientname, 'column name' );
+	$new_columns['_technical_details'] = _x( $tech, 'column name' );
+	$new_columns['_siteurl'] = _x( $siteURL, 'column name' );
+	$new_columns['_portfolio_type'] = _x( $type, 'column name' );
 	$new_columns['_sortorder'] = _x( 'Sort Order', 'column name' );
 	$new_columns['date'] = _x('Create Date', 'column name');
 	$new_columns['id'] = __('ID');
@@ -808,9 +859,22 @@ function manage_portfolio_columns($column_name, $id) {
 	} // end switch
 }
 
+//removes quick edit from portfolio list
+function remove_quick_edit( $actions ) {
+	global $post;
+    if( $post->post_type == 'Portfolio' ) {
+//		unset($actions['inline hide-if-no-js']);
+		unset($actions['view']);
+	}
+	
+    return $actions;
+	
+}
+
 if (is_admin()) {
 	add_filter('manage_edit-Portfolio_columns', 'add_new_portfolio_columns');
 	add_action('manage_posts_custom_column', 'manage_portfolio_columns', 10, 2);
+	add_filter('post_row_actions','remove_quick_edit',10,2);
 }
 
 //*************************************************//
@@ -861,9 +925,14 @@ if ( is_admin() ) {
 	add_action('admin_menu', 'portolio_admin_menu');
 }
 
-
 // define the Portfolio Plugin settings admin page
 function portfolio_plugin_page() {
+	
+    //must check that the user has the required capability 
+    if (!current_user_can('manage_options'))
+    {
+		wp_die( __('Your user account does not have sufficient privileges to manage Portfolio options.') );
+    }
 	
 	echo '<div class="wrap portfolio-admin">';
     echo '	<div class="company_logo">';
@@ -874,12 +943,6 @@ function portfolio_plugin_page() {
     echo '        <div class="metabox-holder">';
     echo '            <div class="meta-box-sortables">';
 
-    //must check that the user has the required capability 
-    if (!current_user_can('manage_options'))
-    {
-      wp_die( __('You do not have sufficient permissions to access this page.') );
-    }
-	
     // variables for the field and option names
 	$hidden_field_name = 'webphys_submit_hidden';
 	$display_portfolio_title = 'webphysiology_portfolio_display_portfolio_title'; // default true
@@ -892,9 +955,10 @@ function portfolio_plugin_page() {
 	$missing_img_url = 'webphysiology_portfolio_missing_image_url'; // default images/empty_window.png
 	$allowed_sites = 'webphysiology_portfolio_allowed_image_sites'; // default flickr.com,picasa.com,blogger.com,wordpress.com,img.youtube.com
 	$use_stw = 'webphysiology_portfolio_use_stw'; // default false
-	$stw_ak = 'webphysiology_portfolio_stw_ak'; // default "not set"
-	$stw_sk = 'webphysiology_portfolio_stw_sk'; // default "not set"
+	$stw_ak = 'webphysiology_portfolio_stw_ak'; // default ""
+	$stw_sk = 'webphysiology_portfolio_stw_sk'; // default ""
 	$img_click_behavior = 'webphysiology_portfolio_image_click_behavior'; // default litebox
+	$target = 'webphysiology_portfolio_anchor_click_behavior'; // default False
 	$check_openlitebox = '';
 	$check_nav2page = '';
 	$label_width = 'webphysiology_portfolio_label_width'; // default 60
@@ -960,7 +1024,12 @@ function portfolio_plugin_page() {
 				$opt_val_img_click_behavior = $_POST[ $img_click_behavior ];
 			} else {
 				$opt_val_img_click_behavior = 'litebox';
-			}			
+			}
+			if ( !empty($_POST[ $target ]) ) {
+				$opt_val_target = $_POST[ $target ];
+			} else {
+				$opt_val_target = "False";
+			}
 			$opt_val_label_width = $_POST[ $label_width ];
 			$opt_val_display_labels["Type"] = $_POST[ $display_labels . '_Type' ];
 			$opt_val_display_labels["Created"] = $_POST[ $display_labels . '_Created' ];
@@ -1031,7 +1100,7 @@ function portfolio_plugin_page() {
 			} elseif ($opt_val_overall_width < 250) {
 				$validated = false;
 				$validation_msg = __('settings NOT saved - overall width cannot be narrower than 250 pixels.', 'Portfolio' );
-			} elseif ( ($opt_val_use_stw == "True") && ( (empty($opt_val_stw_ak)) || ($opt_val_stw_ak == "not set") || (empty($opt_val_stw_sk)) || ($opt_val_stw_sk == "not set") )) {
+			} elseif ( ($opt_val_use_stw == "True") && ( (empty($opt_val_stw_ak)) || (empty($opt_val_stw_sk)) ) ) {
 				$validated = false;
 				$validation_msg = __('settings NOT saved - ShrinkTheWeb.com settings are incomplete.', 'Portfolio' );
 			} elseif ( !check_admin_referer('portfolio_config', 'portolio-nonce') ) {
@@ -1075,8 +1144,8 @@ function portfolio_plugin_page() {
 			$opt_val_missing_img_url = "images/empty_window.png";
 			$opt_val_allowed_sites = "flickr.com,picasa.com,blogger.com,wordpress.com,img.youtube.com";
 			$opt_val_use_stw = "False";
-			$opt_val_stw_ak = "not set";
-			$opt_val_stw_sk = "not set";
+			$opt_val_stw_ak = "";
+			$opt_val_stw_sk = "";
 			$opt_val_img_click_behavior = "litebox";
 			$opt_val_label_width = "60";
 			$opt_val_display_labels = array("Type" => "Type", "Created" => "Created", "Client" => "For", "SiteURL" => "Site", "Tech" => "Tech");
@@ -1116,6 +1185,7 @@ function portfolio_plugin_page() {
 			update_option( $stw_ak, $opt_val_stw_ak );
 			update_option( $stw_sk, $opt_val_stw_sk );
 			update_option( $img_click_behavior, $opt_val_img_click_behavior );
+			update_option( $target, $opt_val_target );
 			update_option( $label_width, $opt_val_label_width );
 			update_option( $display_labels, $opt_val_display_labels );
 			update_option( $items_per_page, $opt_val_items_per_page );
@@ -1154,6 +1224,7 @@ function portfolio_plugin_page() {
 		$opt_val_stw_ak = get_option( $stw_ak );
 		$opt_val_stw_sk = get_option( $stw_sk );
 		$opt_val_img_click_behavior = get_option( $img_click_behavior );
+		$opt_val_target = get_option( $target );
 		$opt_val_label_width = get_option( $label_width );
 		$opt_val_display_labels = get_option( $display_labels );
 		$opt_val_items_per_page = get_option( $items_per_page );
@@ -1182,6 +1253,7 @@ function portfolio_plugin_page() {
 	if ($opt_val_display_tech=="True" ) {$opt_val_display_tech="checked";}
 	if ($opt_val_use_stw=="True" ) {$opt_val_use_stw="checked";} else {$opt_val_use_stw="";}
 	if ($opt_val_img_click_behavior == "litebox") { $check_openlitebox = 'checked'; } else { $check_nav2page = 'checked'; }
+	if ($opt_val_target=="True" ) {$opt_val_target="checked";}
 	if ($opt_val_sort_numerically=="True" ) {$opt_val_sort_numerically="checked";}
 	if ($opt_val_css=="True" ) {$opt_val_css="checked";}
 	if ($opt_val_display_credit=="True" ) {$opt_val_display_credit="checked";}
@@ -1254,9 +1326,10 @@ function portfolio_plugin_page() {
 	echo '						<label for="' . $allowed_sites . '">Allowed image sites:</label><input type="text" id="' . $allowed_sites . '" name="' . $allowed_sites . '" value="' . $opt_val_allowed_sites . '" class="half_input shortbottom" /><br /><span class="attribute_instructions">note: add allowed domain separated with commas (e.g., flickr.com,picasa.com,blogger.com,wordpress.com,img.youtube.com)</span><br class="tallbottom" />' . "\n";
 	echo '								<input type="checkbox" id="' . $use_stw . '" name="' . $use_stw . '" value="True" ' . $opt_val_use_stw . ' /><label for="' . $use_stw . '" class="half_input shortbottom">Use ShrinkTheWeb.com</label>&nbsp;&nbsp;&nbsp;' . "\n";
 	echo '							<label for="' . $stw_ak . '">Access key:</label><input type="text" id="' . $stw_ak . '" name="' . $stw_ak . '" value="' . $opt_val_stw_ak . '" />&nbsp;&nbsp;&nbsp;' . "\n";
-	echo '							<label for="' . $stw_sk . '">Secret key:</label><input type="text" id="' . $stw_sk . '" name="' . $stw_sk . '" value="' . $opt_val_stw_sk . '" /><br />' . "\n";
+	echo '							<label for="' . $stw_sk . '">Secret key:</label><input type="password" id="' . $stw_sk . '" name="' . $stw_sk . '" value="' . $opt_val_stw_sk . '" /><br />' . "\n";
 	echo '						<span class="attribute_instructions">Get your own <a href="http://www.shrinktheweb.com">Website Preview from ShrinkTheWeb</a></span><br class="tallbottom"/>' . "\n";
-	echo '						<label for="' . $img_click_behavior . '">Image click behavior: </label><input type="radio" name="' . $img_click_behavior . '" value="litebox" ' .  $check_openlitebox . ' /> Open fullsize image in a lite box&nbsp;&nbsp;<input type="radio" name="' . $img_click_behavior . '" value="nav2page" ' . $check_nav2page . ' /> Navigate to the portfolio web page URL<br/>' . "\n";
+	echo '						<label for="' . $img_click_behavior . '">Image click behavior: </label><input type="radio" name="' . $img_click_behavior . '" value="litebox" ' .  $check_openlitebox . ' /> Open fullsize image in a thickbox&nbsp;&nbsp;<input type="radio" name="' . $img_click_behavior . '" value="nav2page" ' . $check_nav2page . ' /> Navigate to the portfolio web page URL<br/>' . "\n";
+	echo '								<input type="checkbox" id="' . $target . '" name="' . $target . '" value="True" ' . $opt_val_target . '/><label for="' . $target . '">Open links in a new tab (target="_blank")</label><br/>' . "\n";
 	echo '						<label for="' . $items_per_page . '">Portfolio items per page:</label><input type="text" id="' . $items_per_page . '" name="' . $items_per_page . '" value="' . $opt_val_items_per_page . '" class="webphysiology_portfolio_small_input" /><br />' . "\n";
 	echo '						<input type="checkbox" id="' . $sort_numerically . '" name="' . $sort_numerically . '" value="True" ' . $opt_val_sort_numerically . '/><label for="' . $sort_numerically . '">Sort numerically</label><br/>' . "\n";
 	echo '						<input type="checkbox" id="' . $display_credit . '" name="' . $display_credit . '" value="True" ' . $opt_val_display_credit . '/><label for="' . $display_credit . '">Display WEBphysiology credit and/or a donation would be nice (though neither is required).</label>' . "\n";
@@ -1358,13 +1431,20 @@ function get_Loop_Site_Image() {
 	$anchor_close = '';
 	$class = '';
 	$img_click_behavior = get_option( 'webphysiology_portfolio_image_click_behavior' );
+	$target = get_option( 'webphysiology_portfolio_anchor_click_behavior' );
     $full_size_img_url = get_post_meta(get_the_ID(), "_imageurl", true);
 	$img_url = str_replace(content_url(), "", $full_size_img_url);
     $site_url = get_post_meta(get_the_ID(), "_siteurl", true);
 	
 	$opt_val_img_width = get_option( 'webphysiology_portfolio_image_width' );
 	
-	if ( empty($opt_val_img_width) ) {$opt_val_img_width = '150';}
+	if ( empty($opt_val_img_width) ) { $opt_val_img_width = '150'; }
+	
+	if ( empty($target) || ($target == "False") ) {
+		$target = '';
+	} else {
+		$target = ' target="_blank"';
+	}
 	
 	// If using ShrinkTheWeb, no image URL is specified and a site URL is assigned
 	if ( empty($img_url) && (strtolower(get_option( 'webphysiology_portfolio_use_stw' )) == "true") && !empty($site_url) ) {
@@ -1381,7 +1461,9 @@ function get_Loop_Site_Image() {
 		// if the image url was cleaned and not cleared, check that it really exists
 		if ( ($img_url != $full_size_img_url) && ( !empty($img_url)) ) {
 			if (!file_exists(dirname ( __FILE__ ) . '/' . $img_url)) {
-				$full_size_img_url = "";
+				if (!file_exists($img_url)) {
+					$full_size_img_url = "";
+				}
 			}
 		}
 	}
@@ -1394,14 +1476,14 @@ function get_Loop_Site_Image() {
 	}
 	
 	if (($img_click_behavior == 'litebox') && ($full_size_img_url != '')) {
-		$anchor_open = '<a href="' . $full_size_img_url . '" title="' . the_title_attribute( 'echo=0' ) . '" class="Portfolio-Link thickbox">';
+		$anchor_open = '<a href="' . $full_size_img_url . '" title="' . the_title_attribute( 'echo=0' ) . '" class="Portfolio-Link thickbox"' . $target . '>';
 		$anchor_close = '</a>';
 	} elseif (($img_click_behavior == 'nav2page') && ($site_url != '')) {
-		$anchor_open = '<a href="' . $site_url . '" title="' . the_title_attribute( 'echo=0' ) . '" class="Portfolio-Link">';
+		$anchor_open = '<a href="' . $site_url . '" title="' . the_title_attribute( 'echo=0' ) . '" class="Portfolio-Link"' . $target . '>';
 		$anchor_close = '</a>';
 	}
-	
-	$path = $anchor_open . '<img src="' . plugin_dir_url(__FILE__) . 'scripts/thumb/timthumb.php?src=' . $img_url . '&w=' . $opt_val_img_width . '&zc=1" alt="' . the_title_attribute('echo=0') . '"' . $class . ' />' . $anchor_close;
+	$html = esc_attr(plugin_dir_url(__FILE__) . 'scripts/thumb/timthumb.php?src=' . $img_url . '&w=' . $opt_val_img_width . '&zc=1');
+	$path = $anchor_open . '<img src="' . $html . '" alt="' . the_title_attribute('echo=0') . '"' . $class . ' />' . $anchor_close;
 	
 	return $path;
 }
@@ -1650,7 +1732,7 @@ function nav_pages($qryloop, $pageurl, $class) {
 			$nav .= '<li><a href="' . $paged . ($start + $for) . '">&gt;</a></li>';
 		} elseif ($after == 2) {
 			$nav .= '<li><a href="' . $paged . ($start + $for) . '">&gt;</a></li>';
-			$nav .= '<li><a href="' . $paged . $pages . '">&raquo</a></li>';
+			$nav .= '<li><a href="' . $paged . $pages . '">&raquo;</a></li>';
 		}
 		$nav .= '</ul>';
 		
@@ -1711,7 +1793,8 @@ function clean_source ($src) {
 	$orig_src = "";
 	
 	// if the image file is on the current server, grab the path as we'll be setting it back to this if all is good
-	if (strpos($src,$_SERVER['HTTP_HOST']) > 0) {
+
+	if (strpos(strtoupper($src),strtoupper($_SERVER['HTTP_HOST'])) > 0) {
 		$orig_src = $src;
 	}
 	
@@ -1920,4 +2003,54 @@ function display_error ($errorString = '') {
 
 }
 
+
+
+// check that the current environment supports the WEBphysiology Portfolio plugin
+
+function portfolio_requirements_message() {
+	
+    global $wpdb;
+	
+	if (empty($portfolio_rqmts_checked)) {
+		
+		if (empty($top_message_head) && empty($message) && empty($message_head)) {
+			
+			$is_php_valid = version_compare(phpversion(), '5.0.0', '>');
+			$is_mysql_valid = version_compare($wpdb->db_version(), '5.0.0', '>');
+			$is_wp_valid = version_compare(get_bloginfo("version"), '3.0.0', '>');
+			$meets_requirements = ($is_php_valid && $is_mysql_valid && $is_wp_valid);
+			$class = $meets_requirements ? "update-message" : "error";
+		
+			if ( !$meets_requirements ) {
+	
+				$top_message_head = "<div class='error' style='margin:5px; padding:3px; text-align:left; width:93%; margin-bottom: 15px;'>";
+		
+				$message = "Your host setup is not compatible with WEBphysiology Portfolio. The following items must be upgraded:<br/> ";
+		
+				if(!$is_php_valid){
+					$message .= " - <strong>PHP</strong> (Current version: " .  phpversion() . ", Required: 5.0)<br/> ";
+				}
+		
+				if(!$is_mysql_valid){
+					$message .= " - <strong>MySql</strong> (Current version: " .  $wpdb->db_version() . ", Required: 5.0)<br/> ";
+				}
+		
+				if(!$is_wp_valid){
+					$message .= " - <strong>Wordpress</strong> (Current version: " .  get_bloginfo("version") . ", Required: 3.0)<br/> ";
+				}
+		
+				$message .= "</div>";
+				
+				echo $top_message_head . $message;
+			}
+		}
+	}
+
+}
+
+define("RG_CURRENT_PAGE", basename($_SERVER['PHP_SELF']));
+
+if ( RG_CURRENT_PAGE == "plugins.php" ) {
+    add_action('after_plugin_row_webphysiology-portfolio/portfolio-main.php', 'portfolio_requirements_message');
+}
 ?>

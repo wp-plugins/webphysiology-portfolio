@@ -4,7 +4,7 @@ Donate link: http://webphysiology.com/redir/webphysiology-portfolio/donate/
 Tags: portfolio,gallery,list,grid,posts,post,custom post type,custom taxonomy,shrinktheweb,shrink the web,webphysiology
 Requires at least: 3.0.0
 Tested up to: 3.0.4
-Stable tag: 1.2.2
+Stable tag: 1.2.3
 
 Allows for the creation of an expanded-list styled or a grid-style page containing images and supporting detail, perfect for a portfolio presentation.
 
@@ -54,6 +54,10 @@ This happens on occasion.  Running the install a second time typically results i
 
 The styling behavior of the WEBphysiology Portfolio can vary from theme to theme.  The reason for this is that the theme's styling can trump the Portfolio's styling depending upon where the styling of one or the other falls within the styling hierarchy.  If this is happening you'll have to adjust your theme's styling to allow for the portfolio's styling to work.
 
+= When I close the image pop-up thickbox I still see an animated loading image. =
+
+There is a conflict when running WEBphysiology Portfolio and the eCommerce plugin.  This does not appear to be a fault of the WEBphysiology Portfolio plugin as no errors are returned for this plugin but quite a number of errors are being thrown by the eCommerce plugin.  If the image click option does not open the image, but instead navigates to the site URL, then this anomaly will not occur.
+
 == Screenshots ==
 
 1. Portfolio Page Frontend User Interface
@@ -67,6 +71,19 @@ The styling behavior of the WEBphysiology Portfolio can vary from theme to theme
 
 == Changelog ==
 
+= 1.2.3 =
+* Support for deeper page screenshot generation added for ShrinkTheWeb.com. This does require more than the basic subscription with them.
+* Cleaned up some CSS validation errors
+* Updated some PHP logic to utilize !empty v. !$x==''
+* Updated post-id ID references to handle multiple [shortcodes] on one page as they were not necessarily unique in this instance
+* Added an option that allows an admin to set the links to open in a new tab/window
+* Added code to trap for autosave and quick edit saves such that the custom Portfolio save script does not execute and, in the case of the quick edit save, keep it from completing
+* Removed the "preview" button from the Portfolio edit screen as there is no individual Portfolio view
+* Removed the "view" option within the Portfolio admin listing as there is no individual Portfolio view
+* Updated the Portfolio Listing column labels to use those set in the Portfolio options
+* Updated Portfolio Listing to hide Portfolio Types as QuickEdit does not utilize a select list, which is problematic
+* Changed the ShrinkTheWeb secret key input type to mask the value
+* Added an environment check to ensure that the current host and WordPress version meets the minimum requirements of the WEBphysiology Portfolio plugin
 = 1.2.2 =
 * Removed the forcing of the sort field to be numeric and added an option to sort alphabetically (by turning off "sort numerically").
 = 1.2.1 =
