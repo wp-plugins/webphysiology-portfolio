@@ -10,6 +10,12 @@
  * adjusted on: 2010-01-09
  * 
  * updated by: Jeff Lambert, WEBphysiology.com
+ * updated on: 2010-02-23
+ * updated   : enhanced code that determines if the URL passed in is an inside page or not and updated
+ *             the inside page URL argument from "inside" to "stwinside" as thie former was an outdated
+ *             ShrinkTheWeb Pro argument
+ * 
+ * updated by: Jeff Lambert, WEBphysiology.com
  * updated on: 2010-01-21
  * updated   : added the "&inside=1" parameter so that URLs can be deeper than the primary domain
  *             this does require that the user purchase a higher level of ShrinkTheWeb subscription
@@ -111,6 +117,27 @@ abstract class AppSTW {
 		
     }
 	
+	//  function to determine if URL is an inside page or the primary domain page
+	private static function inside_url($url) {
+		
+		$inside = false;
+		$url = strtolower($url); // knock everything down to lowercase if it isn't
+		$domtld = parse_url($url); //  break URL into components                                                                             
+		$domtld = $domtld['host']; //  assign only the host portion
+		$domtld = str_ireplace( "www.", "", $domtld ); //  strip off www for consistency
+		if ( strpos($url,"http") !== FALSE ) { //  if it's not an IP address
+			$basedom = $domtld;
+		} else { //  support IP addresses as referrer
+			$basedom = $url;
+		}
+		$outside = strpos($url,$basedom) + strlen($basedom) + 2; // extend by 2 to cover for ending / and possilby /#
+		$remaining = substr($url, $outside);
+		$inside = ( ! empty($remaining) );
+		
+		return $inside;
+		
+	}
+	
     /**
      * Calls through the API and processes the results based on the
      * original sample code from STW.
@@ -124,14 +151,16 @@ abstract class AppSTW {
      */
     private static function queryRemoteThumbnail($url, $args = null, $debug = false) {
 		
-		$url_depth = strpos($url, ".", strlen($url) - 6);
-
+		$inside_page = self::inside_url($url);
+		
         $args = is_array($args) ? $args : array();
         $defaults["stwaccesskeyid"] = get_option( 'webphysiology_portfolio_stw_ak' );
         $defaults["stwu"] = get_option( 'webphysiology_portfolio_stw_sk' );
-		if (empty($url_depth)) {
-			$defaults["inside"] = "1";
+		if ( $inside_page ) {
+			$defaults["stwinside"] = "1";
 		}
+//		$defaults["stwq"] = "100";
+//		$defaults["stwredo"] = "1";
 		
 		foreach ($defaults as $k=>$v) {
             if (!isset($args[$k])) {
@@ -140,6 +169,7 @@ abstract class AppSTW {
 		}
 		
 		$args["stwurl"] = $url;
+		
         $request_url = "http://images.shrinktheweb.com/xino.php?".http_build_query($args);
         $line = self::make_http_request($request_url);
 		$check = strtolower($line);
