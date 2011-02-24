@@ -182,3 +182,6 @@
 	font-size: 0.95em;
 	text-decoration: none;
 }
+#bonzai .webphysiology_portfolio .odd {
+	background-color: #aaa !important;
+}
