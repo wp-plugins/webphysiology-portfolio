@@ -3,8 +3,8 @@ Contributors: lambje
 Donate link: http://webphysiology.com/redir/webphysiology-portfolio/donate/
 Tags: portfolio,gallery,list,grid,posts,post,custom post type,custom taxonomy,shrinktheweb,shrink the web,webphysiology
 Requires at least: 3.0.0
-Tested up to: 3.0.5
-Stable tag: 1.2.3
+Tested up to: 3.1.0
+Stable tag: 1.2.4
 
 Allows for the creation of an expanded-list styled or a grid-style page containing images and supporting detail, perfect for a portfolio presentation.
 
@@ -14,7 +14,7 @@ The WEBphysiology Portfolio plugin was built to provide a clean, current look in
 
 The plugin utilizes a Custom Post Type as well as a Custom Taxonomy. It provides a Settings page for specifying some customizable options, like the number of entries to display per page. It also allows one to turn off the provided CSS in place of implementing their own.
 
-The Portfolio entry screen is highly customized to include just the items that make up a Portfolio entry. Attributes that aren’t populated will not be displayed on the end user interface. Attaching an image to a Portfolio entry also has been made relatively painless.  With the release of version 1.2.0, the ability to utilize ShrinkTheWeb.com has been added.
+The Portfolio entry screen is highly customized to include just the items that make up a Portfolio entry. Attributes that aren‚Äôt populated will not be displayed on the end user interface. Attaching an image to a Portfolio entry also has been made relatively painless.  With the release of version 1.2.0, the ability to utilize ShrinkTheWeb.com has been added.
 
 The end user interface can be adjusted using the Portfolio (Admin) Settings values or via your own CSS. It also incorporates the TimThumb.php code in order to scale the images displayed in the portfolio. The benefit here is to decrease the page weight while maintaining an acceptable quality image, plus the fact that you only need to load one image for use in the portfolio thumbnail and expanded view.  Managing how things work within the end user interface is very customizable. Images can come from a saved image or from ShrinkTheWeb.com, clicking an image can open it up in a thickbox or it can take you to the supplied website URL....
 
@@ -26,7 +26,7 @@ This section describes how to install the plugin and get it working.
 2. Activate the plugin through the 'Plugins' menu in WordPress
 3. Add the necessary Portfolio Types via it's menu under the Portfolio section
 4. Add one or more Portfolios
-5. Place the [portfolio] shortcode into the content area of your "portfolio" page
+5. Place the [webphysiology_portfolio] shortcode into the content area of your "portfolio" page
 
 == Frequently Asked Questions ==
 
@@ -71,6 +71,18 @@ There is a conflict when running WEBphysiology Portfolio and the eCommerce plugi
 
 == Changelog ==
 
+= 1.2.4 =
+* added shortcode parameter "id" that allows for the ability to encapsulate a portfolio within a <div> of a specified id
+* added shortcode parameter "per_page" that allows for the ability to override the options setting specifying the number of portfolios to display per page
+* added shortcode parameter "thickbox" that allows for the ability to override the options setting specifying the image click behavior 
+* added shortcode parameter "credit" that allows for the ability to override the options setting specifying whether to display the plugin credit
+* found that some of the shortcode variables were not being cleared when a shortcode was used more than once on a given page - fixed
+* added support for thickbox pop-ups to display Youtube and Vimeo videos along with pulling back the thumbnail associated with them
+* fixed fancybox CSS file as the IE fixes had incorrect paths, which resulted in issues in IE and slowness in a site utilizing the jQuery plugin
+* moved plugin Options up within the Portfolio menu block and also moved the "Settings" link on the plugins page from the description area to under the plugin title
+* updated the custom post type from "Portfolio" to "webphys_portfolio" because v3.1 doesn't like caps and also to avoid contention with other plugins
+* started transition of shortcode from [portfolio] to [webphysiology_portfolio]
+* added important release notes to the Portfolio Options page
 = 1.2.3 =
 * Support for deeper page screenshot generation added for ShrinkTheWeb.com. This does require more than the basic subscription with them.
 * Cleaned up some CSS validation errors
@@ -129,8 +141,10 @@ There is a conflict when running WEBphysiology Portfolio and the eCommerce plugi
 
 == Support ==
 
-NOTE: If you get a "File Not Found" during installation from the WordPress site, simply run the installation again.
+NOTE: The [portfolio] shortcode will be replaced with [webphysiology_portfolio] in a later release.  [webphysiology_portfolio] is available with release 1.2.4
 
 NOTE: CSS DEPRECATION ALERT: The "portfolios" element ID will be deprecated in a later release.  CSS for the Class "webphysiology_portfolio" has been added in version 1.2.0 to replace the ID CSS.
+
+NOTE: If you get a "File Not Found" during installation from the WordPress site, simply run the installation again.
 
 I will do my best to correct any reported defects as soon as I can make time, but please understand that this is side work. That said, I also use this plugin and am keen to ensure it provides the intended functionality. As to requests for enhancements, feel free to make these. I'll do my best to respond to your requests and, for those requests that I feel would benefit the majority of users, I'll get them on the enhancement list. I can't say just how quickly these would be implemented but funding the request would definitely move it up in the queue.

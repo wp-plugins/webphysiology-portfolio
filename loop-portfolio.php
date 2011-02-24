@@ -9,6 +9,9 @@
 
 /*  UPDATES
 
+	1.2.4 - exchanged per page code that was grabbing the per page option to using the global var for the per page portfolio count defined in portfolio-main.php
+	      - updated the custom post type from "Portfolio" to "webphys_portfolio" because v3.1 doesn't like caps and also to avoid contention with other plugins
+		  - updated code to utilize the new $display_the_credit global variable that is now set by the "credit" shortcode parameter
 	1.2.3 - did a little CSS validation fixing where there were some extra quotes that didn't belong
 	      - updated some (!$x == '') logic to (!empty($x)) syntax and other similar updates
 		  - updated post-id ID references to handle multiple [shortcodes] on one page as they were not necessarily unique in this instance
@@ -31,8 +34,10 @@ global $loop;
 global $wp_query;
 global $portfolio_types;
 global $portfolio_output;
+global $num_per_page;
 global $currpageurl;
 global $port;
+global $display_the_credit;
 
 $display_portfolio_title = get_option( 'webphysiology_portfolio_display_portfolio_title' );
 $display_portfolio_desc = get_option( 'webphysiology_portfolio_display_portfolio_desc' );
@@ -42,8 +47,6 @@ $display_clientname = get_option( 'webphysiology_portfolio_display_clientname' )
 $display_siteurl = get_option( 'webphysiology_portfolio_display_siteurl' );
 $display_tech = get_option( 'webphysiology_portfolio_display_tech' );
 $detail_labels = get_option( 'webphysiology_portfolio_display_labels' );
-$portfolios_per_page = get_option( 'webphysiology_portfolio_items_per_page' );
-$display_credit = get_option( 'webphysiology_portfolio_display_credit' );
 $gridstyle = get_option( 'webphysiology_portfolio_gridstyle' );
 $sort_numerically = get_option( 'webphysiology_portfolio_sort_numerically' );
 if ($sort_numerically == 'True') {
@@ -100,10 +103,10 @@ if ( !empty($tech_label) ) $tech_label .= ": ";
 
 // if the portfolio shortcode had no portfolio types defined
 if ( empty($portfolio_types) ) {
-	$loop = new WP_Query( array( 'post_type' => 'Portfolio', 'posts_per_page' => $portfolios_per_page, 'orderby' => 'meta_value' . $sort_numerically, 'meta_key' => '_sortorder', 'order' => 'ASC', 'paged'=> $paged ) );
+	$loop = new WP_Query( array( 'post_type' => 'webphys_portfolio', 'posts_per_page' => $num_per_page, 'orderby' => 'meta_value' . $sort_numerically, 'meta_key' => '_sortorder', 'order' => 'ASC', 'paged'=> $paged ) );
 } else {
 	$wp_query->query_vars['portfoliotype'] = $portfolio_types;
-	$loop = new WP_Query( array( 'post_type' => 'Portfolio', 'portfoliotype' => $portfolio_types, 'posts_per_page' => $portfolios_per_page, 'orderby' => 'meta_value' . $sort_numerically, 'meta_key' => '_sortorder', 'order' => 'ASC', 'paged'=> $paged ) );
+	$loop = new WP_Query( array( 'post_type' => 'webphys_portfolio', 'portfoliotype' => $portfolio_types, 'posts_per_page' => $num_per_page, 'orderby' => 'meta_value' . $sort_numerically, 'meta_key' => '_sortorder', 'order' => 'ASC', 'paged'=> $paged ) );
 }
 
 if ( $loop->have_posts() ) {
@@ -225,7 +228,7 @@ if ( $loop->have_posts() ) {
 	$portfolio_output .= $ul_close;
 	
 	// Credit link
-	if($display_credit == 'True') {
+	if ( strtolower($display_the_credit) == 'true' ) {
 		$portfolio_output .= '<div class="portfolio_credit"><em>powered by <a href="http://webphysiology.com/redir/webphysiology-portfolio/" target="_blank">WEBphysiology Portfolio</a></em></div>';
 	}
 	
