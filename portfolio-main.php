@@ -523,9 +523,34 @@ add_shortcode('webphysiology_portfolio', 'portfolio_loop'); /* asterisk - remove
 function create_portfolio_type_taxonomy() {
 	
 	if (!taxonomy_exists('portfolio_type')) {
+		
+		$labels = array(
+				
+			'name'              => __( 'Portfolio Types', 'Portfolio' ),
+			'singular_name'     => __( 'Portfolio Type', 'Portfolio' ),
+			'search_items'      => __( 'Search Portfolio Types', 'Portfolio' ),
+			'popular_items'     => __( 'Popular Portfolio Types', 'Portfolio' ),
+			'all_items'         => __( 'All Portfolio Types', 'Portfolio' ),
+			'parent_item'       => __( 'Parent Portfolio Type', 'Portfolio' ),
+			'parent_item_colon' => __( 'Parent Portfolio Type:', 'Portfolio' ),
+			'edit_item'         => __( 'Edit Portfolio Type', 'Portfolio' ),
+			'update_item'       => __( 'Update Portfolio Type', 'Portfolio' ),
+			'add_new_item'      => __( 'Add New Portfolio Type', 'Portfolio' ),
+			'new_item_name'     => __( 'New Portfolio Type Name', 'Portfolio' ),
+			'menu_name'         => __( 'Portfolio Types', 'Portfolio' )
+				
+		);
+		
 		register_taxonomy('portfolio_type', 
 						  'webphys_portfolio',
-						  array('hierarchical' => false, 'show_tagcloud' => false, 'label' => __('Portfolio Types'), 'query_var' => 'portfolio_type', 'rewrite' => array( 'slug' => 'portfolio_type')));
+						  array(	'hierarchical' => false, 
+									'labels' => $labels,
+									'show_tagcloud' => false,
+									'public' => true,
+									'show_in_nav_menus' => true,
+									'show_ui' => true,
+									'query_var' => 'portfolio_type',
+									'rewrite' => array( 'slug' => 'portfolio_type')));
 	 	
 		// if there are no Portfolio Type terms, add a default term
 		if (count(get_terms('portfolio_type', 'hide_empty=0')) == 0) {
