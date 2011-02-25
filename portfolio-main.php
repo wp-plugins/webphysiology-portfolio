@@ -104,11 +104,8 @@ License: GPL2
 
 // ASTERISK = make certain to update these as appropriate with new releases //
 
-$x = str_replace("/", "", str_replace(basename( __FILE__),"",plugin_basename(__FILE__)));
-
 define ( 'WEBPHYSIOLOGY_VERSION', '1.2.4' );
 define ( 'WEBPHYSIOLOGY_DB_VERSION', '3.1' );
-define ( 'WEBPHYSIOLOGY_PORTFOLIO_CURRENT_PAGE', $x );
 define ( 'WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE', basename($_SERVER['PHP_SELF']) );
 
 // if the Ozh Admin Menu plugin is being used, add the JVHM icon to the menu portfolio menu item
@@ -584,11 +581,10 @@ function portfolio_install() {
 register_activation_hook(__FILE__,'portfolio_install');
 
 // smart jquery inclusion
-if ( (!is_admin()) || ( ( WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE == 'edit.php' ) && ( WEBPHYSIOLOGY_PORTFOLIO_CURRENT_PAGE == 'webphysiology-portfolio' ) ) ) {
+if ( (!is_admin()) || ( WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE == 'edit.php' ) ) {
 	wp_deregister_script('jquery');
 	wp_register_script('jquery', ("http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"), false);
 	wp_enqueue_script('jquery');
-	echo 'hello world';
 }
 
 
@@ -1991,14 +1987,14 @@ function fancy_script() {
 	echo ( '</script>' . "\n");
 }
 
-if ( (!is_admin()) || ( ( WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE == 'edit.php' ) && ( WEBPHYSIOLOGY_PORTFOLIO_CURRENT_PAGE == 'webphysiology-portfolio' ) ) ) {
+if ( (!is_admin()) || ( WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE == 'edit.php' ) ) {
 	add_action('init', 'jquery_lightbox_init');
 	add_action('init', 'jquery_lightbox_styles');
 }
 if ( !is_admin() ) {
 	add_action('wp_head', 'fancy_script');
 }
-if ( ( WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE == 'edit.php' ) && ( WEBPHYSIOLOGY_PORTFOLIO_CURRENT_PAGE == 'webphysiology-portfolio' ) ) {
+if ( WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE == 'edit.php' ) {
 	add_action('admin_head', 'fancy_script');
 }
 
