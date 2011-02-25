@@ -104,11 +104,12 @@ License: GPL2
 
 // ASTERISK = make certain to update these as appropriate with new releases //
 
+$x = str_replace("/", "", str_replace(basename( __FILE__),"",plugin_basename(__FILE__)));
+
 define ( 'WEBPHYSIOLOGY_VERSION', '1.2.4' );
 define ( 'WEBPHYSIOLOGY_DB_VERSION', '3.1' );
-define ( 'WEBPHYSIOLOGY_PORTFOLIO_CURRENT_PAGE', basename($_SERVER['PHP_SELF']) );
-
-
+define ( 'WEBPHYSIOLOGY_PORTFOLIO_CURRENT_PAGE', $x );
+define ( 'WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE', basename($_SERVER['PHP_SELF']) );
 
 // if the Ozh Admin Menu plugin is being used, add the JVHM icon to the menu portfolio menu item
 function RegisterAdminIcon($hook) {
@@ -583,29 +584,45 @@ function portfolio_install() {
 register_activation_hook(__FILE__,'portfolio_install');
 
 // smart jquery inclusion
-if (!is_admin()) {
+if ( (!is_admin()) || ( ( WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE == 'edit.php' ) && ( WEBPHYSIOLOGY_PORTFOLIO_CURRENT_PAGE == 'webphysiology-portfolio' ) ) ) {
 	wp_deregister_script('jquery');
 	wp_register_script('jquery', ("http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"), false);
 	wp_enqueue_script('jquery');
+	echo 'hello world';
 }
+
+
+function set_admin_message($message) {
+	update_option('webphysiology_portfolio_message', $msg);
+}
+
 
 If (is_admin()) {
 	
+	$message = get_option('webphysiology_portfolio_message');
+	if ( ! empty($message) ) {
+		echo ('<div class="error"><p><strong>' . $message . '.</strong></p></div>');
+		update_option('webphysiology_portfolio_message', '');
+	}
+	
 	// ASTERISK = make certain to update this with new releases //
 	// check the most recently added option, if it doesn't exist then pass down through all of them and add any that are missing
-	$return = get_option('webphysiology_portfolio_version');
+	$return = get_option('webphysiology_portfolio_message');
 
 	if ( empty($return) ) {
 		
 		// added in v1.2.4
+		$return = get_option('webphysiology_portfolio_message');
+		if ( empty($return) ) {
+			add_option('webphysiology_portfolio_message', '');
+		}
+		
 		$return = get_option('webphysiology_portfolio_database_version');
 		if ( empty($return) ) {
+			
 			add_option("webphysiology_portfolio_database_version", WEBPHYSIOLOGY_DB_VERSION);
 			update_database('1.2.4');
 			
-			$x = str_replace(basename( __FILE__),"",plugin_basename(__FILE__));
-			$settings_link = '<a href="edit.php?post_type=webphys_portfolio&page=' . $x .'" style="background:none;margin:0;padding:0;float:none;width:auto;height:auto;">' . __('Portfolio Options page','Portfolio') . '</a>';
-			echo ('<div class="error"><p><strong>' . 'Please read the important WEBphysiology Portfolio Release Notes available on the ' . $settings_link . '.</strong></p></div>');
 		}
 		$return = get_option('webphysiology_portfolio_version');
 		if ( empty($return) ) {
@@ -700,6 +717,7 @@ If (is_admin()) {
 		if ( empty($return) ) {
 			add_option("webphysiology_portfolio_delete_data", "False"); // This is the default value for whether to delete Portfolio data on plugin deactivation
 		}
+		
 	}
 }
 
@@ -1973,14 +1991,14 @@ function fancy_script() {
 	echo ( '</script>' . "\n");
 }
 
-if ( (!is_admin()) || (WEBPHYSIOLOGY_PORTFOLIO_CURRENT_PAGE == 'edit.php') ) {
+if ( (!is_admin()) || ( ( WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE == 'edit.php' ) && ( WEBPHYSIOLOGY_PORTFOLIO_CURRENT_PAGE == 'webphysiology-portfolio' ) ) ) {
 	add_action('init', 'jquery_lightbox_init');
 	add_action('init', 'jquery_lightbox_styles');
 }
 if ( !is_admin() ) {
 	add_action('wp_head', 'fancy_script');
 }
-if ( WEBPHYSIOLOGY_PORTFOLIO_CURRENT_PAGE == 'edit.php' ) {
+if ( ( WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE == 'edit.php' ) && ( WEBPHYSIOLOGY_PORTFOLIO_CURRENT_PAGE == 'webphysiology-portfolio' ) ) {
 	add_action('admin_head', 'fancy_script');
 }
 
@@ -2374,7 +2392,7 @@ function portfolio_requirements_message() {
 
 }
 
-if ( WEBPHYSIOLOGY_PORTFOLIO_CURRENT_PAGE == "plugins.php" ) {
+if ( WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE == "plugins.php" ) {
     add_action('after_plugin_row_webphysiology-portfolio/portfolio-main.php', 'portfolio_requirements_message');
 }
 
@@ -2385,7 +2403,12 @@ function update_database($ver) {
 	if ( $ver = '1.2.4' ) {
 		/* update post types from "Portfolio" to "webphys_portfolio" */
 		$wpdb->query("UPDATE $wpdb->posts SET post_type = 'webphys_portfolio' WHERE post_type = 'Portfolio'");
-		portfolio_alert('1.2.4');
+		
+		$x = str_replace(basename( __FILE__),"",plugin_basename(__FILE__));
+		$settings_link = '<a href="edit.php?post_type=webphys_portfolio&page=' . $x .'" style="background:none;margin:0;padding:0;float:none;width:auto;height:auto;">' . __('Portfolio Options page','Portfolio') . '</a>';
+		$msg = 'Please read the important WEBphysiology Portfolio Release Notes available on the ' . $settings_link ;
+		
+		set_admin_message($msg);
 	}
 }
 
@@ -2426,14 +2449,6 @@ function portfolio_version_alert($alert_ver) {
 	}
 	
 	return $html;
-	
-}
-
-function display_version_alert ($text) {
-	
-	if ( empty($text) ) {
-		return;
-	}
 	
 }
 ?>
