@@ -99,6 +99,7 @@ License: GPL2
 // add ability to include / exlude multiple variations of Portfolio Types
 // image gallery widget or shortcode
 // add sort order to quick edit
+// search ability
 **********/
 
 
@@ -567,8 +568,10 @@ function portfolio_install() {
 	
 	// create new Portfolio plugin database field
 	
+	// ASTERISK - update as necessary with new release
 	$return = get_option('webphysiology_portfolio_version');
 	if ( empty($return) || ($return != '1.2.4') ) {
+		add_option('webphysiology_portfolio_message', '');
 		add_option("webphysiology_portfolio_version", WEBPHYSIOLOGY_VERSION);
 		add_option("webphysiology_portfolio_database_version", WEBPHYSIOLOGY_DB_VERSION);
 		add_option("webphysiology_portfolio_display_portfolio_title", 'True'); // This is the default value for whether to display the Portfolio Title
@@ -614,7 +617,7 @@ if ( (!is_admin()) || ( WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE == 'edit.php' ) ) {
 
 
 function set_admin_message($message) {
-	update_option('webphysiology_portfolio_message', $msg);
+	update_option('webphysiology_portfolio_message', $message);
 }
 
 
@@ -642,7 +645,7 @@ If (is_admin()) {
 		if ( empty($return) ) {
 			
 			add_option("webphysiology_portfolio_database_version", WEBPHYSIOLOGY_DB_VERSION);
-			update_database('1.2.4');
+			update_database(WEBPHYSIOLOGY_VERSION);
 			
 		}
 		$return = get_option('webphysiology_portfolio_version');
