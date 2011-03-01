@@ -4,7 +4,7 @@ Donate link: http://webphysiology.com/redir/webphysiology-portfolio/donate/
 Tags: portfolio,gallery,list,grid,posts,post,custom post type,custom taxonomy,shrinktheweb,shrink the web,webphysiology
 Requires at least: 3.0.0
 Tested up to: 3.1.0
-Stable tag: 1.2.4
+Stable tag: 1.2.5
 
 Allows for the creation of an expanded-list styled or a grid-style page containing images and supporting detail, perfect for a portfolio presentation.
 
@@ -71,6 +71,13 @@ There is a conflict when running WEBphysiology Portfolio and the eCommerce plugi
 
 == Changelog ==
 
+= 1.2.5 =
+* updated the image paths to use "/wp-content/... instead of the whole path URL as some hosting companies won't allow http://www in the URL args
+* enhanced plugin messaging system to be properly formatted, which also reauired updates to portfolio_admin.css
+* include my own copy of farbtastic as I couldn't get WordPress to load the existing WP version after the google jQuery load
+* got the version notes displaying consistently in fancybox
+* updated fancybox script to version 1.3.4
+* updated jQuery to version 1.4.4
 = 1.2.4 =
 * added shortcode parameter "id" that allows for the ability to encapsulate a portfolio within a <div> of a specified id
 * added shortcode parameter "per_page" that allows for the ability to override the options setting specifying the number of portfolios to display per page

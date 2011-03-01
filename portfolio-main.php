@@ -3,7 +3,7 @@
 Plugin Name: WEBphysiology Portfolio
 Plugin URI: http://webphysiology.com/redir/webphysiology-portfolio/
 Description: Provides a clean Portfolio listing with image, details and portfolio type taxonomy.  A [portfolio] shortcode is used to include the portfolio on any page.
-Version: 1.2.4
+Version: 1.2.5
 Author: Jeff Lambert
 Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 License: GPL2
@@ -27,6 +27,12 @@ License: GPL2
 
 /*  UPDATES
 
+	1.2.5 - * updated the image paths to use "/wp-content/... instead of the whole path URL as some hosting companies won't allow http://www in the URL args
+			* enhanced plugin messaging system to be properly formatted, which also reauired updates to portfolio_admin.css
+			* include my own copy of farbtastic as I couldn't get WordPress to load the existing WP version after the google jQuery load
+			* got the version notes displaying consistently in fancybox
+			* updated fancybox script to version 1.3.4
+			* updated jQuery to version 1.4.4
 	1.2.4 - * added shortcode parameter "id" that allows for the ability to encapsulate a portfolio within a <div> of a specified id
 			* added shortcode parameter "per_page" that allows for the ability to override the options setting specifying the number of portfolios to display per page
 			* added shortcode parameter "thickbox" that allows for the ability to override the options setting specifying the image click behavior 
@@ -387,8 +393,9 @@ function portfolio_admin_scripts() {
 	}
 	
 	if ($continue == "True") {
-		
+		//asterisk escape
 		$x = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__)) . 'scripts/';
+		$x = clear_pre_content($x);
 		wp_enqueue_script('media-upload');
 		wp_enqueue_script('thickbox');
 		wp_register_script('portfolio-image-upload', $x . 'file_uploader.js', array('jquery','media-upload','thickbox'));
@@ -414,7 +421,8 @@ function portfolio_admin_styles() {
 	if ($continue == "True") {
 		
 		$x = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__)) . 'scripts/fancybox/';
-		wp_register_style('lightbox_css', $x . '/jquery.fancybox-1.3.1.css');
+		$x = clear_pre_content($x);
+		wp_register_style('lightbox_css', $x . '/jquery.fancybox-1.3.4.css');
 		wp_enqueue_style('lightbox_css');
 		
 		wp_enqueue_style('thickbox');
@@ -426,6 +434,131 @@ if ( is_admin() ) {
 	add_action('admin_print_scripts', 'portfolio_admin_scripts');
 	add_action('admin_print_styles', 'portfolio_admin_styles');
 }
+
+
+// add scripts and styling needed for the lightbox functionality
+function jquery_fancybox_init () {
+    $x = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__)) . 'scripts/fancybox/';
+	$x = clear_pre_content($x);
+	wp_register_script('fancybox', $x . 'jquery.fancybox-1.3.4.pack.js', array('jquery'));
+	wp_enqueue_script('fancybox');
+	wp_register_script('mousewheel', $x . 'jquery.mousewheel-3.0.4.pack.js');
+	wp_enqueue_script('mousewheel');
+//	wp_register_script('easing', $x . 'jquery.easing-1.3.pack.js');
+//	wp_enqueue_script('easing');
+}
+
+function jquery_fancybox_styles() {
+    $x = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__)) . 'scripts/fancybox/';
+	$x = clear_pre_content($x);
+	wp_register_style('fancybox_css', $x . 'jquery.fancybox-1.3.4.css');
+	wp_enqueue_style('fancybox_css');
+}
+
+if ( !is_admin() || (is_admin() && ( WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE == 'edit.php' ) ) ) {
+
+	global $post;
+	
+	// register the stylesheet if we are not on the portfolio edit page since there is another call to do that already
+	if ( ( ! is_admin() ) || ( is_admin() && ( empty($post) ) ) ) {
+		add_action('init', 'jquery_fancybox_styles');
+	}
+	add_action('init', 'jquery_fancybox_init');
+	
+	if ( ! is_admin() ) {
+		add_action('wp_head', 'fancy_script');
+	} else {
+		add_action('admin_head', 'fancy_script', 12);
+	}
+}
+
+function fancy_script() {
+	echo ( "\n" . '<script type="text/javascript">' . "\n");
+	echo ( 'jQuery.noConflict();' . "\n");
+	echo ("\n");
+	echo ( 'jQuery(document).ready(function() {' . "\n");
+	echo ("\n");
+	echo ( '	jQuery("a.thickbox").fancybox({' . "\n");
+	echo ( "		'overlayOpacity'	:	0.95," . "\n");
+	echo ( "		'overlayColor'	:	'#333'," . "\n");
+	echo ( "		'transitionIn'	: 'fade'," . "\n");
+	echo ( "		'transitionOut'	: 'fade'," . "\n");
+	echo ( "		'speedIn'	:	350," . "\n");
+	echo ( "		'speedOut'	:	350," . "\n");
+	echo ( "		'hideOnContentClick'	:	true," . "\n");
+	echo ( "		'href' : this.src," . "\n");
+	echo ( "		'showCloseButton'	: true," . "\n");
+	echo ( "		'titleShow'	:	false" . "\n");
+	echo ( "	});" . "\n");
+	echo ("\n");
+	echo ( '	jQuery("a.alert_text").fancybox({' . "\n");
+	echo ( "			'overlayOpacity'		: 0.95," . "\n");
+	echo ( "			'overlayColor'			: '#333'," . "\n");
+	echo ( "			'speedIn'				: 350," . "\n");
+	echo ( "			'speedOut'				: 350," . "\n");
+	echo ( "			'hideOnContentClick'	: false," . "\n");
+	echo ( "			'transitionIn'			: 'fade'," . "\n");
+	echo ( "			'transitionOut'			: 'fade'," . "\n");
+//	echo ( "			'autoDimension'			: false," . "\n");
+//	echo ( "			'width'					: 680," . "\n");
+//	echo ( "			'height'				: 495," . "\n");
+	echo ( "			'href'					: this.href," . "\n");
+//	echo ( "			'scrolling'				: false," . "\n");
+	echo ( "			'showCloseButton'		: true," . "\n");
+	echo ( "			'titleShow'				: false" . "\n");
+	echo ( "	});" . "\n");
+	echo ("\n");
+	echo ( '	jQuery("a.vimeo").click(function() {' . "\n");
+	echo ( '		jQuery.fancybox({' . "\n");
+	echo ( "			'overlayOpacity'	: 0.95," . "\n");
+	echo ( "			'overlayColor'	: '#333'," . "\n");
+	echo ( "			'speedIn'		: 350," . "\n");
+	echo ( "			'speedOut'		: 350," . "\n");
+	echo ( "			'padding'		: 10," . "\n");
+	echo ( "			'autoScale'		: false," . "\n");
+	echo ( "			'transitionIn'	: 'fade'," . "\n");
+	echo ( "			'transitionOut'	: 'fade'," . "\n");
+	echo ( "			'title'			: this.title," . "\n");
+	echo ( "			'titleShow'		: false," . "\n");
+	echo ( "			'showCloseButton'	: true," . "\n");
+	echo ( "			'width'			: 680," . "\n");
+	echo ( "			'height'		: 495," . "\n");
+	echo ( "			'href'			: this.href.replace(new RegExp(\"([0-9])\",\"i\"),'moogaloop.swf?clip_id=$1')," . "\n");
+	echo ( "			'type'			: 'swf'" . "\n");
+	echo ( "		});" . "\n");
+	echo ( "		return false;" . "\n");
+	echo ( "	});" . "\n");
+	echo ("\n");
+	echo ( '	jQuery("a.youtube").click(function() {' . "\n");
+	echo ( '		jQuery.fancybox({' . "\n");
+	echo ( "			'overlayOpacity'	: 0.95," . "\n");
+	echo ( "			'overlayColor'	: '#333'," . "\n");
+	echo ( "			'speedIn'		: 350," . "\n");
+	echo ( "			'speedOut'		: 350," . "\n");
+	echo ( "			'padding'		: 10," . "\n");
+	echo ( "			'autoScale'		: false," . "\n");
+	echo ( "			'transitionIn'	: 'fade'," . "\n");
+	echo ( "			'transitionOut'	: 'fade'," . "\n");
+	echo ( "			'title'			: this.title," . "\n");
+	echo ( "			'titleShow'		: false," . "\n");
+	echo ( "			'showCloseButton'	: true," . "\n");
+	echo ( "			'width'			: 680," . "\n");
+	echo ( "			'height'		: 495," . "\n");
+	echo ( "			'href'			: this.href.replace(new RegExp(\"watch\\\?v=\", \"i\"), 'v/')," . "\n");
+	echo ( "			'type'			: 'swf'," . "\n");
+	echo ( "			'swf'			: {" . "\n");
+	echo ( "			   	 'wmode'		: 'transparent'," . "\n");
+	echo ( "				'allowfullscreen'	: 'false'" . "\n");
+	echo ( "			}" . "\n");
+	echo ( "		});" . "\n");
+	echo ( "		return false;" . "\n");
+	echo ( "	});" . "\n");
+	echo ("\n");
+	echo ( '});' . "\n");
+	echo ("\n");
+	echo ( '</script>' . "\n");
+}
+
 
 /* define the Portfolio ShortCode and set defaults for available arguments */
 function portfolio_loop($atts, $content = null) {
@@ -609,10 +742,12 @@ function portfolio_install() {
 register_activation_hook(__FILE__,'portfolio_install');
 
 // smart jquery inclusion
-if ( (!is_admin()) || ( WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE == 'edit.php' ) ) {
+if ( ! is_admin() ) {
+	
 	wp_deregister_script('jquery');
-	wp_register_script('jquery', ("http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"), false);
+	wp_register_script('jquery', ("http://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"), false);
 	wp_enqueue_script('jquery');
+	
 }
 
 
@@ -620,13 +755,34 @@ function set_admin_message($message) {
 	update_option('webphysiology_portfolio_message', $message);
 }
 
-
-If (is_admin()) {
+// check and display any plugin messages
+function display_update_alert() {
 	
+	// if the current user has no ability to manage options then don't bother showing them the transient message
+    if (!current_user_can('manage_options'))
+    {
+		return;
+    }
+	
+	// grab the message option and see if it is populated
 	$message = get_option('webphysiology_portfolio_message');
 	if ( ! empty($message) ) {
-		echo ('<div class="error"><p><strong>' . $message . '.</strong></p></div>');
+		
+		echo '	<div class="webphys_portfolio_message">';
+		echo '		<div class="errrror">	<p>' . $message . '.</p></div>';
+		echo '	</div>';
+		
+		// now that we've displayed the alert, clear it out
+		// asterisk - at a later date add the ability to make the clearing of the message based upon user action only
 		update_option('webphysiology_portfolio_message', '');
+	}
+}
+
+If (is_admin()) {
+
+	$message = get_option('webphysiology_portfolio_message');
+	if ( ! empty($message) ) {
+		add_action( 'admin_notices', 'display_update_alert' );
 	}
 	
 	// ASTERISK = make certain to update this with new releases //
@@ -1059,11 +1215,6 @@ if ( is_admin() ) {
 		$file = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__)) . 'css/portfolio_admin.css';
 		wp_register_style('portfolio_admin_css', $file);
 		wp_enqueue_style('portfolio_admin_css');
-		wp_enqueue_script('farbtastic');
-		
-		$file = str_replace('wp-content/plugins', "wp-admin/css/",WP_PLUGIN_URL) . 'farbtastic.css';
-		wp_register_style('farbtastic_css', $file);
-		wp_enqueue_style('farbtastic_css');
 	}
 	
 	// Add Portfolio Options menu item
@@ -1086,6 +1237,35 @@ if ( is_admin() ) {
 	add_action('init', 'portfolio_admin_css');
 	add_action('admin_menu', 'portolio_admin_menu');
 	add_filter( 'plugin_action_links_' . $plugin, 'add_plugin_settings_link' );
+	
+	if ( WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE == 'edit.php' ) {
+		
+		function get_google_jquery() {
+			wp_deregister_script('jquery');
+			wp_register_script('jquery', ("http://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"), false);
+			wp_enqueue_script('jquery');
+		}
+		
+		function get_colorpicker_jquery() {
+			
+			$base = plugin_dir_url(__FILE__) . 'scripts/farbtastic/';
+			
+			wp_deregister_script('webphys_farbtastic');
+			$file = esc_attr($base . 'farbtastic.js');
+			wp_register_script('webphys_farbtastic', $file);
+			wp_enqueue_script('webphys_farbtastic');
+			
+			$file = esc_attr($base . 'farbtastic.css');
+			wp_register_style('webphys_farbtastic_css', $file);
+			wp_enqueue_style('webphys_farbtastic_css');
+			
+		}
+		
+		add_action('init', 'get_google_jquery');
+		add_action('init', 'get_colorpicker_jquery');
+		
+	}
+
 }
 
 // define the Portfolio Plugin settings admin page
@@ -1638,6 +1818,7 @@ function get_Loop_Site_Image() {
 		}
 	}
 	
+	
 	// if the image was not specified or was cleared due to issues, use the default empty image
 	if ( empty($full_size_img_url) ) {
 		
@@ -1650,6 +1831,9 @@ function get_Loop_Site_Image() {
 			$class = ' class="missing"';
 		}
 	}
+	
+	// Asterisk - maybe tie to an option
+	$img_url = clear_pre_content($img_url);
 	
 	$supported_video = is_supported_video($site_url);
 	
@@ -1723,6 +1907,25 @@ function is_supported_video($siteurl) {
 }
 
 endif;
+
+// clear the passed in path up to wp-content as some code and hosting providers don't play nicely with arguments containing http://www
+if ( ! function_exists( 'clear_pre_content' ) ) :
+
+function clear_pre_content($url) {
+	
+	$return = $url;
+	
+	$pos = strpos($return, 'wp-content');
+	
+	if ( ! empty($pos) ) {
+		$return = str_replace(substr($return, 0, strpos($return, 'wp-content') - 1), "", $return);
+	}
+	
+	return $return;
+}
+
+endif;
+
 
 // Determine the class to assign to the anchor tag based upon the video provider
 if ( ! function_exists( 'get_video_class' ) ) :
@@ -1908,123 +2111,6 @@ function set_portfolio_css() {
 	}
 }
 add_action('wp_head', 'set_portfolio_css');
-
-
-// add scripts and styling needed for the lightbox functionality
-function jquery_lightbox_init () {
-    $x = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__)) . 'scripts/fancybox/';
-	wp_register_script('fancybox', $x . 'jquery.fancybox-1.3.1.pack.js', array('jquery'));
-	wp_enqueue_script('fancybox');
-	wp_register_script('mousewheel', $x . 'jquery.mousewheel-3.0.2.pack.js');
-	wp_enqueue_script('mousewheel');
-}
-
-function jquery_lightbox_styles() {
-    $x = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__)) . 'scripts/fancybox/';
-	wp_register_style('lightbox_css', $x . 'jquery.fancybox-1.3.1.css');
-	wp_enqueue_style('lightbox_css');
-}
-
-function fancy_script() {
-	echo ( "\n" . '<script type="text/javascript">' . "\n");
-	echo ( 'jQuery.noConflict();' . "\n");
-	echo ("\n");
-	echo ( 'jQuery(document).ready(function() {' . "\n");
-	echo ("\n");
-	echo ( '	jQuery("a.thickbox").fancybox({' . "\n");
-	echo ( "		'overlayOpacity'	:	0.95," . "\n");
-	echo ( "		'overlayColor'	:	'#333'," . "\n");
-	echo ( "		'transitionIn'	: 'fade'," . "\n");
-	echo ( "		'transitionOut'	: 'fade'," . "\n");
-	echo ( "		'speedIn'	:	350," . "\n");
-	echo ( "		'speedOut'	:	350," . "\n");
-	echo ( "		'hideOnContentClick'	:	true," . "\n");
-	echo ( "		'href' : this.src," . "\n");
-	echo ( "		'showCloseButton'	: true," . "\n");
-	echo ( "		'titleShow'	:	false" . "\n");
-	echo ( "	});" . "\n");
-	echo ("\n");
-	echo ( '	jQuery("a.alert_text").click(function() {' . "\n");
-	echo ( '		jQuery.fancybox({' . "\n");
-	echo ( "			'overlayOpacity'		: 0.95," . "\n");
-	echo ( "			'overlayColor'			: '#333'," . "\n");
-	echo ( "			'speedIn'				: 350," . "\n");
-	echo ( "			'speedOut'				: 350," . "\n");
-	echo ( "			'hideOnContentClick'	: false," . "\n");
-	echo ( "			'transitionIn'			: 'fade'," . "\n");
-	echo ( "			'transitionOut'			: 'fade'," . "\n");
-	echo ( "			'autoDimension'			: false," . "\n");
-	echo ( "			'width'					: 480," . "\n");
-	echo ( "			'height'				: 'auto'," . "\n");
-	echo ( "			'href'					: this.href," . "\n");
-	echo ( "			'scrolling'				: 'yes'," . "\n");
-	echo ( "			'showCloseButton'		: true," . "\n");
-	echo ( "			'titleShow'				: false" . "\n");
-	echo ( "		});" . "\n");
-	echo ( "		return false;" . "\n");
-	echo ( "	});" . "\n");
-	echo ("\n");
-	echo ( '	jQuery("a.vimeo").click(function() {' . "\n");
-	echo ( '		jQuery.fancybox({' . "\n");
-	echo ( "			'overlayOpacity'	: 0.95," . "\n");
-	echo ( "			'overlayColor'	: '#333'," . "\n");
-	echo ( "			'speedIn'		: 350," . "\n");
-	echo ( "			'speedOut'		: 350," . "\n");
-	echo ( "			'padding'		: 10," . "\n");
-	echo ( "			'autoScale'		: false," . "\n");
-	echo ( "			'transitionIn'	: 'fade'," . "\n");
-	echo ( "			'transitionOut'	: 'fade'," . "\n");
-	echo ( "			'title'			: this.title," . "\n");
-	echo ( "			'titleShow'		: false," . "\n");
-	echo ( "			'showCloseButton'	: true," . "\n");
-	echo ( "			'width'			: 680," . "\n");
-	echo ( "			'height'		: 495," . "\n");
-	echo ( "			'href'			: this.href.replace(new RegExp(\"([0-9])\",\"i\"),'moogaloop.swf?clip_id=$1')," . "\n");
-	echo ( "			'type'			: 'swf'" . "\n");
-	echo ( "		});" . "\n");
-	echo ( "		return false;" . "\n");
-	echo ( "	});" . "\n");
-	echo ("\n");
-	echo ( '	jQuery("a.youtube").click(function() {' . "\n");
-	echo ( '		jQuery.fancybox({' . "\n");
-	echo ( "			'overlayOpacity'	: 0.95," . "\n");
-	echo ( "			'overlayColor'	: '#333'," . "\n");
-	echo ( "			'speedIn'		: 350," . "\n");
-	echo ( "			'speedOut'		: 350," . "\n");
-	echo ( "			'padding'		: 10," . "\n");
-	echo ( "			'autoScale'		: false," . "\n");
-	echo ( "			'transitionIn'	: 'fade'," . "\n");
-	echo ( "			'transitionOut'	: 'fade'," . "\n");
-	echo ( "			'title'			: this.title," . "\n");
-	echo ( "			'titleShow'		: false," . "\n");
-	echo ( "			'showCloseButton'	: true," . "\n");
-	echo ( "			'width'			: 680," . "\n");
-	echo ( "			'height'		: 495," . "\n");
-	echo ( "			'href'			: this.href.replace(new RegExp(\"watch\\\?v=\", \"i\"), 'v/')," . "\n");
-	echo ( "			'type'			: 'swf'," . "\n");
-	echo ( "			'swf'			: {" . "\n");
-	echo ( "			   	 'wmode'		: 'transparent'," . "\n");
-	echo ( "				'allowfullscreen'	: 'false'" . "\n");
-	echo ( "			}" . "\n");
-	echo ( "		});" . "\n");
-	echo ( "		return false;" . "\n");
-	echo ( "	});" . "\n");
-	echo ("\n");
-	echo ( '});' . "\n");
-	echo ("\n");
-	echo ( '</script>' . "\n");
-}
-
-if ( (!is_admin()) || ( WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE == 'edit.php' ) ) {
-	add_action('init', 'jquery_lightbox_init');
-	add_action('init', 'jquery_lightbox_styles');
-}
-if ( !is_admin() ) {
-	add_action('wp_head', 'fancy_script');
-}
-if ( WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE == 'edit.php' ) {
-	add_action('admin_head', 'fancy_script');
-}
 
 
 /* Build out the navigation elements for paging through the Portfolio pages */
@@ -2429,10 +2515,9 @@ function update_database($ver) {
 		$wpdb->query("UPDATE $wpdb->posts SET post_type = 'webphys_portfolio' WHERE post_type = 'Portfolio'");
 		
 		$x = str_replace(basename( __FILE__),"",plugin_basename(__FILE__));
-		$settings_link = '<a href="edit.php?post_type=webphys_portfolio&page=' . $x .'" style="background:none;margin:0;padding:0;float:none;width:auto;height:auto;">' . __('Portfolio Options page','Portfolio') . '</a>';
+		$settings_link = '<a href="edit.php?post_type=webphys_portfolio&page=' . $x .'">' . __('Portfolio Options page','Portfolio') . '</a>';
 		$msg = 'Please read the important WEBphysiology Portfolio Release Notes available on the ' . $settings_link ;
 		
-		set_admin_message($msg);
 	}
 }
 
@@ -2444,27 +2529,26 @@ function portfolio_version_alert($alert_ver) {
 		$html  = '<div id="pluginsettings" class="postbox">' . "\n";
 		$html .= '	<h3 class="hndle"><span>Portfolio Release Notes</span></h3>' . "\n";
 		$html .= '	<div class="inside" style="padding: 10px 10px;">' . "\n";
-		$html .= '		<a class="alert_text" href="#version_release_notes">IMPORTANT Version 1.2.4 release notes</a>' . "\n";
-
+		$html .= '		<a class="alert_text" href="#v124_notes">IMPORTANT Version 1.2.4 release notes</a>' . "\n";
 		$html .= '		<div style="display: none;">' . "\n";
-		$html .= '		<div id="version_release_notes" name="version_release_notes">' . "\n";
-		$html .= '			<h3 style="font-size:1.4em;text-align: center;">WEBphysiology Portfolio Plugin - Version 1.2.4 Release Notifications</h3>' . "\n";
-		$html .= '			<p style="font-weight:bold; color:red;text-align:center;">!!! PLEASE NOTE A FEW CHANGES THAT YOU NEED TO BE AWARE OF AS SOME DEPRECATION WILL BE COMING SOON  !!!<br /></p>' . "\n";
-		$html .= "			<p>1) To proactively try and avoid future plugin contentions, the shortcode will be changing from [portfolio] to [webphysiology_portfolio].  The later is currently available. The former will go away in the near future, so, update your portoflio pages with the new code.</p>" . "\n";
-		$html .= '			<p>2) If you are doing custom CSS work on the portfolio, be aware that back in version 1.2.0 we noted that the standard CSS that comes with the plugin was having the ID "#portfolio" selector changed to the class ".webphysiology_portfolio" selector.  The ID selector will be removed from the CSS in the next release.  You will not be affected if you have not customized any backend CSS.  If you have, just make certain you are not using "#portfolio".</p>' . "\n";
-		$html .= '			<p>3) The WEBphysiology Portfolio settings have been moved out from under the Admin "Settings" menu and relabeled. The plugin configuration options are now labeled "Options" and are located under the Portfolio menu block.</p>' . "\n";
-		$html .= '			<p style="font-size:1.2em;font-weight:bold;margin-top:10px;">1.2.4 Enhancements to be aware of:</p>' . "\n";
-		$html .= '			<p>1) The custom post type has been changed from "Portfolio" to "webphys_portfolio". Reason #1 is that WP v3.1 has disallowed the use of uppercase characters in the custom post type name, which broke the plugin.  "webphys_" also was added to proactively try and avoid any contentions with other plugins and code.  When you upgraded to v1.2.4 of this plugin the Portfolio Post data was automagically updated to the new custom post type value "webphys_portfolio".</p>' . "\n";
-		$html .= "			<p>2) Four new shortcode parameters have been added to allow for additional functionality:</p>" . "\n";
-		$html .= '			<p style="margin-left:10px;"><span style="font-weight:bold;">id</span> : this string parameter allows you to specify a &lt;div&gt; ID that will wrap the data returned by the shortcode. This will provide the ability to style a given instance of the shortcode differently from another instance.<br />' . "\n";
-		$html .= '			      <span style="font-weight:bold;">per_page</span> : this numeric parameter, if specified, will override the Option setting and allow you to, on a particular instance of the shortcode, specify how many portfolio items will be included per page for that instance of the shortcode.<br />' . "\n";
-		$html .= '			      <span style="font-weight:bold;">thickbox</span> : this boolean (true/false) parameter will let you override the Option setting, allowing you to open items in a thickbox or direct the click to the specified URL<br />' . "\n";
-		$html .= '			      <span style="font-weight:bold;">credit</span> : this boolean (true/false) parameter will let you override the Option setting, allowing you to only display the plugin credit where you want to. specific reason for this parm is to allow you, in instances where you have more than one [webphysiology_portfolio] shortcode on a page, to just display the credit on one instance.</p>' . "\n";
-		$html .= "			<p>3) YouTube and Vimeo are now supported within the Fancybox thickbox interface.  If you enter a Portfolio Web Page URL for a video hosted on one of these sites, and you have set the WEBphysiology Portfolio options to display the image in a thickbox, then the video will be displayed in the thickbox as opposed to sending you to Vimeo/Youtube.  The required format for these URLs are as follows:</p>" . "\n";
-		$html .= '			<p style="margin-left:10px;"><span style="font-weight:bold;">Youtube</span>:  http://www.youtube.com/watch?v=<span style="font-style:italic;">071KqJu7WVo</span><br />' . "\n";
-		$html .= '			      <span style="font-weight:bold;">Vimeo</span>:  http://vimeo.com/<span style="font-style:italic;">16756306</span><br /></p>' . "\n";
-		$html .= "			<p>For a complete list of changes refer to the Readme.txt file in the WEBphysiology Portfolio plugin directory.</p>" . "\n";
-		$html .= "		</div>" . "\n";
+		$html .= '			<div id="v124_notes" >' . "\n";
+		$html .= '				<h3 style="font-size:1.4em;text-align: center;">WEBphysiology Portfolio Plugin - Version 1.2.4 Release Notifications</h3>' . "\n";
+		$html .= '				<p style="font-weight:bold; color:red;text-align:center;">!!! PLEASE NOTE A FEW CHANGES THAT YOU NEED TO BE AWARE OF AS SOME DEPRECATION WILL BE COMING SOON  !!!<br /></p>' . "\n";
+		$html .= "				<p>1) To proactively try and avoid future plugin contentions, the shortcode will be changing from [portfolio] to [webphysiology_portfolio].  The later is currently available. The former will go away in the near future, so, update your portoflio pages with the new code.</p>" . "\n";
+		$html .= '				<p>2) If you are doing custom CSS work on the portfolio, be aware that back in version 1.2.0 we noted that the standard CSS that comes with the plugin was having the ID "#portfolio" selector changed to the class ".webphysiology_portfolio" selector.  The ID selector will be removed from the CSS in the next release.  You will not be affected if you have not customized any backend CSS.  If you have, just make certain you are not using "#portfolio".</p>' . "\n";
+		$html .= '				<p>3) The WEBphysiology Portfolio settings have been moved out from under the Admin "Settings" menu and relabeled. The plugin configuration options are now labeled "Options" and are located under the Portfolio menu block.</p>' . "\n";
+		$html .= '				<p style="font-size:1.2em;font-weight:bold;margin-top:10px;">1.2.4 Enhancements to be aware of:</p>' . "\n";
+		$html .= '				<p>1) The custom post type has been changed from "Portfolio" to "webphys_portfolio". Reason #1 is that WP v3.1 has disallowed the use of uppercase characters in the custom post type name, which broke the plugin.  "webphys_" also was added to proactively try and avoid any contentions with other plugins and code.  When you upgraded to v1.2.4 of this plugin the Portfolio Post data was automagically updated to the new custom post type value "webphys_portfolio".</p>' . "\n";
+		$html .= "				<p>2) Four new shortcode parameters have been added to allow for additional functionality:</p>" . "\n";
+		$html .= '				<p style="margin-left:10px;"><span style="font-weight:bold;">id</span> : this string parameter allows you to specify a &lt;div&gt; ID that will wrap the data returned by the shortcode. This will provide the ability to style a given instance of the shortcode differently from another instance.<br />' . "\n";
+		$html .= '				    <span style="font-weight:bold;">per_page</span> : this numeric parameter, if specified, will override the Option setting and allow you to, on a particular instance of the shortcode, specify how many portfolio items will be included per page for that instance of the shortcode.<br />' . "\n";
+		$html .= '			    	<span style="font-weight:bold;">thickbox</span> : this boolean (true/false) parameter will let you override the Option setting, allowing you to open items in a thickbox or direct the click to the specified URL<br />' . "\n";
+		$html .= '			      	<span style="font-weight:bold;">credit</span> : this boolean (true/false) parameter will let you override the Option setting, allowing you to only display the plugin credit where you want to. specific reason for this parm is to allow you, in instances where you have more than one [webphysiology_portfolio] shortcode on a page, to just display the credit on one instance.</p>' . "\n";
+		$html .= "				<p>3) YouTube and Vimeo are now supported within the Fancybox thickbox interface.  If you enter a Portfolio Web Page URL for a video hosted on one of these sites, and you have set the WEBphysiology Portfolio options to display the image in a thickbox, then the video will be displayed in the thickbox as opposed to sending you to Vimeo/Youtube.  The required format for these URLs are as follows:</p>" . "\n";
+		$html .= '				<p style="margin-left:10px;"><span style="font-weight:bold;">Youtube</span>:  http://www.youtube.com/watch?v=<span style="font-style:italic;">071KqJu7WVo</span><br />' . "\n";
+		$html .= '				      <span style="font-weight:bold;">Vimeo</span>:  http://vimeo.com/<span style="font-style:italic;">16756306</span><br /></p>' . "\n";
+		$html .= "				<p>For a complete list of changes refer to the Readme.txt file in the WEBphysiology Portfolio plugin directory.</p>" . "\n";
+		$html .= "			</div>" . "\n";
 		$html .= "		</div>" . "\n";
 
 
