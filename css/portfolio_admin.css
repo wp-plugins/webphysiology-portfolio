@@ -14,7 +14,7 @@
 .company_logo h2 {
 	padding-top: 18px;
 }
-.company_logo a {
+a.webphys_logo {
 	background: url(../images/WEBphysiology-icon.png) no-repeat;
 	height: 60px;
 	width: 60px;
