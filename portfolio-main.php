@@ -3,7 +3,7 @@
 Plugin Name: WEBphysiology Portfolio
 Plugin URI: http://webphysiology.com/redir/webphysiology-portfolio/
 Description: Provides a clean Portfolio listing with image, details and portfolio type taxonomy.  A [portfolio] shortcode is used to include the portfolio on any page.
-Version: 1.2.5
+Version: 1.2.6
 Author: Jeff Lambert
 Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 License: GPL2
@@ -27,6 +27,8 @@ License: GPL2
 
 /*  UPDATES
 
+	1.2.6 - * fixed an issue where the update notes were not being displayed
+			* tried to harden the code that updates the database when upgrading from a version lower than 1.2.4
 	1.2.5 - * updated the image paths to use "/wp-content/... instead of the whole path URL as some hosting companies won't allow http://www in the URL args
 			* enhanced plugin messaging system to be properly formatted, which also reauired updates to portfolio_admin.css
 			* include my own copy of farbtastic as I couldn't get WordPress to load the existing WP version after the google jQuery load
@@ -111,8 +113,8 @@ License: GPL2
 
 // ASTERISK = make certain to update these as appropriate with new releases //
 
-define ( 'WEBPHYSIOLOGY_VERSION', '1.2.4' );
-define ( 'WEBPHYSIOLOGY_DB_VERSION', '3.1' );
+define ( 'WEBPHYSIOLOGY_VERSION', '1.2.6' );
+define ( 'WEBPHYSIOLOGY_DB_VERSION', '3.1.0' );
 define ( 'WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE', basename($_SERVER['PHP_SELF']) );
 
 // if the Ozh Admin Menu plugin is being used, add the JVHM icon to the menu portfolio menu item
@@ -699,12 +701,20 @@ add_action( 'init', 'create_portfolio_type_taxonomy', 0 );
 /* Define Portfolio Plugin Activation process */
 function portfolio_install() {
 	
-	// create new Portfolio plugin database field
-	
-	// ASTERISK - update as necessary with new release
-	$return = get_option('webphysiology_portfolio_version');
-	if ( empty($return) || ($return != '1.2.4') ) {
-		add_option('webphysiology_portfolio_message', '');
+	// ASTERISK = make certain to update this with new releases //
+	// check the most recently added option, if it doesn't exist then pass down through all of them and add any that are missing
+	$return = get_option('webphysiology_portfolio_message');
+
+	if ( empty($return) ) {
+		
+		// just in case the new options are added here and not below, trap whether the db option exists or not because, if it doesn't,
+		// this may be an update requiring db updates
+		$dbver = get_option('webphysiology_portfolio_database_version');
+		if ( empty($dbver) ) { $dbver = '3.0.0'; }
+		$pluginver = get_option('webphysiology_portfolio_version');
+		if ( empty($pluginver) ) { $pluginver = '1.2.3'; }
+		
+		add_option('webphysiology_portfolio_message', 'empty');
 		add_option("webphysiology_portfolio_version", WEBPHYSIOLOGY_VERSION);
 		add_option("webphysiology_portfolio_database_version", WEBPHYSIOLOGY_DB_VERSION);
 		add_option("webphysiology_portfolio_display_portfolio_title", 'True'); // This is the default value for whether to display the Portfolio Title
@@ -737,6 +747,17 @@ function portfolio_install() {
 		add_option("webphysiology_portfolio_link_color", '#004813'); // This is the anchor link color
 		add_option("webphysiology_portfolio_odd_stripe_color", '#eeeeee'); // This is the portfolio list odd row stripe background color
 		add_option("webphysiology_portfolio_even_stripe_color", '#f9f9f9'); // This is the portfolio list even row stripe background color
+		
+		// if the old db version was earlier than the current version
+		if ( version_compare(WEBPHYSIOLOGY_DB_VERSION, $dbver, ">=" ) ) {
+			update_database();
+		}
+		
+		// if the old plugin version was earlier than the current version
+		if ( version_compare(WEBPHYSIOLOGY_VERSION, $pluginver, ">=" ) ) {
+			// perform any necessary updates
+		}
+		
 	}
 }
 register_activation_hook(__FILE__,'portfolio_install');
@@ -752,7 +773,15 @@ if ( ! is_admin() ) {
 
 
 function set_admin_message($message) {
-	update_option('webphysiology_portfolio_message', $message);
+	
+	$return = get_option('webphysiology_portfolio_message');
+	
+	if ( ! empty($return) ) {
+		update_option('webphysiology_portfolio_message', $message);
+	} else {
+		add_option('webphysiology_portfolio_message', $message);
+	}
+	
 }
 
 // check and display any plugin messages
@@ -766,7 +795,7 @@ function display_update_alert() {
 	
 	// grab the message option and see if it is populated
 	$message = get_option('webphysiology_portfolio_message');
-	if ( ! empty($message) ) {
+	if ( ! empty($message) && ( $message != 'empty' ) ) {
 		
 		echo '	<div class="webphys_portfolio_message">';
 		echo '		<div class="errrror">	<p>' . $message . '.</p></div>';
@@ -774,16 +803,13 @@ function display_update_alert() {
 		
 		// now that we've displayed the alert, clear it out
 		// asterisk - at a later date add the ability to make the clearing of the message based upon user action only
-		update_option('webphysiology_portfolio_message', '');
+		set_admin_message('empty');
 	}
 }
 
-If (is_admin()) {
-
-	$message = get_option('webphysiology_portfolio_message');
-	if ( ! empty($message) ) {
-		add_action( 'admin_notices', 'display_update_alert' );
-	}
+If ( is_admin() ) {
+	
+	add_action( 'admin_notices', 'display_update_alert' );
 	
 	// ASTERISK = make certain to update this with new releases //
 	// check the most recently added option, if it doesn't exist then pass down through all of them and add any that are missing
@@ -794,18 +820,27 @@ If (is_admin()) {
 		// added in v1.2.4
 		$return = get_option('webphysiology_portfolio_message');
 		if ( empty($return) ) {
-			add_option('webphysiology_portfolio_message', '');
+			add_option("webphysiology_portfolio_message", 'empty');
 		}
 		
-		$return = get_option('webphysiology_portfolio_database_version');
-		if ( empty($return) ) {
+		$dbver = get_option('webphysiology_portfolio_database_version');
+		if ( empty($dbver) ) { $dbver = '3.0.0'; }
+		
+		$pluginver = get_option('webphysiology_portfolio_version');
+		if ( empty($pluginver) ) { $pluginver = '1.2.3'; }
+		
+		if ( $dbver = '3.0.0' ) {
 			
 			add_option("webphysiology_portfolio_database_version", WEBPHYSIOLOGY_DB_VERSION);
-			update_database(WEBPHYSIOLOGY_VERSION);
+			
+			// if the old db version was earlier than the current version then the user is likely upgrading from a version
+			//   of the plugin earlier than 1.2.4, so, run any db updates
+			if ( version_compare(WEBPHYSIOLOGY_DB_VERSION, $dbver, ">=" ) ) {
+				update_database();
+			}
 			
 		}
-		$return = get_option('webphysiology_portfolio_version');
-		if ( empty($return) ) {
+		if ( $pluginver = '1.2.3' ) {
 			add_option("webphysiology_portfolio_version", WEBPHYSIOLOGY_VERSION);
 		}
 		
@@ -814,11 +849,13 @@ If (is_admin()) {
 		if ( empty($return) ) {
 			add_option("webphysiology_portfolio_anchor_click_behavior", 'False'); // This is the default value for whether to open links in a new tab
 		}
+		
 		// added in v1.2.2
 		$return = get_option('webphysiology_portfolio_sort_numerically');
 		if ( empty($return) ) {
 			add_option("webphysiology_portfolio_sort_numerically", 'True'); // This is the default value for whether to sort numerically off the sort column
 		}
+		
 		// added in v1.2.0
 		check_temp_dir(); // check to see that the temp directory exists, as this is needed when images from different domains are utilized
 		$return = get_option('webphysiology_portfolio_use_stw');
@@ -833,11 +870,13 @@ If (is_admin()) {
 		if ( empty($return) ) {
 			add_option("webphysiology_portfolio_stw_sk", ""); // This is the default value for the ShrinkTheWeb.com Security Key
 		}
+		
 		// added in v1.1.5
 		$return = get_option('webphysiology_portfolio_allowed_image_sites');
 		if ( empty($return) ) {
 			add_option("webphysiology_portfolio_allowed_image_sites", "flickr.com,picasa.com,blogger.com,wordpress.com,img.youtube.com"); // This is the default value for the allowed image sites
 		}
+		
 		// added in v1.1.3
 		$return = get_option('webphysiology_portfolio_display_portfolio_title');
 		if ( empty($return) ) {
@@ -855,6 +894,7 @@ If (is_admin()) {
 		if ( empty($return) ) {
 			add_option("webphysiology_portfolio_gridcolor", "#eeeeee"); // This is the default value for the grid background color
 		}
+		
 		// added in v1.0.3
 		$return = get_option('webphysiology_portfolio_display_clientname');
 		if ( empty($return) ) {
@@ -884,6 +924,7 @@ If (is_admin()) {
 		if ( empty($return) ) {
 			add_option("webphysiology_portfolio_image_click_behavior", 'litebox'); // This is the default value for whether to display the image in a thickbox or navigate to the associated site
 		}
+		
 		// added in v1.0.0
 		$return = get_option('webphysiology_portfolio_display_credit');
 		if ( empty($return) ) {
@@ -1279,7 +1320,7 @@ function portfolio_plugin_page() {
 	
 	echo '<div class="wrap portfolio-admin">';
     echo '	<div class="company_logo">';
-    echo '        <a href="http://WEBphysiology.com/">&nbsp;</a>';
+    echo '        <a class="webphys_logo" href="http://WEBphysiology.com/">&nbsp;</a>';
     echo '        <div id="icon-plugins" class="icon32"></div><h2>Portfolio Options</h2>';
     echo '    </div>';
     echo '    <div class="postbox-container">';
@@ -2502,21 +2543,33 @@ function portfolio_requirements_message() {
 
 }
 
+
 if ( WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE == "plugins.php" ) {
     add_action('after_plugin_row_webphysiology-portfolio/portfolio-main.php', 'portfolio_requirements_message');
 }
 
-function update_database($ver) {
+function update_database() {
 	
 	global $wpdb;
 	
-	if ( $ver = '1.2.4' ) {
-		/* update post types from "Portfolio" to "webphys_portfolio" */
-		$wpdb->query("UPDATE $wpdb->posts SET post_type = 'webphys_portfolio' WHERE post_type = 'Portfolio'");
+	// if this version of WEBphysiology Portfolio is using the 3.1.0 db version or better
+	if ( version_compare(WEBPHYSIOLOGY_DB_VERSION, '3.1.0', '>=') ) {
 		
-		$x = str_replace(basename( __FILE__),"",plugin_basename(__FILE__));
-		$settings_link = '<a href="edit.php?post_type=webphys_portfolio&page=' . $x .'">' . __('Portfolio Options page','Portfolio') . '</a>';
-		$msg = 'Please read the important WEBphysiology Portfolio Release Notes available on the ' . $settings_link ;
+		// check to see if there are any old "Portfolio" records in the database
+		$row = $wpdb->get_row("SELECT COUNT(*) 'portfolio_count' FROM $wpdb->posts WHERE post_type = 'Portfolio'");
+		
+		// if old "Portfolio" records were found update them to "webphys_portfolio"
+		if ( $row->portfolio_count > 0 ) {
+//			echo $row->portfolio_count . '<br />';
+			/* update post types from "Portfolio" to "webphys_portfolio" */
+			$wpdb->query("UPDATE $wpdb->posts SET post_type = 'webphys_portfolio' WHERE post_type = 'Portfolio'");
+			
+			$x = str_replace(basename( __FILE__),"",plugin_basename(__FILE__));
+			$settings_link = '<a href="edit.php?post_type=webphys_portfolio&page=' . $x .'">' . __('Portfolio Options page','Portfolio') . '</a>';
+			$msg = 'Please read the important WEBphysiology Portfolio Version 1.2.4 Release Notes available on the ' . $settings_link ;
+			set_admin_message($msg);
+			
+		}
 		
 	}
 }
