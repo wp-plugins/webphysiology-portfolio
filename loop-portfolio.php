@@ -9,6 +9,7 @@
 
 /*  UPDATES
 
+	1.2.7 - fixed an issue where $portfolio_open_empty was not being defined for non-grid styled portfolios
 	1.2.4 - exchanged per page code that was grabbing the per page option to using the global var for the per page portfolio count defined in portfolio-main.php
 	      - updated the custom post type from "Portfolio" to "webphys_portfolio" because v3.1 doesn't like caps and also to avoid contention with other plugins
 		  - updated code to utilize the new $display_the_credit global variable that is now set by the "credit" shortcode parameter
@@ -76,9 +77,11 @@ $li_open_even = '';
 $li_open_odd = '';
 $li_close = '';
 $gridclass = '';
+
+$portfolio_open = '<div id="portfolios' . $portnum . '" class="webphysiology_portfolio" role="main">';
+$portfolio_open_empty = '<div id="portfolios' . $portnum . '" class="webphysiology_portfolio empty" role="main">';
+
 if ($gridstyle == 'True') {
-	$portfolio_open = '<div id="portfolios' . $portnum . '" class="webphysiology_portfolio" role="main">';
-	$portfolio_open_empty = '<div id="portfolios' . $portnum . '" class="webphysiology_portfolio empty" role="main">';
 	$ul_open = '<ul class="grid">';
 	$ul_open_empty = '<ul class="grid empty">';
 	$ul_close = '</ul>';
@@ -87,8 +90,6 @@ if ($gridstyle == 'True') {
 	$li_open_odd_empty = '<li class="odd empty">';
 	$li_close = '</li>';
 	$gridclass = ' grid';
-} else {
-	$portfolio_open = '<div id="portfolios' . $portnum . '" class="webphysiology_portfolio" role="main">';
 }
 $type_label = $detail_labels["Type"];
 if ( !empty($type_label) ) $type_label .= ": ";

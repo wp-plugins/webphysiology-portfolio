@@ -4,7 +4,7 @@ Donate link: http://webphysiology.com/redir/webphysiology-portfolio/donate/
 Tags: portfolio,gallery,list,grid,posts,post,custom post type,custom taxonomy,shrinktheweb,shrink the web,webphysiology
 Requires at least: 3.0.0
 Tested up to: 3.1.0
-Stable tag: 1.2.6
+Stable tag: 1.2.7
 
 Allows for the creation of an expanded-list styled or a grid-style page containing images and supporting detail, perfect for a portfolio presentation.
 
@@ -71,9 +71,20 @@ There is a conflict when running WEBphysiology Portfolio and the eCommerce plugi
 
 == Changelog ==
 
+= 1.2.7 =
+* added a little error handling to the ShrinkTheWeb code to throw back any errors returned when trying to get a thumbnail from STW
+* changed navigation styling to use borders and not images
+* #portfolios   styling ID now has been deprecated and replaced with class   .webphysiology_portfolio
+* admin options page has had some styling updates and option placement shifts
+* pushed the fancybox jquery script down into the footer
+* added new option to allow disabling the registering of the Google served jQuery code as other plugins, like MailChimp, has some sort of conflict otherwise
+* added new option to allow disabling the registering of the Fancybox script as other plugins, like Fancybox for WordPress, use an earlier version and they "break" with newer versions - this is me trying to be a good neighbor
+* fixed an issue where $portfolio_open_empty was not being defined for non-grid styled portfolios
+* updates made to support the changes to ShrinkTheWeb.com that removes local caching of thumbnails, which also led to not being able to display the ShrinkTheWeb.com images within a thickbox
+* corrected admin message system as it wasn't always displaying any crafted upgrade messages
 = 1.2.6 =
 * fixed an issue where the update notes were not being displayed
-* tried to harden the code that updates the database when upgrading from a version earlier than 1.2.4
+* tried to harden the code that updates the database when upgrading from a version lower than 1.2.4
 = 1.2.5 =
 * updated the image paths to use "/wp-content/... instead of the whole path URL as some hosting companies won't allow http://www in the URL args
 * enhanced plugin messaging system to be properly formatted, which also reauired updates to portfolio_admin.css
