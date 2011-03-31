@@ -126,8 +126,9 @@
 }
 .webphysiology_portfolio .portfolio_nav ul li a {
 	display: block;
-	padding: 0 4px 1px 5px;
+	padding: 2px 4px 1px 5px;
 	text-decoration: none;
+	line-height: 1.2em;
 }
 .webphysiology_portfolio .portfolio_credit {
 	margin: 0;
