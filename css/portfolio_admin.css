@@ -22,7 +22,12 @@ a.webphys_logo {
 	float: left;
 }
 .postbox .inside {
-	margin: 5px 5px;
+	margin: 5px 5px 5px 20px;
+}
+.postbox .inside h4 {
+	margin: 1.33em 1.33em .6em 0;
+	padding-bottom: .5em;
+	border-bottom: 2px solid #cccccc;
 }
 .postbox .inside label {
 	margin: 10px 0 10px 10px;

@@ -1,29 +1,18 @@
 @charset "UTF-8";
 /* CSS Document */
 
-#portfolios .portfolio_nav ul li,
-.webphysiology_portfolio .portfolio_nav ul li {
-	background: none;
-	background-color: #CC9;
-	border: 1px solid green;
-}
-#portfolios .portfolio_nav ul li.selected, #portfolios .portfolio_nav ul li:hover,
-.webphysiology_portfolio .portfolio_nav ul li.selected, .webphysiology_portfolio .portfolio_nav ul li:hover {
-	background: none;
-	background-color: #FFC;
-}
-#portfolios .portfolio_nav ul li a,
+/******************************************************************************************************
+ 
+ 2011-03-08 : removed most of the navigation elements as they are now handled by simple border
+              styling and not elements
+ 
+ NOTE:   #portfolios   has been deprecated in v1.2.7 and replaced with class   .webphysiology_portfolio
+ 
+ ******************************************************************************************************/
+
 .webphysiology_portfolio .portfolio_nav ul li a {
-	background: none;
 	padding: 1px 4px 2px 5px;
-	background-color: #CC9;
 }
-#portfolios .portfolio_nav a.selected, #portfolios .portfolio_nav a:hover,
-.webphysiology_portfolio .portfolio_nav a.selected, .webphysiology_portfolio .portfolio_nav a:hover {
-	background: none;
-	background-color: #FFC;
-}
-#portfolios #portfolio_credit,
 .webphysiology_portfolio #portfolio_credit {
 	/* The following is ignored by standards-based browsers */
 	-ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=80)";  /* IE8 */
