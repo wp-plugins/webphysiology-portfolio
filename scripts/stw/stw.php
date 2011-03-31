@@ -10,6 +10,10 @@
  * adjusted on: 2010-01-09
  * 
  * updated by: Jeff Lambert, WEBphysiology.com
+ * updated on: 2011-03-28
+ * updated   : Updates made to support the changes to ShrinkTheWeb.com that removes local caching of thumbnails (GetScaledThumbnail)
+ * 
+ * updated by: Jeff Lambert, WEBphysiology.com
  * updated on: 2010-02-23
  * updated   : enhanced code that determines if the URL passed in is an inside page or not and updated
  *             the inside page URL argument from "inside" to "stwinside" as thie former was an outdated
@@ -90,32 +94,48 @@ abstract class AppSTW {
      */
     public static function getScaledThumbnail($url, $width, $height, $args = null, $force = false) {
 		
-        $args = $args ? $args : array("width"=>$width, "height"=>$height);
-        $src = '/'.md5($url.serialize($args)).".jpg";
-        $path = dirname( __FILE__ ) . self::THUMBNAIL_DIR.$src;
-        $cutoff = time() - 3600 * 24 * self::CACHE_DAYS;
-		
-        if ( ($force || !file_exists($path) || filemtime($path) <= $cutoff) ) {
-			if ( $xlg = self::getThumbnail($url, array("stwsize"=>"xlg")) ) {
-				if ( $im = imagecreatefromjpeg($xlg) ) {
-					
-                    list($xw, $xh) = getimagesize($xlg);
-                    $scaled = imagecreatetruecolor($width, $height);
-
-                    if (imagecopyresampled($scaled, $im, 0, 0, 0, 0, $width, $height, $xw, $xh)) {
-                        imagejpeg($scaled, $path, 100);
+		if ( strtolower(get_option( 'webphysiology_portfolio_use_stw_pro' )) == "true" ) {
+			$args = $args ? $args : array("width"=>$width, "height"=>$height);
+			$src = '/'.md5($url.serialize($args)).".jpg";
+			$path = dirname( __FILE__ ) . self::THUMBNAIL_DIR.$src;
+			$cutoff = time() - 3600 * 24 * self::CACHE_DAYS;
+			
+			if ( ($force || !file_exists($path) || filemtime($path) <= $cutoff) ) {
+				if ( $xlg = self::getThumbnail($url, array("stwsize"=>"xlg")) ) {
+					if ( $im = imagecreatefromjpeg($xlg) ) {
+						
+						list($xw, $xh) = getimagesize($xlg);
+						$scaled = imagecreatetruecolor($width, $height);
+	
+						if (imagecopyresampled($scaled, $im, 0, 0, 0, 0, $width, $height, $xw, $xh)) {
+							imagejpeg($scaled, $path, 100);
+						}
 					}
-                }
+				}
 			}
+			
+			if (file_exists($path)) {
+				return plugin_dir_url(__FILE__) . substr(self::THUMBNAIL_DIR, 1) . $src;
+			}
+			
+        	return null;
+			
+		} else {
+			
+			// if user doesn't have a STW pro account
+			
+			$ak = get_option( 'webphysiology_portfolio_stw_ak' );
+			if ( !empty($ak) ) {
+				return '<script type="text/javascript">stw_pagepix("' . $url . '", "' . $ak . '", "xlg");</script>';
+			} else {
+				return null;
+			}
+			
 		}
-		
-        if (file_exists($path)) {
-			return plugin_dir_url(__FILE__) . substr(self::THUMBNAIL_DIR, 1) . $src;
-		}
-		
-        return null;
 		
     }
+	
+//	public static function getProSTWScaledThumbnail($url, $width, $height, $args = null, $force = false) {
 	
 	//  function to determine if URL is an inside page or the primary domain page
 	private static function inside_url($url) {
@@ -210,7 +230,28 @@ abstract class AppSTW {
 			curl_setopt($ch, CURLOPT_HEADER, 0);
 			curl_setopt($ch, CURLOPT_HTTPHEADER, Array("User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.15) Gecko/20080623 Firefox/2.0.0.15") );
 			$return = curl_exec($ch);
+			$info = curl_getinfo($ch);
+			$errno = curl_errno($ch);
+			$error = curl_error($ch);
 			curl_close($ch);
+			
+//			$debug = true;
+			$debug = false;
+			if ($debug) {
+				echo '<pre style=font-size:10px>';
+				unset($info["stwaccesskeyid"]);
+				unset($info["stwu"]);
+				echo 'errno: ' . $errno . '<br />';
+				echo 'error: ' . $error . '<br />';
+				print_r($info);
+				echo '</pre>';
+			} elseif ( ! empty($errno) ) {
+				echo '<pre style=font-size:10px>';
+				echo 'An error was encountered in the request to ShrinkTheWeb.com:<br />';
+				echo '    errno: ' . $errno . '<br />';
+				echo '    error: ' . $error . '<br />';
+				echo '</pre>';
+			}
 			
 		} else {
 			
