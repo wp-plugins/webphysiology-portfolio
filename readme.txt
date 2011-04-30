@@ -4,7 +4,7 @@ Donate link: http://webphysiology.com/redir/webphysiology-portfolio/donate/
 Tags: portfolio,gallery,list,grid,posts,post,custom post type,custom taxonomy,shrinktheweb,shrink the web,webphysiology
 Requires at least: 3.0.0
 Tested up to: 3.1.0
-Stable tag: 1.2.7
+Stable tag: 1.2.8
 
 Allows for the creation of an expanded-list styled or a grid-style page containing images and supporting detail, perfect for a portfolio presentation.
 
@@ -71,6 +71,9 @@ There is a conflict when running WEBphysiology Portfolio and the eCommerce plugi
 
 == Changelog ==
 
+= 1.2.8 =
+* corrected a change made in 1.2.7 where the thumbnail would not display when using a non-Pro version of ShrinkTheWeb and the image click behavior was set to open the Portfolio web page URL
+* added note to image click behavior option setting to let user know that a non-pro version of ShrinkTheWeb will always result in the image click opening the Portfolio web page URL
 = 1.2.7 =
 * added a little error handling to the ShrinkTheWeb code to throw back any errors returned when trying to get a thumbnail from STW
 * changed navigation styling to use borders and not images

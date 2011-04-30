@@ -3,7 +3,7 @@
 Plugin Name: WEBphysiology Portfolio
 Plugin URI: http://webphysiology.com/redir/webphysiology-portfolio/
 Description: Provides a clean Portfolio listing with image, details and portfolio type taxonomy.  A [portfolio] shortcode is used to include the portfolio on any page.
-Version: 1.2.7
+Version: 1.2.8
 Author: Jeff Lambert
 Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 License: GPL2
@@ -27,6 +27,8 @@ License: GPL2
 
 /*  UPDATES
 
+	1.2.8 - * corrected a change made in 1.2.7 where the thumbnail would not display when using a non-Pro version of ShrinkTheWeb and the image click behavior was set to open the Portfolio web page URL
+			* added note to image click behavior option setting to let user know that a non-pro version of ShrinkTheWeb will always result in the image click opening the Portfolio web page URL
 	1.2.7 - * pushed the fancybox jquery script down into the footer
 			* added new option to allow disabling the registering of the Google served jQuery code as other plugins, like MailChimp, has some sort of conflict otherwise
 			* added new option to allow disabling the registering of the Fancybox script as other plugins, like Fancybox for WordPress, use an earlier version and they "break" with newer versions - this is me trying to be a good neighbor
@@ -194,9 +196,9 @@ function portfolio_post_type_init()
 		'show_in_nav_menus' => true,
 		'supports' => array('title','editor','author'),
 		'register_meta_box_cb' => 'add_portfolio_metaboxes',
-		'taxonomies' => array('portfolio_type')
+		'taxonomies' => array('portfolio_type','post_tag')
 	); 
-	
+	// asterisk - added post_tag support, now I need to remove it from the Portfolio menu block
 	register_post_type('webphys_portfolio',$args);
 	
 }
@@ -1802,6 +1804,7 @@ function portfolio_plugin_page() {
 	echo '					<div class="inside">' . "\n";
 	echo '						<h4>User Interface Actions</h4>' . "\n";
 	echo '						<label for="' . $img_click_behavior . '">Image click behavior: </label><input type="radio" name="' . $img_click_behavior . '" value="litebox" ' .  $check_openlitebox . ' /> Open fullsize image in a thickbox&nbsp;&nbsp;<input type="radio" name="' . $img_click_behavior . '" value="nav2page" ' . $check_nav2page . ' /> Navigate to the portfolio web page URL<br/>' . "\n";
+	echo '						<span class="attribute_instructions">note: if you are using a non-Pro version of ShrinkTheWeb, then regardless of this setting, an image click will navigate you to the portfolio web page URL</span><br class="tallbottom"/>' . "\n";
 	echo '								<input type="checkbox" id="' . $target . '" name="' . $target . '" value="True" ' . $opt_val_target . '/><label for="' . $target . '">Open links in a new tab (target="_blank")</label><br/>' . "\n";
 	echo '						<span class="attribute_instructions">Commonly accepted practice is to NOT open links in a new tab or window</span><br class="tallbottom"/>' . "\n";
 	echo '					</div>' . "\n";
@@ -2001,14 +2004,14 @@ function get_Loop_Site_Image() {
 			$img_html = esc_attr(plugin_dir_url(__FILE__) . 'scripts/thumb/timthumb.php?src=' . $img_url . '&w=' . $opt_val_img_width . '&zc=1');
 		};
 		
-	} elseif ( ( $click_behavior == 'nav2page' ) && ( !empty($site_url) ) ) {
+	} elseif ( ( $click_behavior == 'nav2page' ) && ( ! empty($site_url) ) && ($continue == 'true') ) {
 		
 		$anchor_open = '<a href="' . $site_url . '" title="' . the_title_attribute( 'echo=0' ) . '" class="Portfolio-Link"' . $target . '>';
 		$anchor_close = '</a>';
 		$img_html = esc_attr(plugin_dir_url(__FILE__) . 'scripts/thumb/timthumb.php?src=' . $img_url . '&w=' . $opt_val_img_width . '&zc=1');
 		
-	} elseif ( ! empty($img_url) ) {
-		
+	} elseif ( ( ! empty($img_url) ) && ($continue == 'true') ) {
+				
 		$img_html = esc_attr(plugin_dir_url(__FILE__) . 'scripts/thumb/timthumb.php?src=' . $img_url . '&w=' . $opt_val_img_width . '&zc=1');
 		
 	}
