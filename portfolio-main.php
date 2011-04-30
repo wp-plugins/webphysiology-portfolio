@@ -120,7 +120,7 @@ License: GPL2
 
 // ASTERISK = make certain to update these as appropriate with new releases //
 
-define ( 'WEBPHYSIOLOGY_VERSION', '1.2.7' );
+define ( 'WEBPHYSIOLOGY_VERSION', '1.2.8' );
 define ( 'WEBPHYSIOLOGY_DB_VERSION', '3.1.0' );
 define ( 'WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE', basename($_SERVER['PHP_SELF']) );
 
