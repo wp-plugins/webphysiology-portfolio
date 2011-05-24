@@ -4,7 +4,7 @@ Donate link: http://webphysiology.com/redir/webphysiology-portfolio/donate/
 Tags: portfolio,gallery,list,grid,posts,post,custom post type,custom taxonomy,shrinktheweb,shrink the web,webphysiology
 Requires at least: 3.0.0
 Tested up to: 3.1.2
-Stable tag: 1.2.8
+Stable tag: 1.2.9
 
 Allows for the creation of an expanded-list styled or a grid-style page containing images and supporting detail, perfect for a portfolio presentation.
 
@@ -58,6 +58,10 @@ The styling behavior of the WEBphysiology Portfolio can vary from theme to theme
 
 There is a conflict when running WEBphysiology Portfolio and the eCommerce plugin.  This does not appear to be a fault of the WEBphysiology Portfolio plugin as no errors are returned for this plugin but quite a number of errors are being thrown by the eCommerce plugin.  If the image click option does not open the image, but instead navigates to the site URL, then this anomaly will not occur.
 
+= I'm getting strange error messages within the Admin Options page. =
+
+Try resetting all the options by using the "Revert to Default Values" button at the bottom of the form.
+
 == Screenshots ==
 
 1. Portfolio Page Frontend User Interface
@@ -71,6 +75,13 @@ There is a conflict when running WEBphysiology Portfolio and the eCommerce plugi
 
 == Changelog ==
 
+= 1.2.9 =
+* corrected issue where new installs were not having all of the default options set
+* fixed issue where some of the release notes were not being displayed
+* fixed issue where non-ShrinkTheWeb users were not having images displayed in a thickbox
+* added code to ensure that the image "temp" directory exists
+* added "Shortcode Values Help" to Portfolio Options Admin page
+* added to the Options Admin page some process flow charts to document the thumbnail image generation and click behavior logic flows
 = 1.2.8 =
 * corrected a change made in 1.2.7 where the thumbnail would not display when using a non-Pro version of ShrinkTheWeb and the image click behavior was set to open the Portfolio web page URL
 * added note to image click behavior option setting to let user know that a non-pro version of ShrinkTheWeb will always result in the image click opening the Portfolio web page URL
