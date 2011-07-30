@@ -8,6 +8,7 @@
 /******************************************************************************************************
  
  2011-03-08 : changed navigation styling to use borders and not images
+ 2011-07-26 : added CSS to handle positioning the Portfolio description below the meta data
  
  NOTE:   #portfolios   has been deprecated in v1.2.7 and replaced with class   .webphysiology_portfolio
  
@@ -80,6 +81,14 @@
 }
 .webphysiology_portfolio .portfolio_description {
 	margin-bottom: 10px;
+}
+.webphysiology_portfolio .portfolio_description.after_meta_data {
+	margin-top: 10px;
+	clear: both;
+}
+.webphysiology_portfolio .portfolio_description.after_meta_data p {
+	padding-top: 10px;
+	margin-bottom: 0 !important;
 }
 .webphysiology_portfolio .portfolio_meta .key {
 	float: left;

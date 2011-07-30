@@ -144,3 +144,15 @@ a.webphys_logo {
 input.webphysiology_portfolio_small_input {
 	width: 70px;
 }
+#option_alerts {
+	float: left;
+	width: 30%;
+}
+#option_comments {
+	float: left;
+	width: 70%;
+}
+#option_comments h2 {
+	padding: 0;
+	margin: -5px 0 0 0;
+}
