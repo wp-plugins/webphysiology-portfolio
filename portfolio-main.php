@@ -3,7 +3,7 @@
 Plugin Name: WEBphysiology Portfolio
 Plugin URI: http://webphysiology.com/redir/webphysiology-portfolio/
 Description: Provides a clean Portfolio listing with image, details and portfolio type taxonomy.  A [portfolio] shortcode is used to include the portfolio on any page.
-Version: 1.2.9
+Version: 1.3.0
 Author: Jeff Lambert
 Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 License: GPL2
@@ -27,6 +27,15 @@ License: GPL2
 
 /*  UPDATES
 
+	1.3.0 - * updated code so that the admin css stylesheet is only called when on the WEBphysiology Portfolios Options page
+			* removed width styling for the individual portfolio context menus on the portfolio listing
+			* added ability to place the Portfolio Description below the Portfolio Meta Data output
+			* fixed issue where Portfolio counts in the Portfolio Type listing weren't being updated
+			* deprecated the "portfolio" shortcode as it was replaced with "webphysiology_portfolio" in v1.2.4
+			* added additional Options header comments from the plugin authors
+			* removed the "Post Tags" sub-menu from the Portfolio menu block
+			* removed the "Post Tags" and "Portfolio Types" fields from within the Quick Edit area of the Portfolio Listing
+			* added inclusion of a new stylesheet for use when on the edit screen of a Portfolio
 	1.2.9 - * corrected issue where new installs were not having all of the default options set
 			* fixed issue where some of the release notes were not being displayed
 			* fixed issue where non-ShrinkTheWeb users were not having images displayed in a thickbox
@@ -126,8 +135,8 @@ License: GPL2
 
 // ASTERISK = make certain to update these as appropriate with new releases //
 
-define ( 'WEBPHYSIOLOGY_VERSION', '1.2.9' );
-define ( 'WEBPHYSIOLOGY_DB_VERSION', '3.1.0' );
+define ( 'WEBPHYSIOLOGY_VERSION', '1.3.0' );
+define ( 'WEBPHYSIOLOGY_DB_VERSION', '3.2.1' );
 define ( 'WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE', basename($_SERVER['PHP_SELF']) );
 
 //test asterisk
@@ -291,6 +300,53 @@ add_filter('query_vars', 'portfolio_queryvars' );
 add_filter('posts_join', 'portfolio_search_join' );
 add_filter('posts_where', 'portfolio_search_where' );
 
+// Manage Portfolio Types taxonomy counts
+function portfolio_type_taxonomy_count() {
+	
+	global $post_ID;
+	global $wpdb;
+	
+	$postid = wp_is_post_revision( $post_ID );
+	
+	if ( $postid == false ) {
+		$postid = $post_ID;
+	}
+	
+	$wpdb->query("	DELETE	FROM $wpdb->term_relationships
+				 	WHERE	object_id = '".$postid."'
+					AND		EXISTS (
+							SELECT	1
+							FROM	$wpdb->term_taxonomy stt
+							WHERE	stt.term_taxonomy_id = $wpdb->term_relationships.term_taxonomy_id
+							AND		stt.taxonomy = 'portfolio_type')");
+	
+	//echo $post_ID."<br />";
+	$wpdb->query("	INSERT INTO $wpdb->term_relationships (object_id, term_taxonomy_id, term_order)
+					SELECT	sp.id 'object_id',
+						(	SELECT	ssstt.term_taxonomy_id
+							FROM	$wpdb->postmeta spm INNER JOIN
+									$wpdb->terms ssst ON spm.meta_value = ssst.slug INNER JOIN
+									$wpdb->term_taxonomy ssstt ON ssst.term_id = ssstt.term_id AND ssstt.taxonomy = 'portfolio_type'
+							WHERE	spm.meta_key = '_portfolio_type'
+							AND		spm.post_id = sp.id) 'term_taxonomy_id',
+							0 'term_order'
+					FROM	$wpdb->posts sp
+					WHERE	sp.id = '".$postid."'
+					AND		sp.post_type = 'webphys_portfolio'
+					AND		NOT EXISTS (
+							SELECT	1
+							FROM	$wpdb->term_relationships str INNER JOIN
+									$wpdb->term_taxonomy stt ON str.term_taxonomy_id = stt.term_taxonomy_id AND stt.taxonomy = 'portfolio_type' INNER JOIN
+									$wpdb->terms st ON stt.term_id = st.term_id
+							WHERE	str.object_id = sp.id)");
+	
+	// update the Portfolio (Post) counts on the Portfolio Types
+	$wpdb->query("	UPDATE	$wpdb->term_taxonomy
+					SET		count = (SELECT count(ssp.id) FROM $wpdb->posts ssp INNER JOIN $wpdb->term_relationships str ON ssp.id = str.object_id WHERE ssp.post_type = 'webphys_portfolio' AND ssp.post_status = 'publish' AND str.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id)
+					WHERE	taxonomy = 'portfolio_type'");
+	
+}
+add_action('save_post', 'portfolio_type_taxonomy_count');
 
 // Define the Portfolio custom post type update messages
 function portfolio_updated_messages( $messages ) {
@@ -710,8 +766,8 @@ function clear_globals() {
 // register the Portfolio custom post type and shortcode
 add_action( 'init', 'portfolio_post_type_init' );
 add_filter('post_updated_messages', 'portfolio_updated_messages');
-add_shortcode('portfolio', 'portfolio_loop');
-add_shortcode('webphysiology_portfolio', 'portfolio_loop'); /* asterisk - remove in a later version */
+//add_shortcode('portfolio', 'portfolio_loop'); /* removed in version 1.3.0 */
+add_shortcode('webphysiology_portfolio', 'portfolio_loop');
 
 
 // define a custom Portfolio Type taxonomy and populate it
@@ -770,6 +826,7 @@ function portfolio_install() {
 		$dbver = get_option('webphysiology_portfolio_database_version');
 		if ( empty($dbver) ) { $dbver = '3.0.0'; }
 		$pluginver = get_option('webphysiology_portfolio_version');
+		
 		if ( empty($pluginver) ) { $pluginver = '1.2.3'; }
 		
 		add_option('webphysiology_portfolio_message', 'empty');
@@ -777,6 +834,7 @@ function portfolio_install() {
 		add_option("webphysiology_portfolio_database_version", WEBPHYSIOLOGY_DB_VERSION);
 		add_option("webphysiology_portfolio_display_portfolio_title", 'True'); // This is the default value for whether to display the Portfolio Title
 		add_option("webphysiology_portfolio_display_portfolio_desc", 'True'); // This is the default value for whether to display the Portfolio Description
+		add_option("webphysiology_portfolio_display_desc_first", 'True'); // This is the default value for whether to display the Portfolio Description before the meta data
 		add_option("webphysiology_portfolio_display_portfolio_type", 'True'); // This is the default value for whether to display the Portfolio Type
 		add_option("webphysiology_portfolio_display_createdate", 'True'); // This is the default value for whether to display the create date
 		add_option("webphysiology_portfolio_display_clientname", 'True'); // This is the default value for whether to display the client name
@@ -874,10 +932,35 @@ If ( is_admin() ) {
 	
 	// ASTERISK = make certain to update this with new releases //
 	// check the most recently added option, if it doesn't exist then pass down through all of them and add any that are missing
-	$return = get_option('webphysiology_portfolio_skip_jQuery_register');
+	$return = get_option('webphysiology_portfolio_display_desc_first');
 	
 	if ( empty($return) ) {
 		
+		// added in v1.3.0
+		$return = get_option('webphysiology_portfolio_display_desc_first');
+		if ( empty($return) ) {
+			add_option("webphysiology_portfolio_display_desc_first", 'True'); // This is the default value for whether to display the Portfolio Description before the meta data
+		}
+		
+		$dbver = get_option('webphysiology_portfolio_database_version');
+		
+		// if the database version isn't set then set it
+		if (empty($dbver)) {
+			// update the plugin db version to the current version
+			add_option("webphysiology_portfolio_database_version", WEBPHYSIOLOGY_DB_VERSION);
+		} else {
+			
+			if ( version_compare(WEBPHYSIOLOGY_DB_VERSION, $dbver, ">" ) ) {
+				
+				// since the current 
+				update_database();
+				
+				// update the plugin db version to the current version
+				update_option("webphysiology_portfolio_database_version", WEBPHYSIOLOGY_DB_VERSION);
+				
+			}
+		}
+
 		// added in v1.2.7
 		$return = get_option('webphysiology_portfolio_skip_jQuery_register');
 		if ( empty($return) ) {
@@ -961,6 +1044,10 @@ If ( is_admin() ) {
 		if ( empty($return) ) {
 			add_option("webphysiology_portfolio_display_portfolio_desc", 'True'); // This is the default value for whether to display the Portfolio Description
 		}
+		$return = get_option('webphysiology_portfolio_display_desc_first');
+		if ( empty($return) ) {
+			add_option("webphysiology_portfolio_display_desc_first", 'True'); // This is the default value for whether to display the Portfolio Description before the meta data
+		}
 		$return = get_option('webphysiology_portfolio_gridstyle');
 		if ( empty($return) ) {
 			add_option("webphysiology_portfolio_gridstyle", "False"); // This is the default value for whether to display the portfolio in a grid style
@@ -1018,13 +1105,18 @@ If ( is_admin() ) {
 	// if the old plugin version was earlier than the current version
 	$pluginver = get_option('webphysiology_portfolio_version');
 	if ( version_compare(WEBPHYSIOLOGY_VERSION, $pluginver, ">" ) ) {
-echo "4.25<br />";
+		
 		update_option( 'webphysiology_portfolio_version', WEBPHYSIOLOGY_VERSION );
 		if ( WEBPHYSIOLOGY_VERSION == '1.2.7' ) {
-echo "4.5<br />";
 			$x = str_replace(basename( __FILE__),"",plugin_basename(__FILE__));
 			$settings_link = '<a href="edit.php?post_type=webphys_portfolio&page=' . $x .'">' . __('Portfolio Options page','Portfolio') . '</a>';
 			$msg = 'Please read the important WEBphysiology Portfolio Version 1.2.7 Release Notes available on the ' . $settings_link ;
+			set_admin_message($msg);			
+		}
+		if ( WEBPHYSIOLOGY_VERSION == '1.3.0' ) {
+			$x = str_replace(basename( __FILE__),"",plugin_basename(__FILE__));
+			$settings_link = '<a href="edit.php?post_type=webphys_portfolio&page=' . $x .'">' . __('Portfolio Options page','Portfolio') . '</a>';
+			$msg = '<span style="color:red">Please read the important WEBphysiology Portfolio Version 1.3.0 Release Notes available on the ' . $settings_link . '</span>';
 			set_admin_message($msg);			
 		}
 	}
@@ -1045,6 +1137,7 @@ function portfolio_remove() {
 		delete_option("webphysiology_portfolio_database_version");
 		delete_option('webphysiology_portfolio_display_portfolio_title');
 		delete_option('webphysiology_portfolio_display_portfolio_desc');
+		delete_option('webphysiology_portfolio_display_desc_first');
 		delete_option('webphysiology_portfolio_display_portfolio_type');
 		delete_option('webphysiology_portfolio_display_createdate');
 		delete_option('webphysiology_portfolio_display_clientname');
@@ -1203,6 +1296,7 @@ if (is_admin()) {
 	add_action( 'admin_menu' , 'remove_post_custom_fields' );
 }
 
+
 //*************************************************//
 //******** PORTFOLIO EDIT SCREEN CODE END  ********//
 //*************************************************//
@@ -1216,7 +1310,7 @@ if (is_admin()) {
 function add_new_portfolio_columns($columns) {
 	
 	// hide the Portfolio edit screen Preview button
-	echo "\n" . '<style type="text/css" id="webphysiology_portfolio_hide_preview_css">' . "\n" . '	.row-actions { width: 120%; } ' . "\n" . '	label.inline-edit-tags { display: none !important; } ' . "\n" . '</style>' . "\n";
+//	echo "\n" . '<style type="text/css" id="webphysiology_portfolio_hide_preview_css">' . "\n" . '	.row-actions { width: 120%; } ' . "\n" . '	label.inline-edit-tags { display: none !important; } ' . "\n" . '</style>' . "\n";
 	$detail_labels = get_option( 'webphysiology_portfolio_display_labels' );
 	$type = $detail_labels["Type"];
 	$createdate = $detail_labels["Created"];
@@ -1254,12 +1348,15 @@ function add_new_portfolio_columns($columns) {
 	$new_columns['id'] = __('ID');
 
 	return $new_columns;
+	
 }
 
 
 /* Define the data retrieval arguments for the Portfolio list columns */
 function manage_portfolio_columns($column_name, $id) {
+	
 	global $wpdb;
+	
 	switch ($column_name) {
 	case '_sortorder':
 		echo get_post_meta( $id , '_sortorder' , true );
@@ -1297,10 +1394,12 @@ function manage_portfolio_columns($column_name, $id) {
 	default:
 		break;
 	} // end switch
+	
 }
 
 //removes view from portfolio list
 function remove_quick_edit( $actions ) {
+	
 	global $post;
     if( $post->post_type == 'webphys_portfolio' ) {
 //		unset($actions['inline hide-if-no-js']);
@@ -1311,8 +1410,22 @@ function remove_quick_edit( $actions ) {
 	
 }
 
+// hide the Post Tags and Portfolio Types Quick Edit fields on the Portfolio listing
+function webphysiology_portfolio_quickedit() {
+	
+	global $post;
+	
+    if( $post->post_type == 'webphys_portfolio' ) {
+		echo '<style type="text/css">';
+		echo '	.inline-edit-tags {display: none !important;}';
+		echo '</style>';
+	}
+	
+}
+
 if (is_admin()) {
 	add_filter('manage_edit-webphys_portfolio_columns', 'add_new_portfolio_columns');
+	add_action('admin_head-edit.php', 'webphysiology_portfolio_quickedit');
 	add_action('manage_posts_custom_column', 'manage_portfolio_columns', 10, 2);
 	add_filter('post_row_actions','remove_quick_edit',10,2);
 }
@@ -1340,22 +1453,38 @@ if (is_admin()) {
 //*************************************************//
 //*************************************************//
 
-
 // if the current user is an administrator
 if ( is_admin() ) {
-
-	// Add stylesheet link to the header of the Admin area
+	
 	function portfolio_admin_css() {
 		$file = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__)) . 'css/portfolio_admin.css';
 		wp_register_style('portfolio_admin_css', $file);
 		wp_enqueue_style('portfolio_admin_css');
 	}
 	
+	function portfolio_post_css() {
+		
+		global $post;
+		
+		// don't include the Portfolio Post CSS file if we aren't on the Portfolio Post edit screen
+		if (strtolower($post->post_type) == "webphys_portfolio") {
+			$file = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__)) . 'css/portfolio_post.css';
+			wp_register_style('portfolio_post_css', $file);
+			wp_enqueue_style('portfolio_post_css');
+		}
+	}
+	
 	// Add Portfolio Options menu item
 	function portolio_admin_menu() {
 		
-		add_submenu_page('edit.php?post_type=webphys_portfolio', 'WEBphysiology Portfolio Options', 'Options', 'manage_options', 'webphysiology-portfolio', 'portfolio_plugin_page' );
+		$page = add_submenu_page('edit.php?post_type=webphys_portfolio', 'WEBphysiology Portfolio Options', 'Options', 'manage_options', 'webphysiology-portfolio', 'portfolio_plugin_page' );
 		
+		/* Using registered $page handle to hook css for admin page load */
+        add_action('admin_print_styles-' . $page, 'portfolio_admin_css');
+        add_action('admin_print_styles-post.php', 'portfolio_post_css');
+
+		remove_submenu_page( 'edit.php?post_type=webphys_portfolio', 'edit-tags.php?taxonomy=post_tag&amp;post_type=webphys_portfolio' );
+
 	}
 	
 	// Add plugin Settings link
@@ -1368,7 +1497,6 @@ if ( is_admin() ) {
 	
 	$plugin = plugin_basename(__FILE__);
 	
-	add_action('init', 'portfolio_admin_css');
 	add_action('admin_menu', 'portolio_admin_menu');
 	add_filter( 'plugin_action_links_' . $plugin, 'add_plugin_settings_link' );
 	
@@ -1404,7 +1532,7 @@ if ( is_admin() ) {
 		add_action('init', 'get_colorpicker_jquery');
 		
 	}
-
+	
 }
 
 // define the Portfolio Plugin settings admin page
@@ -1429,6 +1557,7 @@ function portfolio_plugin_page() {
 	$hidden_field_name = 'webphys_submit_hidden';
 	$display_portfolio_title = 'webphysiology_portfolio_display_portfolio_title'; // default true
 	$display_portfolio_desc = 'webphysiology_portfolio_display_portfolio_desc'; // default true
+	$display_desc_first = 'webphysiology_portfolio_display_desc_first'; //default true
 	$display_portfolio_type = 'webphysiology_portfolio_display_portfolio_type'; // default true
 	$display_createdate = 'webphysiology_portfolio_display_createdate'; // default true
 	$display_clientname = 'webphysiology_portfolio_display_clientname'; // default true
@@ -1479,6 +1608,11 @@ function portfolio_plugin_page() {
 				$opt_val_display_portfolio_desc = $_POST[ $display_portfolio_desc ];
 			} else {
 				$opt_val_display_portfolio_desc = "False";
+			}
+			if ( !empty($_POST[ $display_desc_first ]) ) {
+				$opt_val_display_desc_first = $_POST[ $display_desc_first ];
+			} else {
+				$opt_val_display_desc_first = "False";
 			}
 			if ( !empty($_POST[ $display_portfolio_type ]) ) {
 				$opt_val_display_portfolio_type = $_POST[ $display_portfolio_type ];
@@ -1636,6 +1770,7 @@ function portfolio_plugin_page() {
 			// Reset to default settings
 			$opt_val_display_portfolio_title = "True";
 			$opt_val_display_portfolio_desc = "True";
+			$opt_val_display_desc_first = "True";
 			$opt_val_display_portfolio_type = "True";
 			$opt_val_display_createdate = "True";
 			$opt_val_display_clientname = "True";
@@ -1677,6 +1812,7 @@ function portfolio_plugin_page() {
 			// Save the posted value in the database
 			update_option( $display_portfolio_title, $opt_val_display_portfolio_title );
 			update_option( $display_portfolio_desc, $opt_val_display_portfolio_desc );
+			update_option( $display_desc_first, $opt_val_display_desc_first );
 			update_option( $display_portfolio_type, $opt_val_display_portfolio_type );
 			update_option( $display_createdate, $opt_val_display_createdate );
 			update_option( $display_clientname, $opt_val_display_clientname );
@@ -1719,6 +1855,7 @@ function portfolio_plugin_page() {
 		// Read in existing option value from database
 		$opt_val_display_portfolio_title = get_option( $display_portfolio_title );
 		$opt_val_display_portfolio_desc = get_option( $display_portfolio_desc );
+		$opt_val_display_desc_first = get_option( $display_desc_first );
 		$opt_val_display_portfolio_type = get_option( $display_portfolio_type );
 		$opt_val_display_createdate = get_option( $display_createdate );
 		$opt_val_display_clientname = get_option( $display_clientname );
@@ -1755,6 +1892,7 @@ function portfolio_plugin_page() {
 	
 	if ($opt_val_display_portfolio_title=="True" ) {$opt_val_display_portfolio_title="checked";}
 	if ($opt_val_display_portfolio_desc=="True" ) {$opt_val_display_portfolio_desc="checked";}
+	if ($opt_val_display_desc_first=="True" ) {$opt_val_display_desc_first="checked";}
 	if ($opt_val_display_portfolio_type=="True" ) {$opt_val_display_portfolio_type="checked";}
 	if ($opt_val_display_createdate=="True" ) {$opt_val_display_createdate="checked";}
 	if ($opt_val_display_clientname=="True" ) {$opt_val_display_clientname="checked";}
@@ -1788,18 +1926,33 @@ function portfolio_plugin_page() {
 	echo '				<input type="hidden" name="' . $hidden_field_name . '" value="Y">' . "\n";
 	echo '				<input type="hidden" name="page_options" value="WEBphysiology_portolio_plugin_data" />' . "\n";
 	echo '				<input type="hidden" value="' . get_option('version') . '" name="version"/>' . "\n";
-	echo portfolio_admin_section_wrap('top', 'Portfolio Release Notes&nbsp;&nbsp;|&nbsp;&nbsp;installed version = ' . get_option('webphysiology_portfolio_version'), ' style="padding: 10px 10px;"');
-	
+	echo portfolio_admin_section_wrap('top', 'Portfolio Release Notes&nbsp;&nbsp;|&nbsp;&nbsp;installed version = ' . get_option('webphysiology_portfolio_version'), ' style="padding: 10px 10px; overflow: hidden;"');
+	echo "				<div id='option_alerts'>";
 	echo portfolio_version_alert(WEBPHYSIOLOGY_VERSION, True);
+//asterisk	echo portfolio_version_alert('1.3.0', True);
 	echo portfolio_version_alert('1.2.7', True);
 	echo portfolio_version_alert('1.2.4', True);
 	echo portfolio_version_alert('shortcode', False);
-	
+	echo portfolio_version_alert('release_notes', False);
+	echo "				</div>";
+	echo "				<div id='option_comments'>";
+	echo "					<h2>WEBphysiology Portfolio</h2>";
+	echo "					<p>Thank you for using the WEBphysiology Portfolio plugin.  We feel it has a lot of versatility but, like anything, there always is room for improvement.  While our resources are limited, we still welcome your input on new feature suggetions.  Just leave a comment on our <a href='http://refr.us/wpport' title='WEBphysiology Portfolio Plugin Page' target='_blank'>plugin page</a>.  This page also covers the many features, so, we ask that you please review the materials provided before reaching out for help.  If you have the budget, and want something more, just <a href='http://WEBphysiology.com/contact/' title='Contact WEBphysiology' target='_blank'>give us a shout</a>.</p>";
+	echo "					<p>Should you have issues of a techincal nature that require assistance, please request help via our <a href='http://refr.us/wphelp' title='WEBphysiology Online Support' target='_blank'>Online Support</a> facility.</p>";
+	echo "					<p style='margin-bottom: 0;'><strong>Release 1.3.0</strong> : With this release you now have the ability to position the Portfolio description below the Portfolio Meta Data.  To do this just un-check the &quot;Display portfolio description before Portfolio meta fields&quot; checkbox to the right of &quot;Display portfolio description&quot; within the &quot;Labeling & Data Display&quot; section.</p>";
+	echo "				</div>";
 	echo portfolio_admin_section_wrap('bottom', null, null);
 	echo portfolio_admin_section_wrap('top', 'Portfolio Display Settings', null);
 	echo '						<h4>Labeling &amp; Data Display</h4>' . "\n";
 	echo '						<input type="checkbox" id="' . $display_portfolio_title . '" name="' . $display_portfolio_title . '" value="True" ' . $opt_val_display_portfolio_title . '/><label for="' . $display_portfolio_title . '">Display portfolio title</label><br/>' . "\n";
+	echo '						<div class="display_and_label">' . "\n";
+	echo '							<div class="display_attrib">' . "\n";
 	echo '						<input type="checkbox" id="' . $display_portfolio_desc . '" name="' . $display_portfolio_desc . '" value="True" ' . $opt_val_display_portfolio_desc . '/><label for="' . $display_portfolio_desc . '">Display portfolio description</label><br />' . "\n";
+	echo '							</div>' . "\n";
+	echo '							<div class="label_attrib">' . "\n";
+	echo '						<input type="checkbox" id="' . $display_desc_first . '" name="' . $display_desc_first . '" value="True" ' . $opt_val_display_desc_first . '/><label for="' . $display_desc_first . '">Display portfolio description before Portfolio meta fields</label><br />' . "\n";
+	echo '							</div>' . "\n";
+	echo '						</div>' . "\n";
 	echo '						<div class="display_and_label">' . "\n";
 	echo '							<div class="display_attrib">' . "\n";
 	echo '								<input type="checkbox" id="' . $display_portfolio_type . '" name="' . $display_portfolio_type . '" value="True" ' . $opt_val_display_portfolio_type . '/><label for="' . $display_portfolio_type . '">Display portfolio type</label><br/>' . "\n";
@@ -2722,6 +2875,8 @@ function update_database() {
 	
 	global $wpdb;
 	
+	if ( ! is_admin() ) { exit; }
+	
 	// if this version of WEBphysiology Portfolio is using the 3.1.0 db version or better
 	if ( version_compare(WEBPHYSIOLOGY_DB_VERSION, '3.1.0', '>=') ) {
 		
@@ -2740,6 +2895,34 @@ function update_database() {
 			set_admin_message($msg);
 			
 		}
+	}
+	
+	// if this version of WEBphysiology Portfolio is using the 3.2.1 db version or better
+	if ( version_compare(WEBPHYSIOLOGY_DB_VERSION, '3.2.1', '>=') ) {
+		
+		/* Insert missing Portfolio | Portfolio Types into the Term Relationship table */
+		$wpdb->query("	INSERT INTO $wpdb->term_relationships (object_id, term_taxonomy_id, term_order)
+						SELECT	sp.id 'object_id',
+							(	SELECT	ssstt.term_taxonomy_id
+								FROM	$wpdb->postmeta spm INNER JOIN
+										$wpdb->terms ssst ON spm.meta_value = ssst.slug INNER JOIN
+										$wpdb->term_taxonomy ssstt ON ssst.term_id = ssstt.term_id AND ssstt.taxonomy = 'portfolio_type'
+								WHERE	spm.meta_key = '_portfolio_type'
+								AND		spm.post_id = sp.id) 'term_taxonomy_id',
+								0 'term_order'
+						FROM	$wpdb->posts sp
+						WHERE	sp.post_type = 'webphys_portfolio'
+						AND		NOT EXISTS (
+								SELECT	1
+								FROM	$wpdb->term_relationships str INNER JOIN
+										$wpdb->term_taxonomy stt ON str.term_taxonomy_id = stt.term_taxonomy_id AND stt.taxonomy = 'portfolio_type' INNER JOIN
+										$wpdb->terms st ON stt.term_id = st.term_id
+								WHERE	str.object_id = sp.id)");
+		
+		// update the Portfolio (Post) counts on the Portfolio Types
+		$wpdb->query("	UPDATE	$wpdb->term_taxonomy
+						SET		count = (SELECT count(ssp.id) FROM $wpdb->posts ssp INNER JOIN $wpdb->term_relationships str ON ssp.id = str.object_id WHERE ssp.post_type = 'webphys_portfolio' AND ssp.post_status = 'publish' AND str.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id)
+						WHERE	taxonomy = 'portfolio_type'");
 		
 	}
 }
@@ -2764,7 +2947,21 @@ function portfolio_version_alert($alert_ver,$spacer) {
 	$html = "";
 	$space = False;
 	
-	if ( $alert_ver == '1.2.7' ) {
+	if ( $alert_ver == '1.3.0' ) {
+		
+		$html .= '		<a class="alert_text" href="#v130_notes">IMPORTANT Version 1.3.0 release notes</a>' . "\n";
+		$html .= '		<div style="display: none;">' . "\n";
+		$html .= '			<div id="v130_notes" >' . "\n";
+		$html .= '				<h3 style="font-size:1.4em;text-align: center;">WEBphysiology Portfolio Plugin - Version 1.3.0 Release Notifications</h3>' . "\n";
+		$html .= '				<p style="font-weight:bold; color:red;text-align:center;">!!! PLEASE NOTE - YOU NEED TO BE AWARE OF A SHORTCODE CHANGE !!!<br />Announced Shortcode Deprecation Enforced in this Release</p>' . "\n";
+		$html .= '				<p>The support for the &#91;Portfolio&#93; shortcode has been removed in this release.  The only supported shortcode for this plugin is &#91;webphysiology_portfolio&#93;.</p>' . "\n";
+		$html .= '				<p>For a complete list of changes refer to the Readme.txt file in the WEBphysiology Portfolio plugin directory or the Change Log on the <a href="http://refr.us/wpport" target="_blank">WEBphysiology Portfolio</a> page.</p>' . "\n";
+		$html .= "			</div>" . "\n";
+		$html .= "		</div>" . "\n";
+		
+		$space = $spacer;
+		
+	} elseif ( $alert_ver == '1.2.7' ) {
 		
 		$html .= '		<a class="alert_text" href="#v127_notes">IMPORTANT Version 1.2.7 release notes</a>' . "\n";
 		$html .= '		<div style="display: none;">' . "\n";
@@ -2815,7 +3012,12 @@ function portfolio_version_alert($alert_ver,$spacer) {
 		
 	} elseif ( $alert_ver == 'shortcode' ) {
 		
-		$html .= '		<a class="iframe_msg" href="' . plugin_dir_url(__FILE__) . 'shortcode_help.html">Shortcode Values Help</a>' . "\n";		
+		$html .= '		<div style="margin-bottom: 10px;"><a class="iframe_msg" href="' . plugin_dir_url(__FILE__) . 'shortcode_help.html">Shortcode Help</a></div>' . "\n";		
+		$space = $spacer;
+		
+	} elseif ( $alert_ver == 'release_notes' ) {
+		
+		$html .= '		<div><a href="http://webphysiology.com/plugins/webphysiology-portfolio-plugin/#updates" title="WEBphysiology Portfolio Release Notes" target="_blank">All Release Notes</a></div>' . "\n";		
 		$space = $spacer;
 		
 	}

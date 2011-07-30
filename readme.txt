@@ -3,8 +3,8 @@ Contributors: lambje
 Donate link: http://webphysiology.com/redir/webphysiology-portfolio/donate/
 Tags: portfolio,gallery,list,grid,posts,post,custom post type,custom taxonomy,shrinktheweb,shrink the web,webphysiology
 Requires at least: 3.0.0
-Tested up to: 3.1.2
-Stable tag: 1.2.9
+Tested up to: 3.2.1
+Stable tag: 1.3.0
 
 Allows for the creation of an expanded-list styled or a grid-style page containing images and supporting detail, perfect for a portfolio presentation.
 
@@ -14,7 +14,7 @@ The WEBphysiology Portfolio plugin was built to provide a clean, current look in
 
 The plugin utilizes a Custom Post Type as well as a Custom Taxonomy. It provides a Settings page for specifying some customizable options, like the number of entries to display per page. It also allows one to turn off the provided CSS in place of implementing their own.
 
-The Portfolio entry screen is highly customized to include just the items that make up a Portfolio entry. Attributes that aren‚Äôt populated will not be displayed on the end user interface. Attaching an image to a Portfolio entry also has been made relatively painless.  With the release of version 1.2.0, the ability to utilize ShrinkTheWeb.com has been added.
+The Portfolio entry screen is highly customized to include just the items that make up a Portfolio entry. Attributes that aren't populated will not be displayed on the end user interface. Attaching an image to a Portfolio entry also has been made relatively painless.  With the release of version 1.2.0, the ability to utilize ShrinkTheWeb.com has been added.
 
 The end user interface can be adjusted using the Portfolio (Admin) Settings values or via your own CSS. It also incorporates the TimThumb.php code in order to scale the images displayed in the portfolio. The benefit here is to decrease the page weight while maintaining an acceptable quality image, plus the fact that you only need to load one image for use in the portfolio thumbnail and expanded view.  Managing how things work within the end user interface is very customizable. Images can come from a saved image or from ShrinkTheWeb.com, clicking an image can open it up in a thickbox or it can take you to the supplied website URL....
 
@@ -33,6 +33,8 @@ This section describes how to install the plugin and get it working.
 = Specifying a 'portfolio_type' in the shortcode is not working. Why? =
 
 Double-check that the code you are specifying is the correct one.  For example, if you've used the same Portfolio Type as a Tag, chances are the slug on your portfolio type had a number appended, even though you didn't type it in when you added the type.
+
+Another cause is that sometimes, when you add the shortcode in the Visual editor, it formats the entry. If this happens then the plugin is unable to parse out the various components. The easiest way to see if this is happening is to flip to HTML editor mode and see if there are tags around any of the elements within the shortcode (e.g., <strong>, <em>).  While in the HTML editor, remove any open and close formatting tags that are found or remove the formatting while in the Visual editor screen.
 
 = Where can I get more details on using this plugin? =
 
@@ -75,6 +77,18 @@ Try resetting all the options by using the "Revert to Default Values" button at 
 
 == Changelog ==
 
+= 1.3.0 =
+* added ability to place the Portfolio Description below the Portfolio Meta Data output
+* fixed issue where Portfolio counts in the Portfolio Type listing weren't being updated
+* deprecated the "portfolio" shortcode as it was replaced with "webphysiology_portfolio" in v1.2.4
+* added CSS to handle positioning the Portfolio description below the meta data
+* updated code so that the admin css stylesheet is only called when on the WEBphysiology Portfolios Options page
+* removed width styling for the individual portfolio context menus on the portfolio listing
+* added additional Options header comments from the plugin authors
+* removed the "Post Tags" sub-menu from the Portfolio menu block
+* removed the "Post Tags" and "Portfolio Types" fields from within the Quick Edit area of the Portfolio Listing
+* added inclusion of a new stylesheet for use when on the edit screen of a Portfolio
+* added new CSS file: "css\portfolio_post.css"
 = 1.2.9 =
 * corrected issue where new installs were not having all of the default options set
 * fixed issue where some of the release notes were not being displayed

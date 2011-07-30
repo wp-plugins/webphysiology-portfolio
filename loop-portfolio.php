@@ -8,7 +8,8 @@
  */
 
 /*  UPDATES
-
+get_Loop_Site_Image
+	1.3.0 - implemented new option that allows for positioning the Portfolio description after the Portfolio meta data
 	1.2.7 - fixed an issue where $portfolio_open_empty was not being defined for non-grid styled portfolios
 	1.2.4 - exchanged per page code that was grabbing the per page option to using the global var for the per page portfolio count defined in portfolio-main.php
 	      - updated the custom post type from "Portfolio" to "webphys_portfolio" because v3.1 doesn't like caps and also to avoid contention with other plugins
@@ -42,6 +43,7 @@ global $display_the_credit;
 
 $display_portfolio_title = get_option( 'webphysiology_portfolio_display_portfolio_title' );
 $display_portfolio_desc = get_option( 'webphysiology_portfolio_display_portfolio_desc' );
+$display_desc_first = get_option( 'webphysiology_portfolio_display_desc_first' );
 $display_portfolio_type = get_option( 'webphysiology_portfolio_display_portfolio_type' );
 $display_created_on = get_option( 'webphysiology_portfolio_display_createdate' );
 $display_clientname = get_option( 'webphysiology_portfolio_display_clientname' );
@@ -183,7 +185,7 @@ if ( $loop->have_posts() ) {
 		$portfolio_output .= '        </div><!-- .entry-meta -->';
 	}
 	
-	if ( !empty($description) ) {
+	if ( (!empty($description)) && ($display_desc_first == 'True') ) {
 		$description = apply_filters('the_content', $description);
 		$description = str_replace(']]>', ']]>', $description);
 		$portfolio_output .= '            <div class="portfolio_description"><div class="value">' . $description . '</div></div>';
@@ -213,6 +215,11 @@ if ( $loop->have_posts() ) {
 	$portfolio_output .= '            ' . wp_link_pages( array( 'before' => '<div class="page-link">' . __( 'Pages:', 'webphysiology_portfolio' ), 'after' => '</div>' ) );
 	if ($gridstyle != 'True') {
 		$portfolio_output .= '        </div>';
+	}
+	if ( (!empty($description)) && ($display_desc_first != 'True') ) {
+		$description = apply_filters('the_content', $description);
+		$description = str_replace(']]>', ']]>', $description);
+		$portfolio_output .= '            <div class="portfolio_description after_meta_data"><div class="value">' . $description . '</div></div>';
 	}
 	$portfolio_output .= '    </div>';
 	
