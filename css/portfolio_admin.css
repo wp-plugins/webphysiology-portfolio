@@ -41,28 +41,6 @@ a.webphys_logo {
 .wrap .updated, .wrap .error {
 	margin-top: 25px !important;
 }
-.webphys_portfolio_message {
-	margin: 25px 45px 25px 15px;
-	padding: 0 10px 0 20px;
-	width: auto;
-	background-color: #FFEBE8;
-	border: 1px solid #CC0000;
-	border-radius: 3px;
-	-moz-border-radius: 3px;
-}
-.webphys_portfolio_message p {
-	font-size: 1.2em;
-	line-height: 1.5em;
-	font-weight: bold;
-}
-.webphys_portfolio_message a {
-	background: none;
-	margin: 0;
-	padding: 0;
-	float: none;
-	width: auto;
-	height: auto;
-}
 .msg_hidden {
 	display: none;
 }
@@ -85,6 +63,13 @@ a.webphys_logo {
 #portolio-conf .portfolio_button {
 	float: left;
 	padding: 0 0 0 10px;
+}
+#portolio-conf .portfolio_button.top {
+	position: absolute;
+	right: 45px;
+	z-index: 999;
+	margin-top: 3px;
+	padding: 0;
 }
 #pluginsettings {
 	margin-bottom: 10px;
@@ -115,6 +100,7 @@ a.webphys_logo {
 #colorselector {
 	text-align: center;
 	margin-bottom: 2px;
+	margin-left: 28px;
 }
 .half_input {
 	width: 50%;
@@ -150,9 +136,35 @@ input.webphysiology_portfolio_small_input {
 }
 #option_comments {
 	float: left;
-	width: 70%;
+	width: 65%;
+	border-left: solid 1px #cccccc;
+	padding-left: 35px;
 }
 #option_comments h2 {
 	padding: 0;
 	margin: -5px 0 0 0;
+}
+#port_option_donate {
+	position: absolute;
+	right: 35px;
+	margin: -2px 0 0 0;
+	padding: 0;
+	height: 40px;
+	z-index: 999;
+}
+#show-clear-response {
+	margin: -32px 0 25px 170px;
+	padding: 5px 5px;
+	text-align: center;
+	width: 140px;
+	background-color: #FF9;
+}
+.ajax_status {
+	margin: 0;
+}
+.ShowAjaxContent {
+	display: block;
+}
+.HideAjaxContent {
+	display: none;
 }
