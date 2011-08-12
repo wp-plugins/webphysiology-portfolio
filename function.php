@@ -1721,7 +1721,7 @@ function portfolio_version_alert($alert_ver,$spacer) {
 			$html .= '		<div style="display: none;">' . "\n";
 			$html .= '			<div id="v131_notes" >' . "\n";
 			$html .= '				<h3 style="font-size:1.4em;text-align: center;">WEBphysiology Portfolio Plugin - Version 1.3.1 Release Notifications</h3>' . "\n";
-			$html .= '				<ol><li>The default "Allowed Image Sites" have been stripped for security purposes. This means if you host any of your portfolio images on flickr.com, picasa.com, blogger.com, wordpress.com or img.youtube.com, you likely will need to add them back into the "Allowed Image Sites" field in Portfolio Options.  You only should list those domains where you actually host images.</li></ol>' . "\n";
+			$html .= '				<ol><li>Do to a <a href="http://ma.tt/2011/08/the-timthumb-saga/" title="TimThumb Zero Day Security Vulnerability">security issue with the TimThumb</a> image resizing (PHP) plugin utilized in this WordPress plugin, this release was pushed out quickly on the heals of the v1.3.0 release.  This release incorporates TimThumb 2.0.</li><li>The default "Allowed Image Sites" have been stripped for security purposes. This means if you host any of your portfolio images on flickr.com, picasa.com, blogger.com, wordpress.com or img.youtube.com, you likely will need to add them back into the "Allowed Image Sites" field in Portfolio Options.  You only should list those domains where you actually host images.</li></ol>' . "\n";
 			$html .= '				<p>For a complete list of changes refer to the Readme.txt file in the WEBphysiology Portfolio plugin directory or the Change Log on the <a href="http://refr.us/wpport" target="_blank">WEBphysiology Portfolio</a> page.</p>' . "\n";
 			$html .= "			</div>" . "\n";
 			$html .= "		</div>" . "\n";
