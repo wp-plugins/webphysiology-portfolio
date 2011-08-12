@@ -1642,10 +1642,12 @@ function webphysiology_portfolio_quickedit() {
 	
 	global $post;
 	
-    if( $post->post_type == 'webphys_portfolio' ) {
-		echo '<style type="text/css">';
-		echo '	.inline-edit-tags {display: none !important;}';
-		echo '</style>';
+	if ( is_object($post) ) {
+	    if ( $post->post_type == 'webphys_portfolio' ) {
+			echo '<style type="text/css">';
+			echo '	.inline-edit-tags {display: none !important;}';
+			echo '</style>';
+		}
 	}
 	
 }
