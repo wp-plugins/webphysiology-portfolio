@@ -8,7 +8,7 @@
  */
 
 /*  UPDATES
-get_Loop_Site_Image
+
 	1.3.0 - implemented new option that allows for positioning the Portfolio description after the Portfolio meta data
 	1.2.7 - fixed an issue where $portfolio_open_empty was not being defined for non-grid styled portfolios
 	1.2.4 - exchanged per page code that was grabbing the per page option to using the global var for the per page portfolio count defined in portfolio-main.php

@@ -4,19 +4,19 @@ Donate link: http://webphysiology.com/redir/webphysiology-portfolio/donate/
 Tags: portfolio,gallery,list,grid,posts,post,custom post type,custom taxonomy,shrinktheweb,shrink the web,webphysiology
 Requires at least: 3.0.0
 Tested up to: 3.2.1
-Stable tag: 1.3.0
+Stable tag: 1.3.1
 
-Allows for the creation of an expanded-list styled or a grid-style page containing images and supporting detail, perfect for a portfolio presentation.
+Allows for the creation of an expanded-list styled or a grid-styled page containing images and supporting detail, perfect for a portfolio presentation.
 
 == Description ==
 
-The WEBphysiology Portfolio plugin was built to provide a clean, current look in situations where an expanded list-style or grid-style portfolio layout is appropriate. The plugin is implemented via a [shortcode] that supports specifying one-or-more portfolio types, all portfolio types, all but specifically excluded portfolio types or any combination of portfolio types to include or exclude.
+The WEBphysiology Portfolio plugin was built to provide a clean, current look in situations where an expanded list-style or grid-style portfolio layout is appropriate. The plugin is implemented via a [shortcode] that supports the display of all, one-or-more or all less one-or-more portfolio types.  More than one shortcode can be used on a given page, allowing for separating portfolio records between these instances.
 
-The plugin utilizes a Custom Post Type as well as a Custom Taxonomy. It provides a Settings page for specifying some customizable options, like the number of entries to display per page. It also allows one to turn off the provided CSS in place of implementing their own.
+The plugin utilizes a Custom Post Type as well as a Custom Taxonomy. It provides an Options page for specifying some customizable settings, like the number of entries to display per page. It also allows one to turn off the provided CSS in place of implementing their own and a lot more.
 
-The Portfolio entry screen is highly customized to include just the items that make up a Portfolio entry. Attributes that aren't populated will not be displayed on the end user interface. Attaching an image to a Portfolio entry also has been made relatively painless.  With the release of version 1.2.0, the ability to utilize ShrinkTheWeb.com has been added.
+The Portfolio entry screen is highly customized to include just the items that make up a Portfolio entry. Attributes that aren't populated will not be displayed on the end user interface. Attaching an image to a Portfolio entry also has been made relatively painless.  With the release of version 1.2.0, the ability to utilize ShrinkTheWeb.com has been included.
 
-The end user interface can be adjusted using the Portfolio (Admin) Settings values or via your own CSS. It also incorporates the TimThumb.php code in order to scale the images displayed in the portfolio. The benefit here is to decrease the page weight while maintaining an acceptable quality image, plus the fact that you only need to load one image for use in the portfolio thumbnail and expanded view.  Managing how things work within the end user interface is very customizable. Images can come from a saved image or from ShrinkTheWeb.com, clicking an image can open it up in a thickbox or it can take you to the supplied website URL....
+The end user interface can be adjusted using the Portfolio (Admin) Options values or via your own CSS. It also incorporates the TimThumb 2.0 code in order to scale the images displayed in the portfolio. The benefit here is to decrease the page weight while maintaining an acceptable quality image, plus the fact that you only need to load one image for use in the portfolio thumbnail and expanded view.  Managing how things work within the end user interface is very customizable. Images can come from a saved image or from ShrinkTheWeb.com, clicking an image can open it up in a thickbox or it can take you to the supplied website URL....  The plugin also supports video media types.
 
 == Installation ==
 
@@ -34,7 +34,7 @@ This section describes how to install the plugin and get it working.
 
 Double-check that the code you are specifying is the correct one.  For example, if you've used the same Portfolio Type as a Tag, chances are the slug on your portfolio type had a number appended, even though you didn't type it in when you added the type.
 
-Another cause is that sometimes, when you add the shortcode in the Visual editor, it formats the entry. If this happens then the plugin is unable to parse out the various components. The easiest way to see if this is happening is to flip to HTML editor mode and see if there are tags around any of the elements within the shortcode (e.g., <strong>, <em>).  While in the HTML editor, remove any open and close formatting tags that are found or remove the formatting while in the Visual editor screen.
+Another cause is that sometimes, when you add the shortcode in the Visual editor, it formats the entry, especially if you've copied and pasted. If this happens then the plugin is unable to parse out the various components. The easiest way to see if this is happening is to flip to HTML editor mode and see if there are tags around any of the elements within the shortcode (e.g., &lt;strong&gt;, &lt;em&gt;).  While in the HTML editor, remove any open and close formatting tags that are found or remove the formatting while in the Visual editor screen.
 
 = Where can I get more details on using this plugin? =
 
@@ -42,25 +42,21 @@ More detailed information can be found here: http://webphysiology.com/plugins/we
 
 = How can I get support? =
 
-My intention, at a minimum, is to maintain this plugin such that it is defect free.  For more info visit our <a href="http://webphysiology.com/plugins/webphysiology-portfolio-plugin/">WEBphysiology Portfolio plugin page</a>.  If after reviewing the details here, and perhaps checking out the videos, you still aren't finding the answer you're looking for, use our support system to log a ticket.
+My intention, at a minimum, is to maintain this plugin such that it is defect free.  For more info visit our <a href="http://webphysiology.com/plugins/webphysiology-portfolio-plugin/">WEBphysiology Portfolio plugin page</a>.  If after reviewing the details here, and perhaps checking out the videos, you still aren't finding the answer you're looking for, use our <a href="http://webphysiology.com/helpdesk/" title="WEBphysiology Help Desk">support system</a> to log a ticket.
 
 = The website URL I've specified is not being displayed as the ShrinkTheWeb.com generated thumbnail =
 
 If you are specifying an inside page within your URL, then you must specifically subscribe to that level of service on your ShrinkTheWeb.com account.
 
-= I get a "File Not Found" error when I try and install from WordPress plugin area =
-
-This happens on occasion.  Running the install a second time typically results in a successful install.
-
 = The styling of my Portfolio is not reflecting the changes I made in the Portfolio options.  Why? =
 
-The styling behavior of the WEBphysiology Portfolio can vary from theme to theme.  The reason for this is that the theme's styling can trump the Portfolio's styling depending upon where the styling of one or the other falls within the styling hierarchy.  If this is happening you'll have to adjust your theme's styling to allow for the portfolio's styling to work.
+The styling behavior of the WEBphysiology Portfolio can vary from theme to theme.  The reason for this is that the theme's styling can trump the Portfolio's styling depending upon where the styling of one or the other falls within the styling hierarchy.  If this is happening you'll have to adjust your theme's styling or add additional styling to allow for the portfolio's styling to work.
 
 = When I close the image pop-up thickbox I still see an animated loading image. =
 
-There is a conflict when running WEBphysiology Portfolio and the eCommerce plugin.  This does not appear to be a fault of the WEBphysiology Portfolio plugin as no errors are returned for this plugin but quite a number of errors are being thrown by the eCommerce plugin.  If the image click option does not open the image, but instead navigates to the site URL, then this anomaly will not occur.
+*** This may not be an issue any longer but has not been tested in quite awhile ***<br />There is a conflict when running WEBphysiology Portfolio and the eCommerce plugin.  This does not appear to be a fault of the WEBphysiology Portfolio plugin as no errors are returned for this plugin but quite a number of errors are being thrown by the eCommerce plugin.  If the image click option does not open the image, but instead navigates to the site URL, then this anomaly will not occur.
 
-= I'm getting strange error messages within the Admin Options page. =
+= I'm getting strange error messages within the Portfolio Options page. =
 
 Try resetting all the options by using the "Revert to Default Values" button at the bottom of the form.
 
@@ -76,6 +72,17 @@ Try resetting all the options by using the "Revert to Default Values" button at 
 = 1.0.0 is the initial release =
 
 == Changelog ==
+
+= 1.3.1 =
+* removed deprecated #portfolios ID from embedded stylesheet; was overlooked in version 1.2.7 when the stylesheet was updated
+* updated file_loader.js script to allow a user to insert media into the content area of the portfolio
+* adjusted code to try and further reduce the <head> overhead on pages when not in Admin
+* changed default "isAllowed" sites to not specify any original out-of-the-box sites and require users to enter the sites so they are fully in control
+* renamed "thumb/timthumb.php" and updated to the new 2.0 version
+* separated out functions and consolidated all code that deals with Admin areas. the functions are now in a separate function.php file
+* further targeted query adjustments to touch only WEBphysiology Portfolio queries
+* added a button for clearing all image caches (temp, stw/cache, timthumb/cache)
+* added second save and donate button to the top of the Portfolio Options admin page
 
 = 1.3.0 =
 * added ability to place the Portfolio Description below the Portfolio Meta Data output
@@ -190,10 +197,8 @@ Try resetting all the options by using the "Revert to Default Values" button at 
 
 == Support ==
 
-NOTE: The [portfolio] shortcode will be replaced with [webphysiology_portfolio] in a later release.  [webphysiology_portfolio] is available with release 1.2.4
+NOTE: SHORTCODE DEPRECATION ALERT: The [portfolio] shortcode was replaced with [webphysiology_portfolio] in version 1.3.0
 
-NOTE: CSS DEPRECATION ALERT: The "portfolios" element ID will be deprecated in a later release.  CSS for the Class "webphysiology_portfolio" has been added in version 1.2.0 to replace the ID CSS.
-
-NOTE: If you get a "File Not Found" during installation from the WordPress site, simply run the installation again.
+NOTE: CSS DEPRECATION ALERT: The "portfolios" element ID was be deprecated in version 1.2.7
 
 I will do my best to correct any reported defects as soon as I can make time, but please understand that this is side work. That said, I also use this plugin and am keen to ensure it provides the intended functionality. As to requests for enhancements, feel free to make these. I'll do my best to respond to your requests and, for those requests that I feel would benefit the majority of users, I'll get them on the enhancement list. I can't say just how quickly these would be implemented but funding the request would definitely move it up in the queue.
