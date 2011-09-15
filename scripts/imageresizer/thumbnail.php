@@ -20,11 +20,7 @@
 	a new version of timthumb.
 
 */
-
-// http://markmaunder.com/2011/wordthumb-is-now-timthumb-2-0/
-
-
-define ('VERSION', '2.7');										// Version of this script 
+define ('VERSION', '2.8');										// Version of this script 
 //Load a config file if it exists. Otherwise, use the values below.
 if( file_exists('timthumb-config.php')) 	require_once('timthumb-config.php');
 if(! defined( 'DEBUG_ON' ) ) 			define ('DEBUG_ON', false);				// Enable debug logging to web server error log (STDERR)
@@ -204,6 +200,8 @@ class timthumb {
 			return false;
 		}
 		if(BLOCK_EXTERNAL_LEECHERS && array_key_exists('HTTP_REFERER', $_SERVER) && (! preg_match('/^https?:\/\/(?:www\.)?' . $this->myHost . '(?:$|\/)/i', $_SERVER['HTTP_REFERER']))){
+			// base64 encoded red image that says 'no hotlinkers'
+			// nothing to worry about! :)
 			$imgData = base64_decode("R0lGODlhUAAMAIAAAP8AAP///yH5BAAHAP8ALAAAAABQAAwAAAJpjI+py+0Po5y0OgAMjjv01YUZ\nOGplhWXfNa6JCLnWkXplrcBmW+spbwvaVr/cDyg7IoFC2KbYVC2NQ5MQ4ZNao9Ynzjl9ScNYpneb\nDULB3RP6JuPuaGfuuV4fumf8PuvqFyhYtjdoeFgAADs=");
 			header('Content-Type: image/gif');
 			header('Content-Length: ' . sizeof($imgData));
@@ -702,7 +700,7 @@ class timthumb {
 
 		}
 		//Straight from Wordpress core code. Reduces filesize by up to 70% for PNG's
-		if ( (IMAGETYPE_PNG == $origType || IMAGETYPE_GIF == $origType) && function_exists('imageistruecolor') && !imageistruecolor( $image ) ){
+		if ( (IMAGETYPE_PNG == $origType || IMAGETYPE_GIF == $origType) && function_exists('imageistruecolor') && !imageistruecolor( $image ) && imagecolortransparent( $image ) > 0 ){
 			imagetruecolortopalette( $canvas, false, imagecolorstotal( $image ) );
 		}
 
@@ -787,6 +785,7 @@ class timthumb {
 		}
 		$this->debug(3, "Done image replace with security header. Cleaning up and running cleanCache()");
 		imagedestroy($canvas);
+		imagedestroy($image);
 		return true;
 	}
 	protected function calcDocRoot(){
@@ -992,6 +991,12 @@ class timthumb {
 		}
 	}
 	protected function sendImageHeaders($mimeType, $dataSize){
+		if(! preg_match('/^image\//i', $mimeType)){
+			$mimeType = 'image/' . $mimeType;
+		}
+		if(strtolower($mimeType) == 'image/jpg'){
+			$mimeType = 'image/jpeg';
+		}
 		$gmdate_expires = gmdate ('D, d M Y H:i:s', strtotime ('now +10 days')) . ' GMT';
 		$gmdate_modified = gmdate ('D, d M Y H:i:s') . ' GMT';
 		// send content headers then display image
@@ -1023,8 +1028,6 @@ class timthumb {
 	protected function openImage($mimeType, $src){
 		switch ($mimeType) {
 			case 'image/jpg': //This isn't a valid mime type so we should probably remove it
-				$image = imagecreatefromjpeg ($src);
-				break;
 			case 'image/jpeg':
 				$image = imagecreatefromjpeg ($src);
 				break;
@@ -1183,4 +1186,3 @@ class timthumb {
 		return $this->is404;
 	}
 }
-?>
