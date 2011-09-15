@@ -10,6 +10,11 @@
  * adjusted on: 2010-01-09
  * 
  * updated by: Jeff Lambert, WEBphysiology.com
+ * updated on: 2011-09-07
+ * updated   : Since non-Pro STW cannot be sized like other images within the portfolio, the code was enhanced to get the largest
+ *             image from STW that is <= the image width defined within the WEBphysiology Portfolio Options
+ * 
+ * updated by: Jeff Lambert, WEBphysiology.com
  * updated on: 2011-03-28
  * updated   : Updates made to support the changes to ShrinkTheWeb.com that removes local caching of thumbnails (GetScaledThumbnail)
  * 
@@ -122,11 +127,38 @@ abstract class AppSTW {
 			
 		} else {
 			
-			// if user doesn't have a STW pro account
+			// if user doesn't have, or is not using, a STW pro account
+			
+			// determine the closest fit for the size of image to retrieve
+			/*
+			FROM: http://www.shrinktheweb.com/uploads/STW_API_Documentation.pdf
+			
+			75x56		mcr		Tells STW to return the "micro" size.
+			90x68		tny		Tells STW to return the "tiny" size.
+			100x75		vsm		Tells STW to return the "very small" size.
+			120x90		sm		Tells STW to return the "small" size.
+			200x150		lg		Tells STW to return the "large" size.
+			320x240		xlg		Tells STW to return the "extra large" size.
+			*/
+			$opt_val_img_width = get_option( 'webphysiology_portfolio_image_width' );
+			
+			if ( $opt_val_img_width >= 320 ) {
+				$stw_width = "xlg";
+			} elseif ( $opt_val_img_width >= 200 ) {
+				$stw_width = "lg";
+			} elseif ( $opt_val_img_width >= 120 ) {
+				$stw_width = "sm";
+			} elseif ( $opt_val_img_width >= 100 ) {
+				$stw_width = "vsm";
+			} elseif ( $opt_val_img_width >= 90 ) {
+				$stw_width = "tny";
+			} else {
+				$stw_width = "mcr";
+			}
 			
 			$ak = get_option( 'webphysiology_portfolio_stw_ak' );
 			if ( !empty($ak) ) {
-				return '<script type="text/javascript">stw_pagepix("' . $url . '", "' . $ak . '", "xlg");</script>';
+				return '<script type="text/javascript">stw_pagepix("' . $url . '", "' . $ak . '", "' . $stw_width . '");</script>';
 			} else {
 				return null;
 			}
