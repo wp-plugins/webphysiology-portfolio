@@ -1,10 +1,10 @@
 === Plugin Name ===
 Contributors: lambje
 Donate link: http://webphysiology.com/redir/webphysiology-portfolio/donate/
-Tags: portfolio,gallery,list,grid,posts,post,custom post type,custom taxonomy,shrinktheweb,shrink the web,webphysiology
+Tags: portfolio,website,image,screenshot,gallery,list,grid,posts,post,custom post type,custom taxonomy,shrinktheweb,thumbnail,webphysiology
 Requires at least: 3.0.0
 Tested up to: 3.2.1
-Stable tag: 1.3.1
+Stable tag: 1.3.2
 
 Allows for the creation of an expanded-list styled or a grid-styled page containing images and supporting detail, perfect for a portfolio presentation.
 
@@ -72,6 +72,16 @@ Try resetting all the options by using the "Revert to Default Values" button at 
 = 1.0.0 is the initial release =
 
 == Changelog ==
+
+= 1.3.2 =
+* in response to an issue with Thesis, changed the hook used to call function that sets css and scripts on pages with the webphysiology_shortcode
+* added support for Options page WEBphysiology social buttons
+* better isolated navigation controls by adding "webphysport_nav_top" and "webphysport_nav_bottom" classes. top and bottom classes will be deprecated in a later release.
+* added embedded portfolio CSS for new webphysport_odd_stripe and webphysport_even_stripe classes. odd and even classes will be deprecated in a later release.
+* moved the instantiation of the webphysiology shortcode to just the non-admin area of the plugin
+* enhanced the "has_shortcode" function to utilize a different method to obtain the current page's content as using "the_content()" was causing issues with some theme's page titling
+* since non-Pro STW cannot be sized like other images within the portfolio, updated ShrinkTheWeb code to get the largest image from STW that is <= the image width defined within the WEBphysiology Portfolio Options
+* to clean up IE7 and below Portfolio meta data layout a new stylesheet was created that defined CSS for the div's within the portfolio_meta classed div and then added negative bottom margin to these child div's to pull them together
 
 = 1.3.1 =
 * removed deprecated #portfolios ID from embedded stylesheet; was overlooked in version 1.2.7 when the stylesheet was updated

@@ -2,7 +2,7 @@
 /*
 Plugin Name: WEBphysiology Portfolio
 Plugin URI: http://webphysiology.com/redir/webphysiology-portfolio/
-Version: 1.3.1
+Version: 1.3.2
 Description: Provides a clean Portfolio listing with image, details and portfolio type taxonomy. A [portfolio] shortcode is used to include the portfolio on any page.
 Author: Jeff Lambert
 Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
@@ -41,6 +41,8 @@ Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 
 /*  UPDATES
 
+	1.3.2 - * in response to an issue with Thesis, changed the hook used to call function that sets css and scripts on pages with the webphysiology_shortcode
+			* moved the instantiation of the webphysiology shortcode to just the non-admin area of the plugin
 	1.3.1 - * removed deprecated #portfolios ID from embedded stylesheet; was overlooked in version 1.2.7 when the stylesheet was updated
 			* updated file_loader.js script to allow a user to insert media into the content area of the portfolio
 	        * adjusted code to try and further reduce the <head> overhead on pages when not in the Admin area
@@ -158,7 +160,7 @@ Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 
 // ASTERISK = make certain to update these as appropriate with new releases //
 
-define ( 'WEBPHYSIOLOGY_VERSION', '1.3.1' );
+define ( 'WEBPHYSIOLOGY_VERSION', '1.3.2' );
 define ( 'WEBPHYSIOLOGY_DB_VERSION', '3.2.1' );
 define ( 'WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE', basename($_SERVER['PHP_SELF']) );
 
@@ -167,12 +169,11 @@ include_once("function.php");
 // register the Portfolio custom post type and shortcode
 add_action( 'init', 'portfolio_post_type_init' );
 add_filter('post_updated_messages', 'portfolio_updated_messages');
-add_shortcode('webphysiology_portfolio', 'portfolio_loop');
 
 // register the Portfolio Type taxonomy
 add_action( 'init', 'create_portfolio_type_taxonomy', 0 );
 
-if ( Is_admin() ) {
+if ( is_admin() ) {
 	
 	$plugin = plugin_basename(__FILE__);
 	$file = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__)) . 'css/portfolio_all_admin.css';
@@ -188,8 +189,8 @@ if ( Is_admin() ) {
 	add_action('admin_notices', 'display_update_alert');
 	add_action('admin_menu', 'remove_post_custom_fields');
 	add_filter('manage_edit-webphys_portfolio_columns', 'add_new_portfolio_columns');
-	add_action('admin_head-edit.php', 'webphysiology_portfolio_quickedit');
 	add_action('manage_posts_custom_column', 'manage_portfolio_columns', 10, 2);
+	add_action('admin_head-edit.php', 'webphysiology_portfolio_quickedit');
 	add_filter('post_row_actions','remove_quick_edit',10,2);
 	add_action('save_post', 'portfolio_type_taxonomy_count');
 	 
@@ -239,14 +240,37 @@ if ( Is_admin() ) {
 			add_action('init', 'jquery_fancybox_init');
 		}
 		
+//		add_action('admin_head','mailchimpie');
 		add_action('admin_footer', 'fancy_script', 12);
 		
 	}
 } else {
-//	add_action('init', 'set_base_portfolio_css');
-	add_action ('get_header','has_shortcode');
+	add_shortcode('webphysiology_portfolio', 'portfolio_loop');
+//	add_action ('get_header','has_shortcode');
+	add_action ('wp_print_styles','has_shortcode');
 	add_filter('query_vars', 'portfolio_queryvars' );
 	add_filter('posts_join', 'portfolio_search_join', 10, 2 );
 	add_filter('posts_where', 'portfolio_search_where', 10, 2 );
+}
+function conditionally_add_scripts_and_styles($posts) {
+	
+	if (empty($posts)) return $posts;
+ 
+	$shortcode_found = false; // use this flag to see if styles and scripts need to be enqueued
+	foreach ($posts as $post) {
+		if (stripos($post->post_content, '[code]')) {
+			$shortcode_found = true; // bingo!
+			break;
+		}
+	}
+ 
+	if ($shortcode_found) {
+		echo "got it<br />";
+		// enqueue here
+//		wp_enqueue_style('my-style', '/style.css');
+//		wp_enqueue_script('my-script', '/script.js');
+	}
+ 
+	return $posts;
 }
 ?>

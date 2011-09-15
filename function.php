@@ -10,7 +10,14 @@
 
 /*  UPDATES
 
-	1.3.? - ???
+	1.3.2 - * added support for Options page WEBphysiology social buttons
+			* better isolated navigation controls by adding "webphysport_nav_top" and "webphysport_nav_bottom" classes.
+			  top and bottom classes will be deprecated in a later release.
+			* added embedded portfolio CSS for new webphysport_odd_stripe and webphysport_even_stripe classes.
+			  odd and even classes will be deprecated in a later release.
+			* enhanced the "has_shortcode" function to utilize a different method to obtain the current page's content as
+			  using "the_content()" was causing issues with some theme's page titling
+			* added declaration for inclusion of a new IE7 and below stylesheet
 	
 */
 
@@ -719,6 +726,17 @@ function portfolio_plugin_page() {
 	echo '	-->' . "\n";
 	echo '</script>' . "\n";
 	echo "\n";
+	echo "			<div id='newsletter_subscribe'><img src='https://s3.amazonaws.com/webphysiology_portfolio/subscribe.png' alt='subscribe to our newsletter' /></div>" . "\n";
+	echo "			<div id='facebook_like'><img src='https://s3.amazonaws.com/webphysiology_portfolio/like.png' alt='like us on Facebook' /></div>" . "\n";
+	echo "			<div id='donate_smiley'><img src='https://s3.amazonaws.com/webphysiology_portfolio/smiley.png' alt='donations make us happy' /></div>" . "\n";
+	echo "			<div id='social_network'>" . "\n";
+	echo "			<ul>" . "\n";
+	echo "				<li><a href='http://www.facebook.com/WEBphysiology' title='Like us on Facebook' target='_blank'><img src='https://s3.amazonaws.com/webphysiology_portfolio/facebook-logo-square-webtreatsetc-32x32.png' alt='Like WEBphysiology on facebook' height='32px' width='32px' /></a></li>" . "\n";
+	echo "				<li><a href='http://twitter.com/#!/WEBphysiology' title='Follow us on Twitter' target='_blank'><img src='https://s3.amazonaws.com/webphysiology_portfolio/twitter-logo-square-webtreatsetc-32x32.png' alt='WEBphysiology on Twitter' height='32px' width='32px' /></a></li>" . "\n";
+	echo "				<li><a href='http://feeds2.feedburner.com/WEBphysiology' title='Subscribe to the WEBphysiology News Feed' target='_blank'><img src='https://s3.amazonaws.com/webphysiology_portfolio/rss-square-webtreatsetc-32x32.png' alt='WEBphysiology News Feed' height='32px' width='32px' /></a></li>" . "\n";
+	echo "				<li><a href='#mc_signup_container' class='webphysiology_newsletter' title='Subscribe to the WEBphysiology Newsletter'><img src='https://s3.amazonaws.com/webphysiology_portfolio/mail-square-webtreatsetc-32x32.png' alt='Subscribe to the WEBphysiology Newsletter' height='32px' width='32px' /></a></li>" . "\n";
+	echo "			</ul>" . "\n";
+	echo "			</div>";
 	echo "			<div id='port_option_donate'>";
 	echo '				<form action="https://www.paypal.com/cgi-bin/webscr" method="post" class="portfolio_donate">' . "\n";
 	echo '					<input type="hidden" name="cmd" value="_s-xclick">' . "\n";
@@ -737,6 +755,7 @@ function portfolio_plugin_page() {
 	echo "				<div id='option_alerts'>";
 	echo portfolio_version_alert(WEBPHYSIOLOGY_VERSION, True);
 	// asterisk - add previous version alert 
+	echo portfolio_version_alert('1.3.1', True);
 	echo portfolio_version_alert('1.3.0', True);
 	echo portfolio_version_alert('1.2.7', True);
 	echo portfolio_version_alert('1.2.4', True);
@@ -1717,6 +1736,21 @@ function portfolio_version_alert($alert_ver,$spacer) {
 	
 	switch ($alert_ver) {
 	
+		case '1.3.2':
+			
+			$html .= '		<a class="alert_text" href="#v132_notes">IMPORTANT Version 1.3.2 release notes</a>' . "\n";
+			$html .= '		<div style="display: none;">' . "\n";
+			$html .= '			<div id="v132_notes" >' . "\n";
+			$html .= '				<h3 style="font-size:1.4em;text-align: center;">WEBphysiology Portfolio Plugin - Version 1.3.2 Release Notifications</h3>' . "\n";
+			$html .= '				<ol><li>As it would appear that many themes define a "top" and "bottom" classes, and because the top and bottom navigation buttons in this plugin also have these classes defined, we&rsquo;ve added new classes, "webphysport_nav_top" and "webphysport_nav_bottom", and updated our styling around these.  The previous styling and inclusion of the "top" and "bottom" classes still remain, for backward compatibility, but <span style="font-weight:bold;color:red;">WILL BE DEPRECATED</span> in a future release.  So, if you&rsquo;ve created any CSS around the "top" or "bottom" classes specifically for this plugin, you should change them to use the "webphysport_nav_top" and "webphysport_nav_bottom" classes, respectively.</li><li>As it would appear that many themes define a "odd" and "even" classes, and because the odd and even background striping in this plugin also have these classes defined, we&rsquo;ve added new classes, "webphysport_odd_stripe" and "webphysport_odd_stripe", and updated our styling around these.  The previous styling and inclusion of the "odd" and "even" classes still remain, for backward compatibility, but <span style="font-weight:bold;color:red;">WILL BE DEPRECATED</span> in a future release.  So, if you&rsquo;ve created any CSS around the "odd" or "even" classes specifically for this plugin, you should change them to use the "webphysport_odd_stripe" and "webphysport_odd_stripe" classes, respectively.</li></ol>' . "\n";
+			$html .= '				<p>For a complete list of changes refer to the Readme.txt file in the WEBphysiology Portfolio plugin directory or the Change Log on the <a href="http://refr.us/wpport" target="_blank">WEBphysiology Portfolio</a> page.</p>' . "\n";
+			$html .= "			</div>" . "\n";
+			$html .= "		</div>" . "\n";
+			
+			$space = $spacer;
+			
+			break;
+			
 		case '1.3.1':
 			
 			$html .= '		<a class="alert_text" href="#v131_notes">IMPORTANT Version 1.3.1 release notes</a>' . "\n";
@@ -1844,6 +1878,7 @@ function portfolio_queryvars( $qvars ) {
 
 // augment the JOIN if a Portfolio Type is part of the search
 function portfolio_search_join( $join, $query ) {
+	
 	global $wpdb, $wp_query;
 	
 	// if the portfolio type has been defined in the search vars
@@ -1914,6 +1949,8 @@ function portfolio_search_where( $where, $query ) {
 
 /* define the Portfolio ShortCode and set defaults for available arguments */
 function portfolio_loop($atts, $content = null) {
+	
+	if ( is_admin() ) { return null; }
 	
 	global $for;
 	global $portfolio_types;
@@ -2042,32 +2079,40 @@ function create_portfolio_type_taxonomy() {
 // if we are on a post or a page with the webphysiology_portfolio shortcode in the content then carry off certain actions
 function has_shortcode() {
 	
-	// if we aren't in the Admin area
-	if ( ! is_admin() ) {
-		
-		$cont = "";
-		
-		// if this is a post there is no way to get content before the header, so, indicate that the shortcode was found
-		// else if this is a page get the content
-		if ( is_single() ) {
-			$cont = " webphysiology_portfolio "; //get_the_content();
-		} elseif ( is_page() ) {
-			$page = get_page($post->ID);
-			$cont = apply_filters('the_content', $page->post_content);
-		}
-		
-		// if the webphysiology_portfolio shortcode is within the content take the actions indicated
-		if ( strpos($cont, "webphysiology_portfolio") > 0 ) {
-			
-			use_googleapis_jquery();
-			use_fancybox_styling();
-			set_base_portfolio_css();
-			add_action('wp_head', 'set_stw_nopro_script');
-			add_action('wp_head', 'set_portfolio_css');
-			
-		}
+	$cont = "";
+	
+	global $post;
+	
+	if ( is_single() || is_page() ) {
+		$cont = getPageContent($post->ID);
 	}
 	
+	// if the webphysiology_portfolio shortcode is within the content take the actions indicated
+	if ( strpos($cont, "webphysiology_portfolio") > 0 ) {
+		use_googleapis_jquery();
+		use_fancybox_styling();
+		set_base_portfolio_css();
+		add_action('wp_head', 'set_portfolio_css'); // we are already in wp_print_styles, so, calling this in wp_head
+		add_action('wp_print_scripts', 'set_stw_nopro_script');
+	}
+	
+}
+
+if(!function_exists('getPageContent')) {
+	function getPageContent($pageId) {
+		if(!is_numeric($pageId)) {
+			return;
+		}
+		global $wpdb;
+		$sql_query = 'SELECT DISTINCT * FROM ' . $wpdb->posts .
+		' WHERE ' . $wpdb->posts . '.ID=' . $pageId;
+		$posts = $wpdb->get_results($sql_query);
+		if(!empty($posts)) {
+			foreach($posts as $post) {
+				return nl2br($post->post_content);
+			}
+		}
+	}
 }
 
 // smart jquery inclusion
@@ -2118,16 +2163,16 @@ function fancy_script() {
 	echo ( "jQuery(document).ready(function() {" . "\n");
 	echo ( "\n");
 	echo ( '	jQuery("a.thickbox").fancybox({' . "\n");
-	echo ( "		'overlayOpacity'	:	0.95," . "\n");
-	echo ( "		'overlayColor'	:	'#333'," . "\n");
-	echo ( "		'transitionIn'	: 'fade'," . "\n");
-	echo ( "		'transitionOut'	: 'fade'," . "\n");
-	echo ( "		'speedIn'	:	350," . "\n");
-	echo ( "		'speedOut'	:	350," . "\n");
-	echo ( "		'hideOnContentClick'	:	true," . "\n");
-	echo ( "		'href' : this.src," . "\n");
-	echo ( "		'showCloseButton'	: true," . "\n");
-	echo ( "		'titleShow'	:	false" . "\n");
+	echo ( "			'overlayOpacity'		: 0.95," . "\n");
+	echo ( "			'overlayColor'			: '#333'," . "\n");
+	echo ( "			'transitionIn'			: 'fade'," . "\n");
+	echo ( "			'transitionOut'			: 'fade'," . "\n");
+	echo ( "			'speedIn'				: 350," . "\n");
+	echo ( "			'speedOut'				: 350," . "\n");
+	echo ( "			'hideOnContentClick'	: true," . "\n");
+	echo ( "			'href'					: this.src," . "\n");
+	echo ( "			'showCloseButton'		: true," . "\n");
+	echo ( "			'titleShow'				: false" . "\n");
 	echo ( "	});" . "\n");
 	echo ( "\n");
 	echo ( '	jQuery("a.alert_text").fancybox({' . "\n");
@@ -2143,47 +2188,78 @@ function fancy_script() {
 	echo ( "			'titleShow'				: false" . "\n");
 	echo ( "	});" . "\n");
 	echo ( "\n");
+	if ( is_admin() ) {
+	echo ( '	jQuery("a.webphysiology_newsletter").click(function() {' . "\n");
+	echo ( '		jQuery.fancybox({' . "\n");
+	echo ( "			'overlayOpacity'		: 0.95," . "\n");
+	echo ( "			'overlayColor'			: '#333'," . "\n");
+	echo ( "			'speedIn'				: 350," . "\n");
+	echo ( "			'speedOut'				: 350," . "\n");
+	echo ( "			'width'					: 264," . "\n");
+	echo ( "			'height'				: 273," . "\n");
+	echo ( "			'autoScale'				: true," . "\n");
+	echo ( "			'transitionIn'			: 'fade'," . "\n");
+	echo ( "			'transitionOut'			: 'fade'," . "\n");
+	echo ( "			'title'					: this.title," . "\n");
+	echo ( "			'showCloseButton'		: true," . "\n");
+	echo ( "			'href'					: 'http://refr.us/wpnews'," . "\n");
+	echo ( "			'titleShow'				: false," . "\n");
+	echo ( "			'scrolling'				: 'no'," . "\n");
+	echo ( "			'beforeSubmit'			: 'mc_beforeForm'," . "\n");
+	echo ( "			'success'				: 'mc_success'," . "\n");
+	echo ( "			'type'					: 'iframe'," . "\n");
+	echo ( "			'onClosed'				: function() { " . "\n");
+	echo ( "										jQuery('#mc_message').hide();" . "\n");
+	echo ( "										jQuery('#mc_signup_form').each(function(){" . "\n");
+	echo ( "											this.reset();" . "\n");
+	echo ( "										});" . "\n");
+	echo ( "									  }" . "\n");
+	echo ( "		});" . "\n");
+	echo ( "		return false;" . "\n");
+	echo ( "	});" . "\n");
+	echo ( "\n");
+	}
 	echo ( '	jQuery("a.vimeo").click(function() {' . "\n");
 	echo ( '		jQuery.fancybox({' . "\n");
-	echo ( "			'overlayOpacity'	: 0.95," . "\n");
-	echo ( "			'overlayColor'	: '#333'," . "\n");
-	echo ( "			'speedIn'		: 350," . "\n");
-	echo ( "			'speedOut'		: 350," . "\n");
-	echo ( "			'padding'		: 10," . "\n");
-	echo ( "			'autoScale'		: false," . "\n");
-	echo ( "			'transitionIn'	: 'fade'," . "\n");
-	echo ( "			'transitionOut'	: 'fade'," . "\n");
-	echo ( "			'title'			: this.title," . "\n");
-	echo ( "			'titleShow'		: false," . "\n");
-	echo ( "			'showCloseButton'	: true," . "\n");
-	echo ( "			'width'			: 680," . "\n");
-	echo ( "			'height'		: 495," . "\n");
-	echo ( "			'href'			: this.href.replace(new RegExp(\"([0-9])\",\"i\"),'moogaloop.swf?clip_id=$1')," . "\n");
-	echo ( "			'type'			: 'swf'" . "\n");
+	echo ( "			'overlayOpacity'		: 0.95," . "\n");
+	echo ( "			'overlayColor'			: '#333'," . "\n");
+	echo ( "			'speedIn'				: 350," . "\n");
+	echo ( "			'speedOut'				: 350," . "\n");
+	echo ( "			'padding'				: 10," . "\n");
+	echo ( "			'autoScale'				: false," . "\n");
+	echo ( "			'transitionIn'			: 'fade'," . "\n");
+	echo ( "			'transitionOut'			: 'fade'," . "\n");
+	echo ( "			'title'					: this.title," . "\n");
+	echo ( "			'titleShow'				: false," . "\n");
+	echo ( "			'showCloseButton'		: true," . "\n");
+	echo ( "			'width'					: 680," . "\n");
+	echo ( "			'height'				: 495," . "\n");
+	echo ( "			'href'					: this.href.replace(new RegExp(\"([0-9])\",\"i\"),'moogaloop.swf?clip_id=$1')," . "\n");
+	echo ( "			'type'					: 'swf'" . "\n");
 	echo ( "		});" . "\n");
 	echo ( "		return false;" . "\n");
 	echo ( "	});" . "\n");
 	echo ( "\n");
 	echo ( '	jQuery("a.youtube").click(function() {' . "\n");
 	echo ( '		jQuery.fancybox({' . "\n");
-	echo ( "			'overlayOpacity'	: 0.95," . "\n");
-	echo ( "			'overlayColor'	: '#333'," . "\n");
-	echo ( "			'speedIn'		: 350," . "\n");
-	echo ( "			'speedOut'		: 350," . "\n");
-	echo ( "			'padding'		: 10," . "\n");
-	echo ( "			'autoScale'		: false," . "\n");
-	echo ( "			'transitionIn'	: 'fade'," . "\n");
-	echo ( "			'transitionOut'	: 'fade'," . "\n");
-	echo ( "			'title'			: this.title," . "\n");
-	echo ( "			'titleShow'		: false," . "\n");
-	echo ( "			'showCloseButton'	: true," . "\n");
-	echo ( "			'width'			: 680," . "\n");
-	echo ( "			'height'		: 495," . "\n");
-	echo ( "			'href'			: this.href.replace(new RegExp(\"watch\\\?v=\", \"i\"), 'v/')," . "\n");
-	echo ( "			'type'			: 'swf'," . "\n");
-	echo ( "			'swf'			: {" . "\n");
-	echo ( "			   	 'wmode'		: 'transparent'," . "\n");
-	echo ( "				'allowfullscreen'	: 'false'" . "\n");
+	echo ( "			'overlayOpacity'		: 0.95," . "\n");
+	echo ( "			'overlayColor'			: '#333'," . "\n");
+	echo ( "			'speedIn'				: 350," . "\n");
+	echo ( "			'speedOut'				: 350," . "\n");
+	echo ( "			'padding'				: 10," . "\n");
+	echo ( "			'autoScale'				: false," . "\n");
+	echo ( "			'transitionIn'			: 'fade'," . "\n");
+	echo ( "			'transitionOut'			: 'fade'," . "\n");
+	echo ( "			'title'					: this.title," . "\n");
+	echo ( "			'titleShow'				: false," . "\n");
+	echo ( "			'showCloseButton'		: true," . "\n");
+	echo ( "			'width'					: 680," . "\n");
+	echo ( "			'height'				: 495," . "\n");
+	echo ( "			'href'					: this.href.replace(new RegExp(\"watch\\\?v=\", \"i\"), 'v/')," . "\n");
+	echo ( "			'type'					: 'swf'," . "\n");
+	echo ( "			'swf'					: {" . "\n");
+	echo ( "			'wmode'					: 'transparent'," . "\n");
+	echo ( "			'allowfullscreen'		: 'false'" . "\n");
 	echo ( "			}" . "\n");
 	echo ( "		});" . "\n");
 	echo ( "		return false;" . "\n");
@@ -2205,7 +2281,9 @@ function fancy_script() {
 	echo ( "			'type'					: 'iframe'" . "\n");
 	echo ( "	});" . "\n");
 	echo ( "\n");
-
+	echo ( '});' . "\n");
+	echo ( "\n");
+	
 //	echo ( '	jQuery("a.webcast-tv").click(function() {' . "\n");
 //	echo ( '		jQuery.fancybox({' . "\n");
 //	echo ( "			'overlayOpacity'	: 0.95," . "\n");
@@ -2227,8 +2305,12 @@ function fancy_script() {
 //	echo ( "		return false;" . "\n");
 //	echo ( "	});" . "\n");
 //	echo ( "\n");
-	echo ( '});' . "\n");
-	echo ( "\n");
+
+//	echo ( '	jQuery("a.youtube").click(function() {' . "\n");
+//	echo ( 'jQuery(document).ready(function() {' . "\n");
+//	echo ( "    jQuery('#webphysiology_newsletter').trigger('click');" . "\n");
+//	echo ( '});' . "\n");
+
 	echo ( "-->" . "\n");
 	echo ( '</script>' . "\n");
 }
@@ -2244,7 +2326,7 @@ function get_Loop_Site_Image() {
 	$anchor_close = '';
 	$class = '';
 	$continue = 'false';
-		
+	
 	$stw = strtolower(get_option( 'webphysiology_portfolio_use_stw' ));
 	$stw_pro = strtolower(get_option( 'webphysiology_portfolio_use_stw_pro' ));
 	$target = get_option( 'webphysiology_portfolio_anchor_click_behavior' );
@@ -2487,7 +2569,7 @@ endif;
 function set_stw_nopro_script() {
 	// if we are configured to use STW, but not the Pro version, then add in the necessary preview script
 	if ( (strtolower(get_option('webphysiology_portfolio_use_stw')) == 'true') && (strtolower(get_option('webphysiology_portfolio_use_stw_pro')) == 'false') ) {
-		echo ('<script type="text/javascript" src="http://www.shrinktheweb.com/scripts/pagepix.js"></script>');
+		echo ('<script type="text/javascript" src="http://www.shrinktheweb.com/scripts/pagepix.js"></script>' . "\n");
 	}
 }
 
@@ -2507,80 +2589,81 @@ function set_base_portfolio_css() {
 
 function set_portfolio_css() {
 	
-	$gridstyle = 'webphysiology_portfolio_gridstyle'; // default false
-	$gridcolor = 'webphysiology_portfolio_gridcolor'; // default #eee
-	$overall_width = 'webphysiology_portfolio_overall_width'; // default is 660px
-	$img_width = 'webphysiology_portfolio_image_width'; // default is 200px
-	$meta_key_width = 'webphysiology_portfolio_label_width'; // default is 60px
-	$header_color = 'webphysiology_portfolio_header_color'; // default is #004813
-	$link_color = 'webphysiology_portfolio_link_color'; // default is #004813
-	$odd_stripe_color = 'webphysiology_portfolio_odd_stripe_color'; // default is #eee
-	$even_stripe_color = 'webphysiology_portfolio_even_stripe_color'; // default is #f9f9f9
-	$opt_val_gridstyle = get_option( $gridstyle );
-	$opt_val_gridcolor = get_option( $gridcolor );
-	$opt_val_overall_width = get_option( $overall_width );
-	$opt_val_img_width = get_option( $img_width );
-	$opt_val_meta_key_width = get_option( $meta_key_width );
-	$opt_val_header_color = get_option( $header_color );
-	$opt_val_link_color = get_option( $link_color );
-	$opt_val_odd_stripe_color = get_option( $odd_stripe_color );
-	$opt_val_even_stripe_color = get_option( $even_stripe_color );
 	$portfolio_css_on = get_option('webphysiology_portfolio_use_css');
 	
-	$overall_image_width = $opt_val_img_width + 20;
-	if ($opt_val_gridstyle != 'True') {
-		$detail_width = $opt_val_overall_width - $overall_image_width - 30;
-		$meta_value_width = $detail_width - ($opt_val_meta_key_width + 4);
-		$class = '.portfolio_details';
-	} else {
-		$detail_width = $overall_image_width - 10;
-		$meta_value_width = $detail_width - ($opt_val_meta_key_width + 4);
-		$class = '.portfolio_entry';
-	}
-	$grid_image_width = $detail_width - 10;
-	
-	$embedded_css = "\n" .
-					'<style type="text/css" id="webphysiology_portfolio_embedded_css">' . "\n" .
-					'    .webphysiology_portfolio {	' . "\n" .
-					'        width: ' . $opt_val_overall_width . 'px;' . "\n" .
-					'    }' . "\n" .
-					'    .webphysiology_portfolio ' . $class . ' {' . "\n" .
-					'        width: ' . $detail_width . 'px;' . "\n" .
-					'    }' . "\n" .
-					'    .webphysiology_portfolio .portfolio_page_img {' . "\n" .
-					'        width: ' . $overall_image_width . 'px;' . "\n" .
-					'    }' . "\n" .
-					'    .webphysiology_portfolio .grid .portfolio_page_img {' . "\n" .
-					'        width: ' . $detail_width . 'px;' . "\n" .
-					'    }' . "\n" .
-					'    .webphysiology_portfolio .portfolio_page_img img {' . "\n" .
-					'        width: ' . $opt_val_img_width . 'px;' . "\n" .
-					'        max-width: ' . $opt_val_img_width . 'px;' . "\n" .
-					'    }' . "\n" .
-					'    .webphysiology_portfolio .portfolio_meta .key {' . "\n" .
-					'    	width: ' . $opt_val_meta_key_width . 'px;' . "\n" .
-					'    }' . "\n" .
-					'    .webphysiology_portfolio .portfolio_meta .value {' . "\n" .
-					'        width: ' . $meta_value_width . 'px;' . "\n" .
-					'    }' . "\n" .
-					'    .webphysiology_portfolio ul.grid {' . "\n" .
-					'    	background-color: ' . $opt_val_gridcolor . ';' . "\n" .
-					'    }' . "\n" .
-					'    .webphysiology_portfolio .portfolio_title h1, .webphysiology_portfolio .portfolio_title h2 {' . "\n" .
-					'        color: ' . $opt_val_header_color . ';' . "\n" .
-					'    }' . "\n" .
-					'    .webphysiology_portfolio .portfolio_nav a {' . "\n" .
-					'        color: ' . $opt_val_link_color . ';' . "\n" .
-					'    }' . "\n" .
-					'    .webphysiology_portfolio .portfolio_entry {' . "\n" .
-					'        background-color: ' . $opt_val_even_stripe_color . ';' . "\n" .
-					'    }' . "\n" .
-					'    .webphysiology_portfolio .portfolio_entry.odd {' . "\n" .
-					'        background-color: ' . $opt_val_odd_stripe_color . ';' . "\n" .
-					'    }' . "\n" .
-					'</style>' . "\n";
-	
 	if (is_wp_error($portfolio_css_on) || $portfolio_css_on=='True') {
+		
+		$gridstyle = 'webphysiology_portfolio_gridstyle'; // default false
+		$gridcolor = 'webphysiology_portfolio_gridcolor'; // default #eee
+		$overall_width = 'webphysiology_portfolio_overall_width'; // default is 660px
+		$img_width = 'webphysiology_portfolio_image_width'; // default is 200px
+		$meta_key_width = 'webphysiology_portfolio_label_width'; // default is 60px
+		$header_color = 'webphysiology_portfolio_header_color'; // default is #004813
+		$link_color = 'webphysiology_portfolio_link_color'; // default is #004813
+		$odd_stripe_color = 'webphysiology_portfolio_odd_stripe_color'; // default is #eee
+		$even_stripe_color = 'webphysiology_portfolio_even_stripe_color'; // default is #f9f9f9
+		$opt_val_gridstyle = get_option( $gridstyle );
+		$opt_val_gridcolor = get_option( $gridcolor );
+		$opt_val_overall_width = get_option( $overall_width );
+		$opt_val_img_width = get_option( $img_width );
+		$opt_val_meta_key_width = get_option( $meta_key_width );
+		$opt_val_header_color = get_option( $header_color );
+		$opt_val_link_color = get_option( $link_color );
+		$opt_val_odd_stripe_color = get_option( $odd_stripe_color );
+		$opt_val_even_stripe_color = get_option( $even_stripe_color );
+		
+		$overall_image_width = $opt_val_img_width + 20;
+		if ($opt_val_gridstyle != 'True') {
+			$detail_width = $opt_val_overall_width - $overall_image_width - 30;
+			$meta_value_width = $detail_width - ($opt_val_meta_key_width + 4);
+			$class = '.portfolio_details';
+		} else {
+			$detail_width = $overall_image_width - 10;
+			$meta_value_width = $detail_width - ($opt_val_meta_key_width + 4);
+			$class = '.portfolio_entry';
+		}
+		$grid_image_width = $detail_width - 10;
+		
+		$embedded_css = "\n" .
+						'<style type="text/css" id="webphysiology_portfolio_embedded_css">' . "\n" .
+						'    .webphysiology_portfolio {	' . "\n" .
+						'        width: ' . $opt_val_overall_width . 'px;' . "\n" .
+						'    }' . "\n" .
+						'    .webphysiology_portfolio ' . $class . ' {' . "\n" .
+						'        width: ' . $detail_width . 'px;' . "\n" .
+						'    }' . "\n" .
+						'    .webphysiology_portfolio .portfolio_page_img {' . "\n" .
+						'        width: ' . $overall_image_width . 'px;' . "\n" .
+						'    }' . "\n" .
+						'    .webphysiology_portfolio .grid .portfolio_page_img {' . "\n" .
+						'        width: ' . $detail_width . 'px;' . "\n" .
+						'    }' . "\n" .
+						'    .webphysiology_portfolio .portfolio_page_img img {' . "\n" .
+						'        width: ' . $opt_val_img_width . 'px;' . "\n" .
+						'        max-width: ' . $opt_val_img_width . 'px;' . "\n" .
+						'    }' . "\n" .
+						'    .webphysiology_portfolio .portfolio_meta .key {' . "\n" .
+						'    	width: ' . $opt_val_meta_key_width . 'px;' . "\n" .
+						'    }' . "\n" .
+						'    .webphysiology_portfolio .portfolio_meta .value {' . "\n" .
+						'        width: ' . $meta_value_width . 'px;' . "\n" .
+						'    }' . "\n" .
+						'    .webphysiology_portfolio ul.grid {' . "\n" .
+						'    	background-color: ' . $opt_val_gridcolor . ';' . "\n" .
+						'    }' . "\n" .
+						'    .webphysiology_portfolio .portfolio_title h1, .webphysiology_portfolio .portfolio_title h2 {' . "\n" .
+						'        color: ' . $opt_val_header_color . ';' . "\n" .
+						'    }' . "\n" .
+						'    .webphysiology_portfolio .portfolio_nav a {' . "\n" .
+						'        color: ' . $opt_val_link_color . ';' . "\n" .
+						'    }' . "\n" .
+						'    .webphysiology_portfolio .portfolio_entry {' . "\n" .
+						'        background-color: ' . $opt_val_even_stripe_color . ';' . "\n" .
+						'    }' . "\n" .
+						'    .webphysiology_portfolio .portfolio_entry.webphysport_odd_stripe {' . "\n" .
+						'        background-color: ' . $opt_val_odd_stripe_color . ';' . "\n" .
+						'    }' . "\n" .
+						'</style>' . "\n";
 		
 		echo $embedded_css;
 		
@@ -2591,10 +2674,11 @@ function set_portfolio_css() {
 		echo '<!--[if lte IE 8]>' . "\n";
 		echo '	<link rel="stylesheet" id="webphysiology_portfolio_ie_adjustment_css" type="text/css" href="' . $x . 'portfolio_lte_ie8.css" />' . "\n";
 		echo '<![endif]-->' . "\n";
+		echo '<!--[if lte IE 7]>' . "\n";
+		echo '	<link rel="stylesheet" id="webphysiology_portfolio_ie_adjustment_css" type="text/css" href="' . $x . 'portfolio_lte_ie7.css" />' . "\n";
+		echo '<![endif]-->' . "\n";
 	}
 }
-//asterisk - this function is now called by the "has_shortcode" function
-//add_action('wp_head', 'set_portfolio_css');
 
 
 /* Build out the navigation elements for paging through the Portfolio pages */
@@ -2612,8 +2696,9 @@ function nav_pages($qryloop, $pageurl, $class) {
 		
 		// if this is the bottom nav then there is no point in rebuilding everything, just take what we
 		// built for the top nav and put it in the bottom nav <div>
-		if ( ($class == "bottom") && ( !empty($navcontrol) ) ) {
-			$portfolio_output .= '<div class="portfolio_nav ' . $class . '">' . $navcontrol . '</div>';
+		// asterisk - remove bottom in future release, webphysport_nav_bottom/top added in v1.3.2
+		if ( ($class == "webphysport_nav_bottom") && ( !empty($navcontrol) ) ) {
+			$portfolio_output .= '<div class="portfolio_nav bottom ' . $class . '">' . $navcontrol . '</div>';
 			$navcontrol = array();
 			return $portfolio_output;
 		}
@@ -2673,9 +2758,10 @@ function nav_pages($qryloop, $pageurl, $class) {
 		}
 		$nav .= '</ul>';
 		
-		$portfolio_output .= '<div class="portfolio_nav ' . $class . '">' . $nav . '</div>';
+		// asterisk - remove top in future release, webphysport_nav_bottom/top added in v1.3.2
+		$portfolio_output .= '<div class="portfolio_nav top ' . $class . '">' . $nav . '</div>';
 		
-		if ($class == "top") {
+		if ($class == "webphysport_nav_top") {
 			$navcontrol = $nav;
 		}
 		
@@ -2920,7 +3006,7 @@ function get_document_root($src) {
         }
     }
 	
-    display_error ('file not found');
+    display_error ('file not found - check your image URLs');
 	
 }
 
