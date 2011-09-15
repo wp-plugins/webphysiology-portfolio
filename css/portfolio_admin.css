@@ -21,6 +21,44 @@ a.webphys_logo {
 	margin: 7px 15px 5px 2px;
 	float: left;
 }
+#social_network {
+	position: absolute;
+	right: 180px;
+	margin: -1px 0 0 0;
+	padding: 0;
+	z-index: 999;
+}
+#newsletter_subscribe {
+	position: absolute;
+	right: 190px;
+	margin: -45px 0 0 0;
+/*	top: 80px; */
+	padding: 0;
+	z-index: 999;
+}
+#facebook_like {
+	position: absolute;
+	right: 310px;
+	margin: 33px 0 0 0;
+/*	top: 158px; */
+	padding: 0;
+	z-index: 999;
+}
+#donate_smiley {
+	position: absolute;
+	right: 70px;
+	margin: -27px 0 0 0;
+/*	top: 95px; */
+	padding: 0;
+	z-index: 999;
+}
+#social_network ul {
+	list-style-type: none;
+}
+#social_network li {
+	float: left;
+	padding: 0 3px;
+}
 .postbox .inside {
 	margin: 5px 5px 5px 20px;
 }

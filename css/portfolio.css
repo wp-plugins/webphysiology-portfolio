@@ -5,14 +5,15 @@
 /* WEBphysiology Portfolio Styling
 -------------------------------------------------------------- */
 
-/******************************************************************************************************
- 
- 2011-03-08 : changed navigation styling to use borders and not images
- 2011-07-26 : added CSS to handle positioning the Portfolio description below the meta data
+/*********************************************************************************************************************
  
  NOTE:   #portfolios   has been deprecated in v1.2.7 and replaced with class   .webphysiology_portfolio
  
- ******************************************************************************************************/
+ 2011-08-18 : added webphysport_nav_top and webphysport_nav_botom classes to, in the future, deprecate top and bottom
+ 2011-07-26 : added CSS to handle positioning the Portfolio description below the meta data
+ 2011-03-08 : changed navigation styling to use borders and not images
+ 
+ *********************************************************************************************************************/
  
 
 .webphysiology_portfolio .grid {
@@ -110,9 +111,11 @@
 	padding: 0;
 	font-size: 1em;
 }
+.webphysiology_portfolio .portfolio_nav.webphysport_nav_top ul,
 .webphysiology_portfolio .portfolio_nav.top ul {
 	margin-bottom: 10px;
 }
+.webphysiology_portfolio .portfolio_nav.webphysport_nav_bottom ul,
 .webphysiology_portfolio .portfolio_nav.bottom ul {
 	margin-top: 10px;
 }
