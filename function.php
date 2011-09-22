@@ -9,7 +9,12 @@
  */
 
 /*  UPDATES
-
+	
+	1.3.3 - * replaced some path code in place of the plugins_url function
+			* added the "webphysiology_portfolio_use_full_path" option to allow for the ability to have images, and some
+			  css/js files, specify full pathnames. there seem to be instances where some hosts don't like HTTP:// within
+			  the image pathnames and some cases where they require it.  go figure
+	
 	1.3.2 - * added support for Options page WEBphysiology social buttons
 			* better isolated navigation controls by adding "webphysport_nav_top" and "webphysport_nav_bottom" classes.
 			  top and bottom classes will be deprecated in a later release.
@@ -109,7 +114,7 @@ function portfolio_updated_messages( $messages ) {
 function portfolio_post_type_init() 
 {
 	
-	$x = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__)).'images/jvhm_pinwheel_bullet.png';
+	$script = plugins_url('images/jvhm_pinwheel_bullet.png', __FILE__);
 
 	$labels = array(
 		'name' => __('Portfolio', 'post type general name'),
@@ -157,7 +162,7 @@ function RegisterPluginLinks($links, $file) {
 }
 
 function portfolio_admin_css() {
-	$file = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__)) . 'css/portfolio_admin.css';
+	$file = plugins_url('css/portfolio_admin.css', __FILE__);
 	wp_register_style('portfolio_admin_css', $file);
 	wp_enqueue_style('portfolio_admin_css');
 }
@@ -168,7 +173,7 @@ function portfolio_post_css() {
 	
 	// don't include the Portfolio Post CSS file if we aren't on the Portfolio Post edit screen
 	if (strtolower($post->post_type) == "webphys_portfolio") {
-		$file = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__)) . 'css/portfolio_post.css';
+		$file = plugins_url('css/portfolio_post.css', __FILE__);
 		wp_register_style('portfolio_post_css', $file);
 		wp_enqueue_style('portfolio_post_css');
 	}
@@ -381,6 +386,7 @@ function portfolio_plugin_page() {
 	$sort_numerically = 'webphysiology_portfolio_sort_numerically'; // default true
 	$skip_jQuery_register = 'webphysiology_portfolio_skip_jQuery_register'; // default false
 	$skip_fancybox_register = 'webphysiology_portfolio_skip_fancybox_register'; // default false
+	$use_full_path = 'webphysiology_portfolio_use_full_path'; // default false
 	$display_credit = 'webphysiology_portfolio_display_credit'; // default true
 	$gridstyle = 'webphysiology_portfolio_gridstyle'; // default false
 	$gridcolor = 'webphysiology_portfolio_gridcolor'; // default #eee
@@ -491,6 +497,11 @@ function portfolio_plugin_page() {
 			} else {
 				$opt_val_skip_fancybox_register = 'False';
 			}
+			if (!empty($_POST[ $use_full_path ])) {
+				$opt_val_use_full_path = $_POST[ $use_full_path ];
+			} else {
+				$opt_val_use_full_path = 'False';
+			}
 			if ( !empty($_POST[ $display_credit ]) ) {
 				$opt_val_display_credit = $_POST[ $display_credit ];
 			} else {
@@ -595,6 +606,7 @@ function portfolio_plugin_page() {
 			$opt_val_sort_numerically = "True";
 			$opt_val_skip_jQuery_register = "False";
 			$opt_val_skip_fancybox_register = "False";
+			$opt_val_use_full_path = "False";
 			$opt_val_display_credit = "True";
 			$opt_val_gridstyle = "False";
 			$opt_val_gridcolor = "#eeeeee";
@@ -638,6 +650,7 @@ function portfolio_plugin_page() {
 			update_option( $sort_numerically, $opt_val_sort_numerically );
 			update_option( $skip_jQuery_register, $opt_val_skip_jQuery_register );
 			update_option( $skip_fancybox_register, $opt_val_skip_fancybox_register );
+			update_option( $use_full_path, $opt_val_use_full_path );
 			update_option( $display_credit, $opt_val_display_credit );
 			update_option( $gridstyle, $opt_val_gridstyle );
 			update_option( $gridcolor, $opt_val_gridcolor );
@@ -681,6 +694,7 @@ function portfolio_plugin_page() {
 		$opt_val_sort_numerically = get_option( $sort_numerically );
 		$opt_val_skip_jQuery_register = get_option( $skip_jQuery_register );
 		$opt_val_skip_fancybox_register = get_option( $skip_fancybox_register );
+		$opt_val_use_full_path = get_option( $use_full_path );
 		$opt_val_display_credit = get_option( $display_credit );
 		$opt_val_gridstyle = get_option( $gridstyle );
 		$opt_val_gridcolor = get_option( $gridcolor );
@@ -711,6 +725,7 @@ function portfolio_plugin_page() {
 	if ($opt_val_sort_numerically=="True" ) {$opt_val_sort_numerically="checked";}
 	if ($opt_val_skip_jQuery_register=="True" ) {$opt_val_skip_jQuery_register="checked";}
 	if ($opt_val_skip_fancybox_register=="True" ) {$opt_val_skip_fancybox_register="checked";}
+	if ($opt_val_use_full_path=="True" ) {$opt_val_use_full_path="checked";}
 	if ($opt_val_css=="True" ) {$opt_val_css="checked";}
 	if ($opt_val_display_credit=="True" ) {$opt_val_display_credit="checked";}
 	if ($opt_val_gridstyle=="True" ) {$opt_val_gridstyle="checked";}
@@ -753,7 +768,7 @@ function portfolio_plugin_page() {
 	echo '				<input type="hidden" value="' . get_option('version') . '" name="version"/>' . "\n";
 	echo portfolio_admin_section_wrap('top', 'Portfolio Release Notes&nbsp;&nbsp;|&nbsp;&nbsp;installed version = ' . get_option('webphysiology_portfolio_version'), ' style="padding: 10px 10px; overflow: hidden;"');
 	echo "				<div id='option_alerts'>";
-	echo portfolio_version_alert(WEBPHYSIOLOGY_VERSION, True);
+	echo portfolio_version_alert(WEBPHYSIOLOGY_VERSION, True);  // 1.3.2
 	// asterisk - add previous version alert 
 	echo portfolio_version_alert('1.3.1', True);
 	echo portfolio_version_alert('1.3.0', True);
@@ -872,6 +887,8 @@ function portfolio_plugin_page() {
 	echo '						<span class="attribute_instructions">on the off chance that some other plugin throws jQuery errors you can simply serve up the standard jQuery provided within the WordPress install</span><br class="tallbottom"/>' . "\n";
 	echo '						<input type="checkbox" id="' . $skip_fancybox_register . '" name="' . $skip_fancybox_register . '" value="True" ' . $opt_val_skip_fancybox_register . '/><label for="' . $skip_fancybox_register . '">Don\'t register Fancybox jQuery v1.3.4</label><br/>' . "\n";
 	echo '						<span class="attribute_instructions">if you are using another plugin that registers Fancybox, you may need to disable one if there are version conflicts</span><br class="tallbottom"/>' . "\n";
+	echo '						<input type="checkbox" id="' . $use_full_path . '" name="' . $use_full_path . '" value="True" ' . $opt_val_use_full_path . '/><label for="' . $use_full_path . '">Use full paths on images and css/js files</label><br/>' . "\n";
+	echo '						<span class="attribute_instructions">some hosts don\'t like HTTP:// within the resource paths while others require it, so, if images aren\'t displaying you might try turning this on</span><br class="tallbottom"/>' . "\n";
 	echo '						<input type="checkbox" id="' . $display_credit . '" name="' . $display_credit . '" value="True" ' . $opt_val_display_credit . '/><label for="' . $display_credit . '">Display WEBphysiology credit and/or a donation would be nice (though neither is required).</label>' . "\n";
 	echo portfolio_admin_section_wrap('bottom', null, null);
 	echo portfolio_admin_section_wrap('top', 'Portfolio Deactivation Settings', null);
@@ -938,9 +955,15 @@ function check_options() {
 	
 	// ASTERISK = make certain to update this with new releases //
 	// check the most recently added option, if it doesn't exist then pass down through all of them and add any that are missing
-	$return = get_option('webphysiology_portfolio_display_desc_first');
+	$return = get_option('webphysiology_portfolio_use_full_path');
 	
 	if ( empty($return) ) {
+		
+		// added in v1.3.3
+		$return = get_option('webphysiology_portfolio_use_full_path');
+		if ( empty($return) ) {
+			add_option("webphysiology_portfolio_use_full_path", 'False'); // This is the default value for whether to use full paths for images and some css/js files
+		}
 		
 		// added in v1.3.0
 		$return = get_option('webphysiology_portfolio_display_desc_first');
@@ -1124,6 +1147,7 @@ function portfolio_install() {
 		add_option("webphysiology_portfolio_sort_numerically", 'True'); // This is the default value for whether to sort numerically off the sort column
 		add_option('webphysiology_portfolio_skip_jQuery_register', 'False'); // This is the default value for whether to not register jQuery from Google
 		add_option('webphysiology_portfolio_skip_fancybox_register', 'False'); // This is the default value for whether to not register Fancybox
+		add_option('webphysiology_portfolio_use_full_path', 'False'); // This is the default value for whether to not to use full paths for images and some css/js files
 		add_option("webphysiology_portfolio_display_credit", "True"); // This is the default value for whether to display a plugin publisher credit
 		add_option("webphysiology_portfolio_gridstyle", "False"); // This is the default value for whether to display portfolio items in a grid format
 		add_option("webphysiology_portfolio_gridcolor", "#eeeeee"); // This is the default value for the grid background color
@@ -1176,6 +1200,7 @@ function portfolio_remove() {
 		delete_option('webphysiology_portfolio_sort_numerically');
 		delete_option('webphysiology_portfolio_skip_jQuery_register');
 		delete_option('webphysiology_portfolio_skip_fancybox_register');
+		delete_option('webphysiology_portfolio_use_full_path');
 		delete_option('webphysiology_portfolio_display_credit');
 		delete_option('webphysiology_portfolio_gridstyle');
 		delete_option('webphysiology_portfolio_gridcolor');
@@ -1569,11 +1594,11 @@ function portfolio_admin_scripts() {
 	
 	if ($continue == "True") {
 		//asterisk escape
-		$x = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__)) . 'scripts/';
-		$x = clear_pre_content($x);
+		$script = plugins_url('scripts/file_uploader.js', __FILE__);
+		$script = clear_pre_content($script);
 		wp_enqueue_script('media-upload');
 		wp_enqueue_script('thickbox');
-		wp_register_script('portfolio-image-upload', $x . 'file_uploader.js', array('jquery','media-upload','thickbox'));
+		wp_register_script('portfolio-image-upload', $script, array('jquery','media-upload','thickbox'));
 		wp_enqueue_script('portfolio-image-upload');
 		
 	}
@@ -1595,9 +1620,9 @@ function portfolio_admin_styles() {
 	
 	if ($continue == "True") {
 		
-		$x = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__)) . 'scripts/fancybox/';
-		$x = clear_pre_content($x);
-		wp_register_style('lightbox_css', $x . '/jquery.fancybox-1.3.4.css');
+		$css = plugins_url('scripts/fancybox/jquery.fancybox-1.3.4.css', __FILE__);
+		$css = clear_pre_content($css);
+		wp_register_style('lightbox_css', $css);
 		wp_enqueue_style('lightbox_css');
 		
 		wp_enqueue_style('thickbox');
@@ -2139,18 +2164,18 @@ function use_fancybox_styling() {
 
 // add scripts and styling needed for the lightbox functionality
 function jquery_fancybox_init () {
-    $x = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__)) . 'scripts/fancybox/';
-	$x = clear_pre_content($x);
-	wp_register_script('fancybox', $x . 'jquery.fancybox-1.3.4.pack.js', array('jquery'));
+	$js = plugins_url('scripts/fancybox/', __FILE__);
+	$js = clear_pre_content($js);
+	wp_register_script('fancybox', $js . 'jquery.fancybox-1.3.4.pack.js', array('jquery'));
 	wp_enqueue_script('fancybox');
-	wp_register_script('mousewheel', $x . 'jquery.mousewheel-3.0.4.pack.js');
+	wp_register_script('mousewheel', $js . 'jquery.mousewheel-3.0.4.pack.js');
 	wp_enqueue_script('mousewheel');
 }
 
 function jquery_fancybox_styles() {
-    $x = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__)) . 'scripts/fancybox/';
-	$x = clear_pre_content($x);
-	wp_register_style('fancybox_css', $x . 'jquery.fancybox-1.3.4.css');
+	$js = plugins_url('scripts/fancybox/jquery.fancybox-1.3.4.css', __FILE__);
+	$js = clear_pre_content($js);
+	wp_register_style('fancybox_css', $js);
 	wp_enqueue_style('fancybox_css');
 }
 
@@ -2398,7 +2423,6 @@ function get_Loop_Site_Image() {
 		
 	}
 	
-	// Asterisk - maybe tie to an option
 	if ( $continue == 'true' ) {
 		$img_url = clear_pre_content($img_url);
 	}
@@ -2470,7 +2494,6 @@ if ( ! function_exists( 'is_supported_video' ) ) :
 function is_supported_video($siteurl) {
 	
 	// Currently supported video formats: Vimeo and YouTube
-//	if ( ( strpos($siteurl, 'vimeo.com/') !== false ) || ( strpos($siteurl, 'youtube.com/watch') !== false ) || ( strpos($siteurl, 'player.webcast-tv.com/flash') !== false ) ) {
 	if ( ( strpos($siteurl, 'vimeo.com/') !== false ) || ( strpos($siteurl, 'youtube.com/watch') !== false ) ) {
 		return true;
 	} else {
@@ -2486,11 +2509,17 @@ if ( ! function_exists( 'clear_pre_content' ) ) :
 function clear_pre_content($url) {
 	
 	$return = $url;
+
+	$use_full_path = get_option('webphysiology_portfolio_use_full_path');
 	
-	$pos = strpos($return, 'wp-content');
-	
-	if ( ! empty($pos) ) {
-		$return = str_replace(substr($return, 0, strpos($return, 'wp-content') - 1), "", $return);
+	if ( $use_full_path != 'True' ) {
+		
+		$pos = strpos($return, 'wp-content');
+		
+		if ( ! empty($pos) ) {
+			$return = str_replace(substr($return, 0, strpos($return, 'wp-content') - 1), "", $return);
+		}
+		
 	}
 	
 	return $return;
@@ -2580,8 +2609,8 @@ function set_base_portfolio_css() {
 	$portfolio_css_on = get_option('webphysiology_portfolio_use_css');
 	
 	if (is_wp_error($portfolio_css_on) || $portfolio_css_on=='True') {
-		$x = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__)) . 'css/';
-		wp_register_style('portfolio_css', $x . 'portfolio.css');
+		$css = plugins_url('css/portfolio.css', __FILE__);
+		wp_register_style('portfolio_css', $css);
 		wp_enqueue_style('portfolio_css');
 	}
 	
@@ -2665,17 +2694,20 @@ function set_portfolio_css() {
 						'    }' . "\n" .
 						'</style>' . "\n";
 		
+		echo "\n";
+		echo "<!-- WEBphysiology Portfolio " . WEBPHYSIOLOGY_VERSION . " by http://WEBphysiology.com -->";
 		echo $embedded_css;
 		
-		$x = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__)) . 'css/';
+		$css = plugins_url('css/', __FILE__);
+		
 		// note: wp_enqueue_style does not support conditional stylesheets at this time
 		
 		echo "\n";
 		echo '<!--[if lte IE 8]>' . "\n";
-		echo '	<link rel="stylesheet" id="webphysiology_portfolio_ie_adjustment_css" type="text/css" href="' . $x . 'portfolio_lte_ie8.css" />' . "\n";
+		echo '	<link rel="stylesheet" id="webphysiology_portfolio_ie_adjustment_css" type="text/css" href="' . $css . 'portfolio_lte_ie8.css" />' . "\n";
 		echo '<![endif]-->' . "\n";
 		echo '<!--[if lte IE 7]>' . "\n";
-		echo '	<link rel="stylesheet" id="webphysiology_portfolio_ie_adjustment_css" type="text/css" href="' . $x . 'portfolio_lte_ie7.css" />' . "\n";
+		echo '	<link rel="stylesheet" id="webphysiology_portfolio_ie_adjustment_css" type="text/css" href="' . $css . 'portfolio_lte_ie7.css" />' . "\n";
 		echo '<![endif]-->' . "\n";
 	}
 }
