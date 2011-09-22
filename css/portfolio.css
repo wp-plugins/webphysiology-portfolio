@@ -91,6 +91,12 @@
 	padding-top: 10px;
 	margin-bottom: 0 !important;
 }
+/*
+.webphysiology_portfolio .portfolio_meta div {
+	margin: 0;
+	padding: 0;
+}
+*/
 .webphysiology_portfolio .portfolio_meta .key {
 	float: left;
 	font-weight: bold;
