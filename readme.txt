@@ -2,7 +2,7 @@
 Contributors: lambje
 Donate link: http://webphysiology.com/redir/webphysiology-portfolio/donate/
 Tags: portfolio,website,image,screenshot,gallery,list,grid,posts,post,custom post type,custom taxonomy,shrinktheweb,thumbnail,webphysiology
-Requires at least: 3.0.0
+Requires at least: 3.1.0
 Tested up to: 3.2.1
 Stable tag: 1.3.2
 
