@@ -2,7 +2,7 @@
 /*
 Plugin Name: WEBphysiology Portfolio
 Plugin URI: http://webphysiology.com/redir/webphysiology-portfolio/
-Version: 1.3.2
+Version: 1.4.0
 Description: Provides a clean Portfolio listing with image, details and portfolio type taxonomy. A [portfolio] shortcode is used to include the portfolio on any page.
 Author: Jeff Lambert
 Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
@@ -41,6 +41,8 @@ Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 
 /*  UPDATES
 
+	1.4.0 - * changed the action that the has_shortcode function is called in to cover for single portfolio screen displaying and thickbox contentions
+			* added back the ability to preview a single portfolio record
 	1.3.2 - * in response to an issue with Thesis, changed the hook used to call function that sets css and scripts on pages with the webphysiology_shortcode
 			* moved the instantiation of the webphysiology shortcode to just the non-admin area of the plugin
 	1.3.1 - * removed deprecated #portfolios ID from embedded stylesheet; was overlooked in version 1.2.7 when the stylesheet was updated
@@ -154,13 +156,12 @@ Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 // add ability to include / exlude multiple variations of Portfolio Types
 // image gallery widget or shortcode
 // add sort order to quick edit
-// search ability
 **********/
 
 
 // ASTERISK = make certain to update these as appropriate with new releases //
 
-define ( 'WEBPHYSIOLOGY_VERSION', '1.3.2' );
+define ( 'WEBPHYSIOLOGY_VERSION', '1.4.0' );
 define ( 'WEBPHYSIOLOGY_DB_VERSION', '3.2.1' );
 define ( 'WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE', basename($_SERVER['PHP_SELF']) );
 
@@ -191,7 +192,7 @@ if ( is_admin() ) {
 	add_filter('manage_edit-webphys_portfolio_columns', 'add_new_portfolio_columns');
 	add_action('manage_posts_custom_column', 'manage_portfolio_columns', 10, 2);
 	add_action('admin_head-edit.php', 'webphysiology_portfolio_quickedit');
-	add_filter('post_row_actions','remove_quick_edit',10,2);
+// 12/23/2011 - added back the viewing of a single portfolio record	add_filter('post_row_actions','remove_quick_edit',10,2);
 	add_action('save_post', 'portfolio_type_taxonomy_count');
 	 
 	// Add the Save Metabox Data
@@ -241,13 +242,13 @@ if ( is_admin() ) {
 		}
 		
 //		add_action('admin_head','mailchimpie');
+		add_action('admin_footer', 'admin_settings_jquery');
 		add_action('admin_footer', 'fancy_script', 12);
-		
+	
 	}
 } else {
 	add_shortcode('webphysiology_portfolio', 'portfolio_loop');
-//	add_action ('get_header','has_shortcode');
-	add_action ('wp_print_styles','has_shortcode');
+	add_action ('wp','has_shortcode');
 	add_filter('query_vars', 'portfolio_queryvars' );
 	add_filter('posts_join', 'portfolio_search_join', 10, 2 );
 	add_filter('posts_where', 'portfolio_search_where', 10, 2 );

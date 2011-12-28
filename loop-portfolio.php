@@ -9,6 +9,7 @@
 
 /*  UPDATES
 
+	1.4.0 - consolidated many options into an array that is now populated via the get_webphys_port_options function
 	1.3.2 - * better isolated navigation controls by adding "webphysport_nav_top" and "webphysport_nav_bottom" classes.
 			  top and bottom classes will be deprecated in a later release.
 			* better isolated portfolio odd/even stripe styling by adding new webphysport_odd_stripe and webphysport_even_stripe classes.
@@ -45,27 +46,29 @@ global $currpageurl;
 global $port;
 global $display_the_credit;
 
-$display_portfolio_title = get_option( 'webphysiology_portfolio_display_portfolio_title' );
-$display_portfolio_desc = get_option( 'webphysiology_portfolio_display_portfolio_desc' );
-$display_desc_first = get_option( 'webphysiology_portfolio_display_desc_first' );
-$display_portfolio_type = get_option( 'webphysiology_portfolio_display_portfolio_type' );
-$display_created_on = get_option( 'webphysiology_portfolio_display_createdate' );
-$display_clientname = get_option( 'webphysiology_portfolio_display_clientname' );
-$display_siteurl = get_option( 'webphysiology_portfolio_display_siteurl' );
-$display_tech = get_option( 'webphysiology_portfolio_display_tech' );
-$detail_labels = get_option( 'webphysiology_portfolio_display_labels' );
-$gridstyle = get_option( 'webphysiology_portfolio_gridstyle' );
-$sort_numerically = get_option( 'webphysiology_portfolio_sort_numerically' );
-if ($sort_numerically == 'True') {
-	$sort_numerically = "_num";
+$options = get_webphys_port_options();
+
+if ($options['sort_numerically'] == 'True') {
+	$options['sort_numerically'] = "_num";
 } else {
-	$sort_numerically = "";
+	$options['sort_numerically'] = "";
+}
+if ($options['legacy_even_odd_class'] != 'True') {
+	$odd_class = 'webphysport_odd_stripe';
+	$even_class = 'webphysport_even_stripe';
+	$odd_grid_class = 'webphysport_odd_cell';
+	$even_grid_class = ' webphysport_even_cell';
+} else {
+	$odd_class = 'webphysport_odd_stripe odd';
+	$even_class = 'webphysport_even_stripe even';
+	$odd_grid_class = 'webphysport_odd_cell odd';
+	$even_grid_class = 'webphysport_even_cell';
 }
 $paged = (get_query_var('paged')) ? get_query_var('paged') : 1;
 $portfolio_open_empty = "";
 $ul_open_empty = "";
 $li_open_odd_empty = "";
-$post_class = "portfolio_entry odd";
+$post_class = "portfolio_entry ".$odd_class;
 
 if (!isset($currpageurl)) {
 	$currpageurl = get_permalink();
@@ -87,41 +90,40 @@ $gridclass = '';
 $portfolio_open = '<div id="portfolios' . $portnum . '" class="webphysiology_portfolio">';
 $portfolio_open_empty = '<div id="portfolios' . $portnum . '" class="webphysiology_portfolio empty">';
 
-if ($gridstyle == 'True') {
+if ($options['gridstyle'] == 'True') {
 	$ul_open = '<ul class="grid">';
 	$ul_open_empty = '<ul class="grid empty">';
 	$ul_close = '</ul>';
-	$li_open_even = '<li>';
-	$li_open_odd = '<li class="odd">';
-	$li_open_odd_empty = '<li class="odd empty">';
+	$li_open_odd = '<li class="' . $odd_grid_class . '">';
+	$li_open_even = '<li class="' . $even_grid_class . '">';
+	$li_open_odd_empty = '<li class="' . $odd_grid_class . ' empty">';
 	$li_close = '</li>';
 	$gridclass = ' grid';
 }
-$type_label = $detail_labels["Type"];
+$type_label = $options['detail_labels']["Type"];
 if ( !empty($type_label) ) $type_label .= ": ";
-$created_label = $detail_labels["Created"];
+$created_label = $options['detail_labels']["Created"];
 if ( !empty($created_label) ) $created_label .= ": ";
-$client_label = $detail_labels["Client"];
+$client_label = $options['detail_labels']["Client"];
 if ( !empty($client_label) ) $client_label .= ": ";
-$siteURL_label = $detail_labels["SiteURL"];
+$siteURL_label = $options['detail_labels']["SiteURL"];
 if ( !empty($siteURL_label) ) $siteURL_label .= ": ";
-$tech_label = $detail_labels["Tech"];
+$tech_label = $options['detail_labels']["Tech"];
 if ( !empty($tech_label) ) $tech_label .= ": ";
 
 // if the portfolio shortcode had no portfolio types defined
 if ( empty($portfolio_types) ) {
-	$loop = new WP_Query( array( 'post_type' => 'webphys_portfolio', 'posts_per_page' => $num_per_page, 'orderby' => 'meta_value' . $sort_numerically, 'meta_key' => '_sortorder', 'order' => 'ASC', 'paged'=> $paged ) );
+	$loop = new WP_Query( array( 'post_type' => 'webphys_portfolio', 'posts_per_page' => $num_per_page, 'orderby' => 'meta_value' . $options['sort_numerically'], 'meta_key' => '_sortorder', 'order' => 'ASC', 'paged'=> $paged ) );
 } else {
 	$wp_query->query_vars['portfoliotype'] = $portfolio_types;
-	$loop = new WP_Query( array( 'post_type' => 'webphys_portfolio', 'portfoliotype' => $portfolio_types, 'posts_per_page' => $num_per_page, 'orderby' => 'meta_value' . $sort_numerically, 'meta_key' => '_sortorder', 'order' => 'ASC', 'paged'=> $paged ) );
+	$loop = new WP_Query( array( 'post_type' => 'webphys_portfolio', 'portfoliotype' => $portfolio_types, 'posts_per_page' => $num_per_page, 'orderby' => 'meta_value' . $options['sort_numerically'], 'meta_key' => '_sortorder', 'order' => 'ASC', 'paged'=> $paged ) );
 }
-//print_r($wp_query);
+
 if ( $loop->have_posts() ) {
 	
 //	echo $loop->request . '<br />';  //asterisk
 	
-	$target = get_option( 'webphysiology_portfolio_anchor_click_behavior' );
-	if ( empty($target) || ($target == "False") ) {
+	if ( ! isset($options['url_target']) || ($options['url_target'] == "False") ) {
 		$target = '';
 	} else {
 		$target = ' target="_blank"';
@@ -142,11 +144,11 @@ if ( $loop->have_posts() ) {
 		$loop->the_post();
 		
 		if ($odd==true) {
-			$post_class = 'portfolio_entry odd webphysport_odd_stripe';
+			$post_class = 'portfolio_entry ' . $odd_class;
 			$portfolio_output .= $li_open_odd;
 			$odd = false;
 		} else {
-			$post_class = 'portfolio_entry even webphysport_even_stripe';
+			$post_class = 'portfolio_entry ' . $even_class;
 			$portfolio_output .= $li_open_even;
 			$odd = true;
 		}
@@ -157,7 +159,7 @@ if ( $loop->have_posts() ) {
 		}
 		
 		$description = '';
-		if ($display_portfolio_desc == 'True') {
+		if ($options['display_portfolio_desc'] == 'True') {
 			$description = get_the_content();
 		}
 		$type = get_post_meta(get_the_ID(), "_portfolio_type", true);
@@ -178,17 +180,18 @@ if ( $loop->have_posts() ) {
 		$portfolio_output .= '    	' . get_Loop_Site_Image();
 		$portfolio_output .= '    </div>';
 		
-		if ($gridstyle != 'True') {
+		if ($options['gridstyle'] != 'True') {
 			$portfolio_output .= '	<div class="portfolio_details">';
 		}
 		
-		if ($display_portfolio_title == 'True') {
+		if ($options['display_portfolio_title'] == 'True') {
 			$portfolio_output .= '        <div class="portfolio_title">';
+//asterisk test link			$portfolio_output .= '<a href="'.the_permalink().'">link</a>';
 			$portfolio_output .= '            ' . get_Loop_Portfolio_Title();
 			$portfolio_output .= '        </div><!-- .entry-meta -->';
 		}
 		
-		if ( (!empty($description)) && ($display_desc_first == 'True') ) {
+		if ( (!empty($description)) && ($options['display_desc_first'] == 'True') ) {
 			$description = apply_filters('the_content', $description);
 			$description = str_replace(']]>', ']]>', $description);
 			$portfolio_output .= '            <div class="portfolio_description"><div class="value">' . $description . '</div></div>';
@@ -196,39 +199,35 @@ if ( $loop->have_posts() ) {
 		
 		$portfolio_output .= '		<div class="portfolio_meta">';
 		
-		if ( !empty($type) && ($display_portfolio_type == 'True') ) {
+		if ( !empty($type) && ($options['display_portfolio_type'] == 'True') ) {
 			$portfolio_output .= '            <div class="portfolio_type"><div class="key">' . $type_label . '</div><div class="value">' . $type . '</div></div>';
 		}
 		
-		if ( !empty($datecreate) && ($display_created_on == 'True') ) {
+		if ( !empty($datecreate) && ($options['display_created_on'] == 'True') ) {
 			$portfolio_output .= '            <div class="portfolio_datecreate"><div class="key">' . $created_label . '</div><div class="value">' .$datecreate . '</div></div>';
 		}
 		
-		if ( !empty($client) && ($display_clientname == 'True') ) {
+		if ( !empty($client) && ($options['display_clientname'] == 'True') ) {
 			$portfolio_output .= '            <div class="portfolio_client"><div class="key">' . $client_label . '</div><div class="value">' .$client . '</div></div>';
 		}
 		
-		if ( !empty($siteurl) && ($display_siteurl == 'True') ) {
+		if ( !empty($siteurl) && ($options['display_siteurl'] == 'True') ) {
 			$portfolio_output .= '            <div class="portfolio_siteurl"><div class="key">' . $siteURL_label . '</div><div class="value"><a href="' . $siteurl . '"' . $target . '>' . $siteurl . '</a></div></div>';
 		}
 		
-		if ( !empty($technical_details) && ($display_tech == 'True') ) {
+		if ( !empty($technical_details) && ($options['display_tech'] == 'True') ) {
 			$portfolio_output .= '            <div class="portfolio_techdetails"><div class="key">' . $tech_label . '</div><div class="value">' . $technical_details . '</div></div>';
 		}
 		$portfolio_output .= '            ' . wp_link_pages( array( 'before' => '<div class="page-link">' . __( 'Pages:', 'webphysiology_portfolio' ), 'after' => '</div>' ) );
-		if ($gridstyle != 'True') {
+		if ($options['gridstyle'] != 'True') {
 			$portfolio_output .= '        </div>';
 		}
-		if ( (!empty($description)) && ($display_desc_first != 'True') ) {
+		if ( (!empty($description)) && ($options['display_desc_first'] != 'True') ) {
 			$description = apply_filters('the_content', $description);
 			$description = str_replace(']]>', ']]>', $description);
 			$portfolio_output .= '            <div class="portfolio_description after_meta_data"><div class="value">' . $description . '</div></div>';
 		}
 		$portfolio_output .= '    </div>';
-		
-		if ($gridstyle == 'True') {
-	//		$portfolio_output .= '    </div>';
-		}
 		
 		$portfolio_output .= '</div><!-- #post-## -->';
 		$portfolio_output .= $li_close;
@@ -258,6 +257,5 @@ if ( $loop->have_posts() ) {
 	$portfolio_output .= $ul_close;
 	
 }
-	
 $portfolio_output .= '</div><!-- #portfolios -->';
 ?>
