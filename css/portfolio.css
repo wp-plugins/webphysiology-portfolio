@@ -5,15 +5,16 @@
 /* WEBphysiology Portfolio Styling
 -------------------------------------------------------------- */
 
-/*********************************************************************************************************************
+/**************************************************************************************************************************************
  
  NOTE:   #portfolios   has been deprecated in v1.2.7 and replaced with class   .webphysiology_portfolio
  
+ 2011-12-23 : 1.4.0 updated .portfolio_page_content to .webphysiology_portfolio_page_content and remove nav .top and .bottom class defs
  2011-08-18 : added webphysport_nav_top and webphysport_nav_botom classes to, in the future, deprecate top and bottom
  2011-07-26 : added CSS to handle positioning the Portfolio description below the meta data
  2011-03-08 : changed navigation styling to use borders and not images
  
- *********************************************************************************************************************/
+ **************************************************************************************************************************************/
  
 
 .webphysiology_portfolio .grid {
@@ -21,7 +22,7 @@
 	margin: 10px 0;
 	overflow: hidden;
 }
-.portfolio_page_content {
+.webphysiology_portfolio_page_content {
 	margin-bottom: 10px;
 }
 .webphysiology_portfolio h1, .webphysiology_portfolio h2 {
@@ -44,8 +45,9 @@
 	list-style: none;
 }
 .webphysiology_portfolio .portfolio_entry h2 {
-	margin-top: 20px;
-	margin-bottom: 20px;
+	margin-top: 2px;
+	margin-bottom: 10px;
+	padding-bottom: 0;
 	font-size: 1.6em;
 }
 .webphysiology_portfolio .grid .portfolio_entry h2 {
@@ -91,12 +93,6 @@
 	padding-top: 10px;
 	margin-bottom: 0 !important;
 }
-/*
-.webphysiology_portfolio .portfolio_meta div {
-	margin: 0;
-	padding: 0;
-}
-*/
 .webphysiology_portfolio .portfolio_meta .key {
 	float: left;
 	font-weight: bold;
@@ -117,12 +113,10 @@
 	padding: 0;
 	font-size: 1em;
 }
-.webphysiology_portfolio .portfolio_nav.webphysport_nav_top ul,
-.webphysiology_portfolio .portfolio_nav.top ul {
+.webphysiology_portfolio .portfolio_nav.webphysport_nav_top ul {
 	margin-bottom: 10px;
 }
-.webphysiology_portfolio .portfolio_nav.webphysport_nav_bottom ul,
-.webphysiology_portfolio .portfolio_nav.bottom ul {
+.webphysiology_portfolio .portfolio_nav.webphysport_nav_bottom ul {
 	margin-top: 10px;
 }
 .webphysiology_portfolio .portfolio_nav ul li {

@@ -1,5 +1,6 @@
 @charset "UTF-8";
 /* Portfolio Admin area CSS Document */
+/* updated 1.4.0 */
 
 #poststuff .inside, #poststuff .inside p {
 	font-size: 1em !important;
@@ -54,6 +55,7 @@ a.webphys_logo {
 }
 #social_network ul {
 	list-style-type: none;
+	margin-top: 0;
 }
 #social_network li {
 	float: left;
@@ -111,6 +113,7 @@ a.webphys_logo {
 }
 #pluginsettings {
 	margin-bottom: 10px;
+	padding-bottom: 10px;
 }
 .portfolio_donate {
 	float: left;
@@ -167,6 +170,9 @@ a.webphys_logo {
 }
 input.webphysiology_portfolio_small_input {
 	width: 70px;
+}
+#portolio-conf input[type="checkbox"], #portolio-conf input[type="radio"] {
+	margin-bottom: 1px;
 }
 #option_alerts {
 	float: left;
