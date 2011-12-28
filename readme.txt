@@ -1,22 +1,26 @@
 === Plugin Name ===
 Contributors: lambje
 Donate link: http://webphysiology.com/redir/webphysiology-portfolio/donate/
-Tags: portfolio,website,image,screenshot,gallery,list,grid,posts,post,custom post type,custom taxonomy,shrinktheweb,thumbnail,webphysiology
+Tags: portfolio,website,image,screenshot,gallery,list,grid,posts,post,custom post type,custom taxonomy,pagepeeker,shrinktheweb,thumbnail,webphysiology
 Requires at least: 3.1.0
-Tested up to: 3.2.1
-Stable tag: 1.3.2
+Tested up to: 3.3.0
+Stable tag: 1.4.0
 
 Allows for the creation of an expanded-list styled or a grid-styled page containing images and supporting detail, perfect for a portfolio presentation.
 
 == Description ==
 
-The WEBphysiology Portfolio plugin was built to provide a clean, current look in situations where an expanded list-style or grid-style portfolio layout is appropriate. The plugin is implemented via a [shortcode] that supports the display of all, one-or-more or all less one-or-more portfolio types.  More than one shortcode can be used on a given page, allowing for separating portfolio records between these instances.
+The WEBphysiology Portfolio plugin was built to provide a clean, current look in situations where an expanded list-style or grid-style portfolio layout is appropriate. The plugin is implemented via a [shortcode] that supports a variety of filtering options based upon Portfolio Type.  More than one shortcode can be used on a given page, allowing for grouping portfolio records by type.  And the shortcode also supports overriding many overall option settings on a case-by-case basis.
 
-The plugin utilizes a Custom Post Type as well as a Custom Taxonomy. It provides an Options page for specifying some customizable settings, like the number of entries to display per page. It also allows one to turn off the provided CSS in place of implementing their own and a lot more.
+The plugin utilizes a Custom Post Type as well as a Custom Taxonomy. It provides an Options page for specifying some customizable settings, like the number of entries to display per page. It also allows one to turn off the provided CSS in place of implementing your own.
 
-The Portfolio entry screen is highly customized to include just the items that make up a Portfolio entry. Attributes that aren't populated will not be displayed on the end user interface. Attaching an image to a Portfolio entry also has been made relatively painless.  With the release of version 1.2.0, the ability to utilize ShrinkTheWeb.com has been included.
+The Portfolio entry screen is customized to include just the items that make up a Portfolio entry. Attributes that aren't populated will not be displayed on the end user interface as well as custom fields whose display has been turned off. Attaching an image to a Portfolio entry also has been made relatively painless.
 
-The end user interface can be adjusted using the Portfolio (Admin) Options values or via your own CSS. It also incorporates the TimThumb 2.0 code in order to scale the images displayed in the portfolio. The benefit here is to decrease the page weight while maintaining an acceptable quality image, plus the fact that you only need to load one image for use in the portfolio thumbnail and expanded view.  Managing how things work within the end user interface is very customizable. Images can come from a saved image or from ShrinkTheWeb.com, clicking an image can open it up in a thickbox or it can take you to the supplied website URL....  The plugin also supports video media types.
+To enhance the design, and also reduce page weight, TimThumb 2.0 is utilized to display thumbnails of full-size imported images.  The ability to add automatic web site thumbnails utilizing ShrinkTheWeb.com was added in version 1.2.0.  And in version 1.4.0, the PagePeeker.com thumbnail service was incorporated.
+
+The end user interface can be adjusted using styling Portfolio Options or via your own CSS. Managing how things work within the end user interface is very customizable. Clicking thumbnail images can result in an image opening in a thickbox or it can take the visitor to the specified website URL....  The plugin also supports video media types, such that they can be played within a thickbox.
+
+A good many hours have been poured into this plugin, so, appreciation in the form of a donation always brightens our day.
 
 == Installation ==
 
@@ -42,7 +46,7 @@ More detailed information can be found here: http://webphysiology.com/plugins/we
 
 = How can I get support? =
 
-My intention, at a minimum, is to maintain this plugin such that it is defect free.  For more info visit our <a href="http://webphysiology.com/plugins/webphysiology-portfolio-plugin/">WEBphysiology Portfolio plugin page</a>.  If after reviewing the details here, and perhaps checking out the videos, you still aren't finding the answer you're looking for, use our <a href="http://webphysiology.com/helpdesk/" title="WEBphysiology Help Desk">support system</a> to log a ticket.
+My intention, at a minimum, is to maintain this plugin such that it is defect free.  For more detailed documentation and videos visit our <a href="http://webphysiology.com/plugins/webphysiology-portfolio-plugin/">WEBphysiology Portfolio plugin page</a>.  If you still aren't finding the answer you are seeking, use our <a href="http://webphysiology.com/helpdesk/" title="WEBphysiology Help Desk">support system</a> to log a ticket.
 
 = The website URL I've specified is not being displayed as the ShrinkTheWeb.com generated thumbnail =
 
@@ -69,9 +73,21 @@ Try resetting all the options by using the "Revert to Default Values" button at 
 
 == Upgrade Notice ==
 
-= 1.0.0 is the initial release =
+= 1.0.0 was the initial release =
 
 == Changelog ==
+
+= 1.4.0 =
+* added support for displaying a single portfolio post, alleviating issues with 404 screens displaying when a Portfolio record was accessed via a search results screen
+* added back the ability to preview a single portfolio record
+* changed the action that the has_shortcode function is called in to cover for single portfolio screen displaying and thickbox contentions
+* added PagePeeker service support for thumbnail generation
+* replaced some path code in place of the plugins_url function
+* added the “webphysiology_portfolio_use_full_path” option to allow for the ability to have images, and some css/js files, specify full pathnames. there seems to be instances where some hosts don’t like HTTP:// within the image pathnames and some cases where they require it
+* added code to handle image paths needing adjustment in a multisite install
+* updated inclusion of ShrinkTheWeb script to utilize wp_enqueue_script and specifically un-register any instances that were registered as “stw-pagepix”, which is how WordPress Portfolio Plugin registers it
+* added deregister of thickbox resources to try and avoid contention with other plugins, like Auto Thickbox Plus
+* added function for gathering plugin options and returning them within an array
 
 = 1.3.2 =
 * in response to an issue with Thesis, changed the hook used to call function that sets css and scripts on pages with the webphysiology_shortcode
