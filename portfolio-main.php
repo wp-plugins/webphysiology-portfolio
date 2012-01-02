@@ -41,6 +41,7 @@ Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 
 /*  UPDATES
 
+	1.4.1 - * removed un-used conditionally_add_scripts_and_styles function as there was another plugin, my-record-collection, that also had this function defined.
 	1.4.0 - * changed the action that the has_shortcode function is called in to cover for single portfolio screen displaying and thickbox contentions
 			* added back the ability to preview a single portfolio record
 	1.3.2 - * in response to an issue with Thesis, changed the hook used to call function that sets css and scripts on pages with the webphysiology_shortcode
@@ -252,26 +253,5 @@ if ( is_admin() ) {
 	add_filter('query_vars', 'portfolio_queryvars' );
 	add_filter('posts_join', 'portfolio_search_join', 10, 2 );
 	add_filter('posts_where', 'portfolio_search_where', 10, 2 );
-}
-function conditionally_add_scripts_and_styles($posts) {
-	
-	if (empty($posts)) return $posts;
- 
-	$shortcode_found = false; // use this flag to see if styles and scripts need to be enqueued
-	foreach ($posts as $post) {
-		if (stripos($post->post_content, '[code]')) {
-			$shortcode_found = true; // bingo!
-			break;
-		}
-	}
- 
-	if ($shortcode_found) {
-		echo "got it<br />";
-		// enqueue here
-//		wp_enqueue_style('my-style', '/style.css');
-//		wp_enqueue_script('my-script', '/script.js');
-	}
- 
-	return $posts;
 }
 ?>
