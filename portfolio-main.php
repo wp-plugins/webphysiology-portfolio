@@ -42,6 +42,12 @@ Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 /*  UPDATES
 
 	1.4.1 - * removed un-used conditionally_add_scripts_and_styles function as there was another plugin, my-record-collection, that also had this function defined.
+			* added custom Portfolio Tag taxonomy and added update code to convert any existing post tags to this custom Portfolio tag
+			* added Portfolio Tag Cloud widget
+			* by default any custom Portfolio tags are included in the standard Tag Cloud widget, but an option to override this behavior is available within the plugin options
+			* added ability to create single-webphys-portfolio.php template for use when displaying a single Portfolio record
+			* added ability to create archive-webphysiology_portfolio_tag.php template for use in displaying Portfolios associated with a Portfolio tag
+			* added ability to change thumbnail cache folder permissions to 0777 to deal with some instances where 0755 default permissions don't work with timthumb.php, resulting in no image being displayed
 	1.4.0 - * changed the action that the has_shortcode function is called in to cover for single portfolio screen displaying and thickbox contentions
 			* added back the ability to preview a single portfolio record
 	1.3.2 - * in response to an issue with Thesis, changed the hook used to call function that sets css and scripts on pages with the webphysiology_shortcode
@@ -162,8 +168,8 @@ Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 
 // ASTERISK = make certain to update these as appropriate with new releases //
 
-define ( 'WEBPHYSIOLOGY_VERSION', '1.4.0' );
-define ( 'WEBPHYSIOLOGY_DB_VERSION', '3.2.1' );
+define ( 'WEBPHYSIOLOGY_VERSION', '1.4.1' );
+define ( 'WEBPHYSIOLOGY_DB_VERSION', '3.3.1' );
 define ( 'WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE', basename($_SERVER['PHP_SELF']) );
 
 include_once("function.php");
@@ -186,6 +192,7 @@ if ( is_admin() ) {
 	add_action('admin_menu', 'portolio_admin_menu');
 	add_filter( 'plugin_action_links_' . $plugin, 'add_plugin_settings_link' );
 	add_action("init","check_version");
+//	add_action("admin_init","check_version");  // asterisk - should I change to this even though I'm already in the Admin (is_admin)?
 	add_action('admin_print_scripts', 'portfolio_admin_scripts');
 	add_action('admin_print_styles', 'portfolio_admin_styles');
 	add_action('admin_notices', 'display_update_alert');
@@ -229,7 +236,7 @@ if ( is_admin() ) {
 		// add in support for the "clear image caches" button
 		$base = esc_attr(plugin_dir_url(__FILE__) . 'scripts/');
 		wp_enqueue_script('prototype');
-		wp_register_script('clear_images', $base.'clear_img_caches.js');
+		wp_register_script('clear_images', $base.'manage_img_caches.js');
 		wp_enqueue_script('clear_images');
 
 		// if the default behavior to load the Fancybox jQuery code has not been overwritten

@@ -9,42 +9,59 @@
 
 /*  UPDATES
 
-	1.4.x - 
+	1.4.1 - Added commenting to help an adventurous soul in copying out necessary code to paste into a single-webphys_portfolio.php file created within their theme's directory
 	
 */
 
 get_header();
 
-$options = get_webphys_port_options();
-
-// sets $click_behavior global variable
-get_click_behavior($options['img_click_behavior']);
-
-$type_label = $options['detail_labels']["Type"];
-if ( !empty($type_label) ) $type_label .= ": ";
-
-$created_label = $options['detail_labels']["Created"];
-if ( !empty($created_label) ) $created_label .= ": ";
-
-$client_label = $options['detail_labels']["Client"];
-if ( !empty($client_label) ) $client_label .= ": ";
-
-$siteURL_label = $options['detail_labels']["SiteURL"];
-if ( !empty($siteURL_label) ) $siteURL_label .= ": ";
-
-$tech_label = $options['detail_labels']["Tech"];
-if ( !empty($tech_label) ) $tech_label .= ": ";
-
-if ( ! isset($options['url_target']) || ($options['url_target'] == "False") ) {
-	$target = '';
-} else {
-	$target = ' target="_blank"';
-}
-
 ?>
+
 		<div id="container" class="webphysiology_portfolio_container">
 			<div id="content" role="main">
+
+
+
 <?php
+	//  ****************************************************** //
+	//                                                         //
+	//    If you will be creating your own Single Portfolio    //
+	//    page template then the section between these two     //
+	//    tags is the main Portfolio content that you will     //
+	//    likely just want to copy and paste as the content    //
+	//    loop area of your template.                          //
+	//                                                         //
+	//                        ** START **                      //
+	//                                                         //
+	//  ****************************************************** //
+	
+	
+	$options = get_webphys_port_options();
+	
+	// sets $click_behavior global variable
+	get_click_behavior($options['img_click_behavior']);
+	
+	$type_label = $options['detail_labels']["Type"];
+	if ( !empty($type_label) ) $type_label .= ": ";
+	
+	$created_label = $options['detail_labels']["Created"];
+	if ( !empty($created_label) ) $created_label .= ": ";
+	
+	$client_label = $options['detail_labels']["Client"];
+	if ( !empty($client_label) ) $client_label .= ": ";
+	
+	$siteURL_label = $options['detail_labels']["SiteURL"];
+	if ( !empty($siteURL_label) ) $siteURL_label .= ": ";
+	
+	$tech_label = $options['detail_labels']["Tech"];
+	if ( !empty($tech_label) ) $tech_label .= ": ";
+	
+	if ( ! isset($options['url_target']) || ($options['url_target'] == "False") ) {
+		$target = '';
+	} else {
+		$target = ' target="_blank"';
+	}
+	
 	if ( have_posts() ) : while ( have_posts() ) : the_post();
 
 		$description = '';
@@ -111,7 +128,24 @@ if ( ! isset($options['url_target']) || ($options['url_target'] == "False") ) {
 		
 		<?php comments_template( '', true ); ?>
 
-<?php	endwhile; endif; // end of the loop. ?>
+<?php	endwhile; endif; // end of the loop.
+
+
+
+	//  ****************************************************** //
+	//                                                         //
+	//                         ** END **                       //
+	//                                                         //
+	//    If you will be creating your own Single Portfolio    //
+	//    page template then the section between these two     //
+	//    tags is the main Portfolio content that you will     //
+	//    likely just want to copy and paste as the content    //
+	//    loop area of your template.                          //
+	//                                                         //
+	//  ****************************************************** //
+?>
+
+
 
 			</div><!-- #content -->
 		</div><!-- #container -->

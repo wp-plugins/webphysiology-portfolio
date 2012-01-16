@@ -111,6 +111,13 @@ a.webphys_logo {
 	margin-top: 3px;
 	padding: 0;
 }
+input.button-primary, button.button-primary, a.button-primary, .button {
+	-moz-border-radius: 6px;
+	border-radius: 6px;
+}
+.postbox .inside .button {
+	padding: 6px 8px 3px 8px;
+}
 #pluginsettings {
 	margin-bottom: 10px;
 	padding-bottom: 10px;
@@ -196,11 +203,13 @@ input.webphysiology_portfolio_small_input {
 	height: 40px;
 	z-index: 999;
 }
-#show-clear-response {
-	margin: -32px 0 25px 170px;
+#show-clear-response, #show-chmod-response {
+	position: absolute;
+	left: 240px;
+	margin: -34px 0 0 0;
 	padding: 5px 5px;
 	text-align: center;
-	width: 140px;
+	width: 300px;
 	background-color: #FF9;
 }
 .ajax_status {

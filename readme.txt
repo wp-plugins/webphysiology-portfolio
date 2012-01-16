@@ -1,10 +1,10 @@
-=== Plugin Name ===
+=== WEBphysiology Portfolio ===
 Contributors: lambje
 Donate link: http://webphysiology.com/redir/webphysiology-portfolio/donate/
 Tags: portfolio,website,image,screenshot,gallery,list,grid,posts,post,custom post type,custom taxonomy,pagepeeker,shrinktheweb,thumbnail,webphysiology
 Requires at least: 3.1.0
-Tested up to: 3.3.0
-Stable tag: 1.4.0
+Tested up to: 3.3.1
+Stable tag: 1.4.1
 
 Allows for the creation of an expanded-list styled or a grid-styled page containing images and supporting detail, perfect for a portfolio presentation.
 
@@ -48,6 +48,10 @@ More detailed information can be found here: http://webphysiology.com/plugins/we
 
 My intention, at a minimum, is to maintain this plugin such that it is defect free.  For more detailed documentation and videos visit our <a href="http://webphysiology.com/plugins/webphysiology-portfolio-plugin/">WEBphysiology Portfolio plugin page</a>.  If you still aren't finding the answer you are seeking, use our <a href="http://webphysiology.com/helpdesk/" title="WEBphysiology Help Desk">support system</a> to log a ticket.
 
+= The thumbnail image isn't displaying =
+
+In some instances, when using the built-in thumbnail generator, the standard folder permissions aren't enough. After checking that the image URL specified is correct, try upping the caching folder's permission using the "Permission Image Cache to 0777" button in the options.
+
 = The website URL I've specified is not being displayed as the ShrinkTheWeb.com generated thumbnail =
 
 If you are specifying an inside page within your URL, then you must specifically subscribe to that level of service on your ShrinkTheWeb.com account.
@@ -70,12 +74,22 @@ Try resetting all the options by using the "Revert to Default Values" button at 
 2. Portfolio Post edit screen
 3. Portfolio Page edit screen showing [shortcode] implementation
 4. Portfolio options screen
+5. Portfolio Tag Cloud widget
 
 == Upgrade Notice ==
 
 = 1.0.0 was the initial release =
 
 == Changelog ==
+
+= 1.4.1 =
+* removed un-used conditionally_add_scripts_and_styles function as there was another plugin, my-record-collection, that also had this function defined.
+* added custom Portfolio Tag taxonomy and added update code to convert any existing post tags to this custom Portfolio tag
+* added Portfolio Tag Cloud widget
+* by default any custom Portfolio tags are included in the standard Tag Cloud widget, but an option to override this behavior is available within the plugin options
+* added ability to create single-webphys-portfolio.php template for use when displaying a single Portfolio record
+* added ability to create archive-webphysiology_portfolio_tag.php template for use in displaying Portfolios associated with a given Portfolio tag
+* added ability to change thumbnail cache folder permissions to 0777 to deal with some instances where 0755 default permissions don't work with timthumb.php, resulting in no image being displayed
 
 = 1.4.0 =
 * added support for displaying a single portfolio post, alleviating issues with 404 screens displaying when a Portfolio record was accessed via a search results screen
