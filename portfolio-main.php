@@ -10,7 +10,7 @@ Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 
 /*	License: GPL2
 	
-	Copyright 2010-2011  JVHM, Inc.  (email : info@jvhm.com)
+	Copyright 2010-2012  JVHM, Inc.  (email : info@jvhm.com)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License, version 2, as 
@@ -41,6 +41,7 @@ Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 
 /*  UPDATES
 
+	1.4.2 - * changed Portfolio Type taxomony from "portfolio_type" to "webphys_portfolio_type" to further reduce contentions with other custom taxonomies
 	1.4.1 - * removed un-used conditionally_add_scripts_and_styles function as there was another plugin, my-record-collection, that also had this function defined.
 			* added custom Portfolio Tag taxonomy and added update code to convert any existing post tags to this custom Portfolio tag
 			* added Portfolio Tag Cloud widget
@@ -169,7 +170,7 @@ Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 // ASTERISK = make certain to update these as appropriate with new releases //
 
 define ( 'WEBPHYSIOLOGY_VERSION', '1.4.1' );
-define ( 'WEBPHYSIOLOGY_DB_VERSION', '3.3.1' );
+define ( 'WEBPHYSIOLOGY_DB_VERSION', '3.3.2' );
 define ( 'WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE', basename($_SERVER['PHP_SELF']) );
 
 include_once("function.php");
@@ -179,7 +180,7 @@ add_action( 'init', 'portfolio_post_type_init' );
 add_filter('post_updated_messages', 'portfolio_updated_messages');
 
 // register the Portfolio Type taxonomy
-add_action( 'init', 'create_portfolio_type_taxonomy', 0 );
+add_action( 'init', 'create_webphys_portfolio_type_taxonomy', 1 );
 
 if ( is_admin() ) {
 	
@@ -191,7 +192,7 @@ if ( is_admin() ) {
 	register_activation_hook(__FILE__,'portfolio_install');
 	add_action('admin_menu', 'portolio_admin_menu');
 	add_filter( 'plugin_action_links_' . $plugin, 'add_plugin_settings_link' );
-	add_action("init","check_version");
+	add_action("init","check_version",0);
 //	add_action("admin_init","check_version");  // asterisk - should I change to this even though I'm already in the Admin (is_admin)?
 	add_action('admin_print_scripts', 'portfolio_admin_scripts');
 	add_action('admin_print_styles', 'portfolio_admin_styles');
@@ -201,10 +202,10 @@ if ( is_admin() ) {
 	add_action('manage_posts_custom_column', 'manage_portfolio_columns', 10, 2);
 	add_action('admin_head-edit.php', 'webphysiology_portfolio_quickedit');
 // 12/23/2011 - added back the viewing of a single portfolio record	add_filter('post_row_actions','remove_quick_edit',10,2);
-	add_action('save_post', 'portfolio_type_taxonomy_count');
 	 
 	// Add the Save Metabox Data
-	add_action('save_post', 'save_portfolio_meta', 1, 2); // save the custom fields
+	add_action('save_post', 'save_portfolio_meta', 1); // save the custom fields
+	add_action('save_post', 'webphys_portfolio_type_taxonomy_count', 99);
 	
 	register_deactivation_hook( __FILE__, 'portfolio_remove' );
 	

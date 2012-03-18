@@ -10,6 +10,8 @@
 
 /*  UPDATES
 	
+	1.4.2 - * changed Portfolio Type taxomony from "portfolio_type" to "webphys_portfolio_type" to further reduce contentions with other custom taxonomies
+			* added deleting Portfolio Tags if the plugin is deactivated and the deletion of Portfolio Records is selected in the options
 	1.4.1 - * added custom Portfolio Tag taxonomy and added update code to convert any existing post tags to this custom Portfolio tag
 			* added Portfolio Tag Cloud widget
 			* by default any custom Portfolio tags are included in the standard Tag Cloud widget, but an option to override this behavior is available within the plugin options
@@ -39,6 +41,9 @@
 	
 */
 
+//class WEBphysiologyPortfolio {
+	
+	
 include_once('file_functions.php');
 
 // if the Ozh Admin Menu plugin is being used, add the JVHM icon to the menu portfolio menu item
@@ -50,15 +55,14 @@ function RegisterAdminIcon($hook) {
 }
 
 // Manage Portfolio Types taxonomy counts
-function portfolio_type_taxonomy_count() {
+function webphys_portfolio_type_taxonomy_count($post_id) {
 	
-	global $post_ID;
 	global $wpdb;
 	
-	$postid = wp_is_post_revision( $post_ID );
+	$postid = wp_is_post_revision( $post_id );
 	
 	if ( $postid == false ) {
-		$postid = $post_ID;
+		$postid = $post_id;
 	}
 	
 	$wpdb->query("	DELETE	FROM $wpdb->term_relationships
@@ -67,16 +71,15 @@ function portfolio_type_taxonomy_count() {
 							SELECT	1
 							FROM	$wpdb->term_taxonomy stt
 							WHERE	stt.term_taxonomy_id = $wpdb->term_relationships.term_taxonomy_id
-							AND		stt.taxonomy = 'portfolio_type')");
+							AND		stt.taxonomy = 'webphys_portfolio_type')");
 	
-	//echo $post_ID."<br />";
 	$wpdb->query("	INSERT INTO $wpdb->term_relationships (object_id, term_taxonomy_id, term_order)
 					SELECT	sp.id 'object_id',
 						(	SELECT	ssstt.term_taxonomy_id
 							FROM	$wpdb->postmeta spm INNER JOIN
 									$wpdb->terms ssst ON spm.meta_value = ssst.slug INNER JOIN
-									$wpdb->term_taxonomy ssstt ON ssst.term_id = ssstt.term_id AND ssstt.taxonomy = 'portfolio_type'
-							WHERE	spm.meta_key = '_portfolio_type'
+									$wpdb->term_taxonomy ssstt ON ssst.term_id = ssstt.term_id AND ssstt.taxonomy = 'webphys_portfolio_type'
+							WHERE	spm.meta_key = '_webphys_portfolio_type'
 							AND		spm.post_id = sp.id) 'term_taxonomy_id',
 							0 'term_order'
 					FROM	$wpdb->posts sp
@@ -86,20 +89,20 @@ function portfolio_type_taxonomy_count() {
 							SELECT	1
 							FROM	sss_postmeta sspm INNER JOIN
 									sss_terms sssst ON sspm.meta_value = sssst.slug INNER JOIN
-									sss_term_taxonomy sssstt ON sssst.term_id = sssstt.term_id AND sssstt.taxonomy = 'portfolio_type'
-							WHERE	sspm.meta_key = '_portfolio_type'
+									sss_term_taxonomy sssstt ON sssst.term_id = sssstt.term_id AND sssstt.taxonomy = 'webphys_portfolio_type'
+							WHERE	sspm.meta_key = '_webphys_portfolio_type'
 							AND		sspm.post_id = sp.id)
 					AND		NOT EXISTS (
 							SELECT	1
 							FROM	$wpdb->term_relationships str INNER JOIN
-									$wpdb->term_taxonomy stt ON str.term_taxonomy_id = stt.term_taxonomy_id AND stt.taxonomy = 'portfolio_type' INNER JOIN
+									$wpdb->term_taxonomy stt ON str.term_taxonomy_id = stt.term_taxonomy_id AND stt.taxonomy = 'webphys_portfolio_type' INNER JOIN
 									$wpdb->terms st ON stt.term_id = st.term_id
 							WHERE	str.object_id = sp.id)");
 	
 	// update the Portfolio (Post) counts on the Portfolio Types
 	$wpdb->query("	UPDATE	$wpdb->term_taxonomy
 					SET		count = (SELECT count(ssp.id) FROM $wpdb->posts ssp INNER JOIN $wpdb->term_relationships str ON ssp.id = str.object_id WHERE ssp.post_type = 'webphys_portfolio' AND ssp.post_status = 'publish' AND str.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id)
-					WHERE	taxonomy = 'portfolio_type'");
+					WHERE	taxonomy = 'webphys_portfolio_type'");
 	
 }
 
@@ -126,8 +129,7 @@ function portfolio_updated_messages( $messages ) {
 }
 
 // Define and register the Portfolio custom post type
-function portfolio_post_type_init() 
-{
+function portfolio_post_type_init() {
 	
 	$script = plugins_url('images/jvhm_pinwheel_bullet.png', __FILE__);
 
@@ -161,7 +163,7 @@ function portfolio_post_type_init()
 		'menu_icon' => $script,
 		'supports' => array('title','editor','author'),
 		'register_meta_box_cb' => 'add_portfolio_metaboxes',
-		'taxonomies' => array('portfolio_type','webphys_portfolio_tag')
+		'taxonomies' => array('webphys_portfolio_type','webphys_portfolio_tag')
 	); 
 	
 	register_post_type('webphys_portfolio',$args);
@@ -215,62 +217,66 @@ function portolio_admin_menu() {
 //*************************************************//
 
 // Define the Save Metabox Data routine
-function save_portfolio_meta($post_id, $post) {
+//function save_portfolio_meta($post_id, $post) {
+function save_portfolio_meta($post_id) {
 	
-	// if the save was initiated by an autosave or a quick edit, exit out as the Portfolio fields being updated here may get over written or hang the save
-	if (!isset($_POST['autosave_quickedit_check'])) {
-		return $post->ID;
-	}
+	$postid = wp_is_post_revision( $post_ID );
 	
-	// verify this call is the result of a POST
-	if ( empty($_POST) ) {
-		return $post->ID;
-	}
- 
-	// if the user isn't saving a portfolio
-	if (strtolower($_POST['post_type']) != "webphys_portfolio") {
-		return $post->ID;
-	}
-	
-	// verify this came from our screen and with proper authorization, because save_post can be triggered at other times
-	if ( !check_admin_referer('portfolio_edit','portfoliometanonce') ) {
-		return $post->ID;
-	}
- 
-	// Is the user allowed to edit the post or page?
-	if ( !current_user_can( 'edit_post', $post->ID )) {
-		return $post->ID;
-	}
-	
-	// OK, we're authenticated: we need to find and save the data
-	// We'll put it into an array to make it easier to loop though.
- 	
-	$portfolio_meta['_portfolio_type'] = $_POST['_portfolio_type'];
-	$portfolio_meta['_createdate'] = $_POST['_createdate'];
-	$portfolio_meta['_clientname'] = $_POST['_clientname'];
-	$portfolio_meta['_technical_details'] = $_POST['_technical_details'];
-	$portfolio_meta['_siteurl'] = $_POST['_siteurl'];
-	$portfolio_meta['_imageurl'] = $_POST['_imageurl'];
-	if (!empty($_POST['_sortorder'])) {
-		$portfolio_meta['_sortorder'] = $_POST['_sortorder'];
-	} else {
-		$portfolio_meta['_sortorder'] = -1*($post->ID);
-	}
-	
- 
-	// Add values of $portfolio_meta as custom fields
- 
-	foreach ($portfolio_meta as $key => $value) { // Cycle through the $portfolio_meta array!
-		if ( $post->post_type == 'revision' ) return; // Don't store custom data twice
-		$value = implode(',', (array)$value); // If $value is an array, make it a CSV (unlikely)
-		if (get_post_meta($post->ID, $key, false)) { // If the custom field already has a value
-			update_post_meta($post->ID, $key, $value);
-		} else { // If the custom field doesn't have a value
-			add_post_meta($post->ID, $key, $value);
+	if ( $postid == false ) {
+		
+		// if the save was initiated by an autosave or a quick edit, exit out as the Portfolio fields being updated here may get over written or hang the save
+		if (!isset($_POST['autosave_quickedit_check'])) {
+			return $post_id;
 		}
-		if (!$value) delete_post_meta($post->ID, $key); // Delete if blank
+		
+		// verify this call is the result of a POST
+		if ( empty($_POST) ) {
+			return $post_id;
+		}
+	 
+		// if the user isn't saving a portfolio
+		if (strtolower($_POST['post_type']) != "webphys_portfolio") {
+			return $post_id;
+		}
+		
+		// verify this came from our screen and with proper authorization, because save_post can be triggered at other times
+		if ( !check_admin_referer('portfolio_edit','portfoliometanonce') ) {
+			return $post_id;
+		}
+	 
+		// Is the user allowed to edit the post or page?
+		if ( !current_user_can( 'edit_post', $post_id )) {
+			return $post_id;
+		}
+		
+		// OK, we're authenticated: we need to find and save the data
+		// We'll put it into an array to make it easier to loop though.
+		
+		$portfolio_meta['_webphys_portfolio_type'] = $_POST['_webphys_portfolio_type'];
+		$portfolio_meta['_createdate'] = $_POST['_createdate'];
+		$portfolio_meta['_clientname'] = $_POST['_clientname'];
+		$portfolio_meta['_technical_details'] = $_POST['_technical_details'];
+		$portfolio_meta['_siteurl'] = $_POST['_siteurl'];
+		$portfolio_meta['_imageurl'] = $_POST['_imageurl'];
+		if (!empty($_POST['_sortorder'])) {
+			$portfolio_meta['_sortorder'] = $_POST['_sortorder'];
+		} else {
+			$portfolio_meta['_sortorder'] = -1*($post_id);
+		}
+		
+	 
+		// Add values of $portfolio_meta as custom fields
+	 
+		foreach ($portfolio_meta as $key => $value) { // Cycle through the $portfolio_meta array!
+			$value = implode(',', (array)$value); // If $value is an array, make it a CSV (unlikely)
+			if (get_post_meta($post_id, $key, false)) { // If the custom field already has a value
+				update_post_meta($post_id, $key, $value);
+			} else { // If the custom field doesn't have a value
+				add_post_meta($post_id, $key, $value);
+			}
+			if (!$value) delete_post_meta($post_id, $key); // Delete if blank
+		}
 	}
- 
 }
 
 //*************************************************//
@@ -287,7 +293,7 @@ function webphys_portfolio_edit_init() {
 	wp_nonce_field( 'portfolio_edit', 'portfoliometanonce' );
 	
 	// Gather any existing custom data for the Portfolio
-	$portfolio_type = get_post_meta($post->ID, '_portfolio_type', true);
+	$webphys_portfolio_type = get_post_meta($post->ID, '_webphys_portfolio_type', true);
 	$datecreate = get_post_meta($post->ID, '_createdate', true);
 	$client = get_post_meta($post->ID, '_clientname', true);
 	$technical_details = get_post_meta($post->ID, '_technical_details', true);
@@ -297,7 +303,7 @@ function webphys_portfolio_edit_init() {
 	if ($sortorder=="") $sortorder = "-" . $post->ID;
  
 	// Gather the list of Portfolio Types
-	$portfolio_type_list = get_terms('portfolio_type', 'hide_empty=0'); 
+	$portfolio_type_list = get_terms('webphys_portfolio_type', 'hide_empty=0'); 
  
  	// Build out the form fields
 	
@@ -322,14 +328,14 @@ function webphys_portfolio_edit_init() {
 	// hide the Portfolio edit screen Preview button
 //asterisk 12/13/11	echo "\n" . '<style type="text/css" id="webphysiology_portfolio_hide_preview_css">' . "\n" . '	#preview-action { display: none; } ' . "\n" . '</style>' . "\n";
 
-	echo '<p><label for="_portfolio_type">Select Portfolio Type (' . $type . '): </label> ';
+	echo '<p><label for="_webphys_portfolio_type">Select Portfolio Type (' . $type . '): </label> ';
 
-    echo '<select name="_portfolio_type" id="_portfolio_type">';
+    echo '<select name="_webphys_portfolio_type" id="_webphys_portfolio_type">';
         echo '<!-- Display portfolio types as options -->';
             echo '<option class="portfolio_type_option" value=""';
-            if ( !count($portfolio_type_list) || is_wp_error($portfolio_type) || empty($portfolio_type) ) echo 'selected>None</option>';
+            if ( !count($portfolio_type_list) || is_wp_error($webphys_portfolio_type) || empty($webphys_portfolio_type) ) echo 'selected>None</option>'; // asterisk 330
         foreach ($portfolio_type_list as $portfolio_item) {
-            if ($portfolio_item->slug == $portfolio_type) {
+            if ($portfolio_item->slug == $webphys_portfolio_type) {
                 echo '<option class="portfolio_type_option" value="' . $portfolio_item->slug . '" selected>' . $portfolio_item->name . '</option>\n'; 
 			} else {
                 echo '<option class="portfolio_type_option" value="' . $portfolio_item->slug . '">' . $portfolio_item->name . '</option>\n';
@@ -1358,12 +1364,21 @@ function portfolio_remove() {
 		}
 
 		// Gather the list of Portfolio Types
-		$portfolio_type_list = get_terms('portfolio_type', 'hide_empty=0');
+		$portfolio_type_list = get_terms('webphys_portfolio_type', 'hide_empty=0');
 		
 		// Loop thru the types and delete each one, the last will clear the taxonomy
 		foreach ($portfolio_type_list as $portfolio_item) {
-			wp_delete_term( $portfolio_item->term_id, 'portfolio_type' );
+			wp_delete_term( $portfolio_item->term_id, 'webphys_portfolio_type' );
 		}
+		
+		// Gather the list of Portfolio Tags
+		$portfolio_type_list = get_terms('webphys_portfolio_tag', 'hide_empty=0');
+		
+		// Loop thru the tags and delete each one
+		foreach ($portfolio_type_list as $portfolio_item) {
+			wp_delete_term( $portfolio_item->term_id, 'webphys_portfolio_tag' );
+		}
+		
 	}
 
 }
@@ -1596,8 +1611,8 @@ function update_database($ver) {
 								(	SELECT	ssstt.term_taxonomy_id
 									FROM	$wpdb->postmeta spm INNER JOIN
 											$wpdb->terms ssst ON spm.meta_value = ssst.slug INNER JOIN
-											$wpdb->term_taxonomy ssstt ON ssst.term_id = ssstt.term_id AND ssstt.taxonomy = 'portfolio_type'
-									WHERE	spm.meta_key = '_portfolio_type'
+											$wpdb->term_taxonomy ssstt ON ssst.term_id = ssstt.term_id AND ssstt.taxonomy = 'webphys_portfolio_type'
+									WHERE	spm.meta_key = '_webphys_portfolio_type'
 									AND		spm.post_id = sp.id) 'term_taxonomy_id',
 									0 'term_order'
 							FROM	$wpdb->posts sp
@@ -1605,14 +1620,14 @@ function update_database($ver) {
 							AND		NOT EXISTS (
 									SELECT	1
 									FROM	$wpdb->term_relationships str INNER JOIN
-											$wpdb->term_taxonomy stt ON str.term_taxonomy_id = stt.term_taxonomy_id AND stt.taxonomy = 'portfolio_type' INNER JOIN
+											$wpdb->term_taxonomy stt ON str.term_taxonomy_id = stt.term_taxonomy_id AND stt.taxonomy = 'webphys_portfolio_type' INNER JOIN
 											$wpdb->terms st ON stt.term_id = st.term_id
 									WHERE	str.object_id = sp.id)");
 			
 			// update the Portfolio (Post) counts on the Portfolio Types
 			$wpdb->query("	UPDATE	$wpdb->term_taxonomy
 							SET		count = (SELECT count(ssp.id) FROM $wpdb->posts ssp INNER JOIN $wpdb->term_relationships str ON ssp.id = str.object_id WHERE ssp.post_type = 'webphys_portfolio' AND ssp.post_status = 'publish' AND str.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id)
-							WHERE	taxonomy = 'portfolio_type'");
+							WHERE	taxonomy = 'webphys_portfolio_type'");
 			
 		}
 		
@@ -1628,6 +1643,32 @@ function update_database($ver) {
 									FROM	$wpdb->term_relationships tr INNER JOIN
 											$wpdb->posts p ON tr.object_id = p.id AND p.post_type = 'webphys_portfolio'
 									WHERE	tr.term_taxonomy_id = tt.term_taxonomy_id)");
+			
+		}
+		
+		// if this version of WEBphysiology Portfolio is using the 3.3.1 db version or better
+		if ( version_compare($ver, '3.3.2', '<=') ) {
+			
+			/* update Post Types hooked to Portfolio records to set them to be WEBphysioology Portfolio Type */
+			$wpdb->query("	UPDATE	$wpdb->term_taxonomy
+							SET		taxonomy = 'webphys_portfolio_type'
+							WHERE	taxonomy = 'portfolio_type'");
+//							AND		EXISTS (
+//									SELECT	1
+//									FROM	$wpdb->term_relationships tr INNER JOIN
+//											$wpdb->posts p ON tr.object_id = p.id AND p.post_type = 'webphys_portfolio'
+//									WHERE	tr.term_taxonomy_id = tt.term_taxonomy_id)");
+			
+			/* update Posts meta keys of _portfolio_type to the new _webphys_portfolio_type */
+			$wpdb->query("	UPDATE	$wpdb->postmeta
+							SET		meta_key = '_webphys_portfolio_type'
+							WHERE	meta_key = '_portfolio_type'");
+			
+			
+			// update the Portfolio (Post) counts on the Portfolio Types
+			$wpdb->query("	UPDATE	$wpdb->term_taxonomy
+							SET		count = (SELECT count(ssp.id) FROM $wpdb->posts ssp INNER JOIN $wpdb->term_relationships str ON ssp.id = str.object_id WHERE ssp.post_type = 'webphys_portfolio' AND ssp.post_status = 'publish' AND str.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id)
+							WHERE	taxonomy = 'webphys_portfolio_type'");
 			
 		}
 	}
@@ -1725,7 +1766,7 @@ function portfolio_admin_styles() {
 // remove the Porfolio Type tag sidebar widget from the Portfolio edit screen as the Portfolio Type dropdown manages this
 // also remove author dropdown list as this really doesn't apply to Portfolios
 function remove_post_custom_fields() {
-	remove_meta_box( 'tagsdiv-portfolio_type' , 'webphys_portfolio' , 'side' );
+	remove_meta_box( 'tagsdiv-webphys_portfolio_type' , 'webphys_portfolio' , 'side' );
 	remove_meta_box( 'authordiv' , 'webphys_portfolio' , 'content' );
 }
 
@@ -1763,7 +1804,7 @@ function add_new_portfolio_columns($columns) {
 	$new_columns['_clientname'] = _x( $clientname, 'column name' );
 	$new_columns['_technical_details'] = _x( $tech, 'column name' );
 	$new_columns['_siteurl'] = _x( $siteURL, 'column name' );
-	$new_columns['_portfolio_type'] = _x( $type, 'column name' );
+	$new_columns['_webphys_portfolio_type'] = _x( $type, 'column name' );
 	$new_columns['_sortorder'] = _x( 'Sort Order', 'column name' );
 	$new_columns['date'] = _x('Create Date', 'column name');
 	$new_columns['id'] = __('ID');
@@ -1812,12 +1853,12 @@ function manage_portfolio_columns($column_name, $id) {
 		// Get the URL to the actual website
 		echo get_post_meta( $id , '_siteurl' , true );
 		break;
-	case '_portfolio_type':
+	case '_webphys_portfolio_type':
 		// Get the Portfolio Type
-		$type = get_post_meta( $id , '_portfolio_type' , true );
-		$portfolio_type = get_term_by( 'slug', $type, 'portfolio_type' );
-		if (!empty($portfolio_type->name)) {
-			echo $portfolio_type->name;
+		$type = get_post_meta( $id , '_webphys_portfolio_type' , true );
+		$webphys_portfolio_type = get_term_by( 'slug', $type, 'webphys_portfolio_type' );
+		if (!empty($webphys_portfolio_type->name)) {
+			echo $webphys_portfolio_type->name;
 		} else {
 			echo "";
 		}
@@ -2009,7 +2050,7 @@ function portfolio_search_join( $join, $query ) {
 */
 		
 		// add the join to the wp_postmeta table for meta records that are of a Portfolio Type
-		$join .=  " LEFT OUTER JOIN " . $wpdb->prefix . "postmeta AS port ON (" . $wpdb->posts . ".ID = port.post_id AND port.meta_key = '_portfolio_type') ";
+		$join .=  " LEFT OUTER JOIN " . $wpdb->prefix . "postmeta AS port ON (" . $wpdb->posts . ".ID = port.post_id AND port.meta_key = '_webphys_portfolio_type') ";
 		
 	}
 	
@@ -2162,9 +2203,9 @@ function clear_globals() {
 
 
 // define a custom Portfolio Type taxonomy and populate it
-function create_portfolio_type_taxonomy() {
+function create_webphys_portfolio_type_taxonomy() {
 	
-	if (!taxonomy_exists('portfolio_type')) {
+	if (!taxonomy_exists('webphys_portfolio_type')) {
 		
 		$labels = array(
 				
@@ -2183,7 +2224,7 @@ function create_portfolio_type_taxonomy() {
 				
 		);
 		
-		register_taxonomy('portfolio_type', 
+		register_taxonomy('webphys_portfolio_type', 
 						  'webphys_portfolio',
 						  array(	'hierarchical' => false, 
 									'labels' => $labels,
@@ -2191,12 +2232,17 @@ function create_portfolio_type_taxonomy() {
 									'public' => true,
 									'show_in_nav_menus' => true,
 									'show_ui' => true,
-									'query_var' => 'portfolio_type',
-									'rewrite' => array( 'slug' => 'portfolio_type')));
+									'query_var' => 'webphys_portfolio_type',
+									'rewrite' => array( 'slug' => 'webphys_portfolio_type'),
+//									'update_count_callback' => 'webphys_portfolio_type_taxonomy_count'
+//									'update_count_callback' => 'wp_update_term_count'
+//									'update_count_callback' => '_update_post_term_count' //asterisk 2196
+								)
+						  );
 	 	
 		// if there are no Portfolio Type terms, add a default term
-		if (count(get_terms('portfolio_type', 'hide_empty=0')) == 0) {
-			wp_insert_term('Default', 'portfolio_type');
+		if (count(get_terms('webphys_portfolio_type', 'hide_empty=0')) == 0) {
+			wp_insert_term('Default', 'webphys_portfolio_type');
 		}
 	}
 	
@@ -2853,6 +2899,7 @@ function get_Loop_Site_Image() {
 	if ( ( ! empty($full_size_img_url) ) && ( $continue == 'true' ) ) {
 		
 		$img_url = clean_source($full_size_img_url);
+//asterisk asterisk		$img_url = $full_size_img_url;
 		
 		// if there was an issue with the image url
 		if ( empty($img_url) ) { $full_size_img_url = ""; }
@@ -2886,6 +2933,13 @@ function get_Loop_Site_Image() {
 		$img_url = clear_pre_content($img_url);
 	}
 	
+	$vid = false;
+	
+//$img_url = 'http://nononsense.loc/wpb/wp-content/plugins/webphysiology-portfolio/images/empty_window.png';
+if ( $img_url == 'images/empty_window.png' ) { // asterisk asterisk
+	$img_url = 'http://nononsense.loc/wpb/wp-content/plugins/webphysiology-portfolio/images/empty_window.png';
+}
+//echo $opt_val_img_width . "<br />";
 	// if the portfolio is a supported video, it is being displayed in a litebox and there was no image associated, allow the litebox
 	//   to still be used as the video hosting services supported will provide a thumbnail
 	if ( ( $click_behavior == 'litebox' ) && ( $supported_video ) && ( $continue != 'true' ) ) { $continue = 'true'; }
@@ -2899,14 +2953,21 @@ function get_Loop_Site_Image() {
 			
 			if ( empty($non_external_service_full_size_img_url) ) {
 				$img_html = get_Video_Thumbnail($site_url, $img_url, $opt_val_img_width);
+				$vid = true;
 			} else {
-				$img_html = esc_attr(plugin_dir_url(__FILE__) . 'scripts/imageresizer/thumbnail.php?src=' . $img_url . '&w=' . $opt_val_img_width . '&zc=1');
+				$u = $img_url;
+				$img_html = vt_resize( null, $u, 200, 150, false );
+//				$img_html = vt_resize( $attach_id = null, $img_url = $u, $width = $opt_val_img_width, $height = 150, $crop = false );
+//				$img_html = esc_attr(plugin_dir_url(__FILE__) . 'scripts/imageresizer/thumbnail.php?src=' . $img_url . '&w=' . $opt_val_img_width . '&zc=1');
 			};
 			
 		} else {
 			
-			$anchor_open = '<a class="Portfolio-Link thickbox" href="' . $full_size_img_url . '" title="' . the_title_attribute( 'echo=0' ) . '"' . $target . '>';
-			$img_html = esc_attr(plugin_dir_url(__FILE__) . 'scripts/imageresizer/thumbnail.php?src=' . $img_url . '&w=' . $opt_val_img_width . '&zc=1');
+			$anchor_open = '<a c;lass="Portfolio-Link thickbox" href="' . $full_size_img_url . '" title="' . the_title_attribute( 'echo=0' ) . '"' . $target . '>';
+			$u = $img_url;
+			$img_html = vt_resize( null, $u, 200, 150, false );
+//			$img_html = vt_resize( $attach_id = null, $img_url = $u, $width = $opt_val_img_width, $height = 150, $crop = false );
+//			$img_html = esc_attr(plugin_dir_url(__FILE__) . 'scripts/imageresizer/thumbnail.php?src=' . $img_url . '&w=' . $opt_val_img_width . '&zc=1');
 			
 		}
 		
@@ -2919,24 +2980,40 @@ function get_Loop_Site_Image() {
 		
 		if ( empty($non_external_service_full_size_img_url) ) {
 			$img_html = get_Video_Thumbnail($site_url, $img_url, $opt_val_img_width);
+			$vid = true;
 		} else {
-			$img_html = esc_attr(plugin_dir_url(__FILE__) . 'scripts/imageresizer/thumbnail.php?src=' . $img_url . '&w=' . $opt_val_img_width . '&zc=1');
+			$u = $img_url;
+			$img_html = vt_resize( null, $u, 200, 150, false );
+//			$img_html = vt_resize( $attach_id = null, $img_url = $u, $width = $opt_val_img_width, $height = 150, $crop = false );
+//			$img_html = esc_attr(plugin_dir_url(__FILE__) . 'scripts/imageresizer/thumbnail.php?src=' . $img_url . '&w=' . $opt_val_img_width . '&zc=1');
 		};
 		
 	} elseif ( ( $click_behavior == 'nav2page' ) && ( ! empty($site_url) ) && ($continue == 'true') ) {
 		
 		$anchor_open = '<a href="' . $site_url . '" title="' . the_title_attribute( 'echo=0' ) . '" class="Portfolio-Link"' . $target . '>';
 		$anchor_close = '</a>';
-		$img_html = esc_attr(plugin_dir_url(__FILE__) . 'scripts/imageresizer/thumbnail.php?src=' . $img_url . '&w=' . $opt_val_img_width . '&zc=1');
+		$u = $img_url;
+		$img_html = vt_resize( null, $u, 200, 150, false );
+//		$img_html = vt_resize( $attach_id = null, $img_url = $u, $width = $opt_val_img_width, $height = 150, $crop = false );
+//		$img_html = esc_attr(plugin_dir_url(__FILE__) . 'scripts/imageresizer/thumbnail.php?src=' . $img_url . '&w=' . $opt_val_img_width . '&zc=1');
 		
 	} elseif ( ( ! empty($img_url) ) && ($continue == 'true') ) {
 				
-		$img_html = esc_attr(plugin_dir_url(__FILE__) . 'scripts/imageresizer/thumbnail.php?src=' . $img_url . '&w=' . $opt_val_img_width . '&zc=1');
+		$u = $img_url;
+		$img_html = vt_resize( null, $u, 200, 150, false );
+//		$img_html = vt_resize( $attach_id = null, $img_url = $u, $width = $opt_val_img_width, $height = 150, $crop = false );
+//		$img_html = esc_attr(plugin_dir_url(__FILE__) . 'scripts/imageresizer/thumbnail.php?src=' . $img_url . '&w=' . $opt_val_img_width . '&zc=1');
 		
 	}
 	
 	if ( ! empty($img_html) ) {
-		$path = $anchor_open . '<img src="' . $img_html . '" alt="' . the_title_attribute('echo=0') . '"' . $class . ' width="' . $opt_val_img_width . '" />' . $anchor_close;
+		if ( ! $vid ) {
+//print_r($img_html);
+//echo "<br />";
+			$path = $anchor_open . '<img src="' . $img_html[url] . '" width="' . $img_html[width] . '" height="' . $img_html[height] . '" />' . $anchor_close;
+		} else {
+			$path = $anchor_open . '<img src="' . $img_html . '" alt="' . the_title_attribute('echo=0') . '"' . $class . ' width="' . $opt_val_img_width . '" />' . $anchor_close;
+		}
 	} elseif ( ($continue == 'false') && ($stw == "true") ) {
 		$path = $anchor_open . $full_size_img_url . $anchor_close;
 	} elseif ( ($continue == 'false') && ($pp == "true") ) {
@@ -3354,7 +3431,11 @@ function clean_source($src) {
 	$regex = "/^(http(s|):\/\/)(www\.|)" . $host . "\//i";
 	$src = preg_replace ($regex, '', $src);
 	$src = strip_tags ($src);
+echo $src . "<br />";
 	$src = check_external ($src);
+echo $src . "<br />";
+$src = str_replace("http://NoNonsense.loc/","",$src);
+echo $src . "<br />";
 	
 	if ( empty($src) ) {return $src;}
 	
@@ -3499,6 +3580,12 @@ function check_external($src) {
 		}
 
     }
+//	echo $src . "<br />";
+//	echo substr($src,0,4) . "<br />";
+	if (substr($src,0,4) == "temp") {
+		$src = plugin_dir_url(__FILE__) . $src;
+//asterisk asterisk		echo $src . "<br />";
+	}
 	
     return $src;
 
@@ -3635,5 +3722,128 @@ function portfolio_requirements_message() {
 		}
 	}
 
+}
+
+
+
+/*
+ * Resize images dynamically using wp built in functions
+ * Victor Teixeira
+ *
+ * php 5.2+
+ *
+ * Exemplo de uso:
+ * 
+ * <?php 
+ * $thumb = get_post_thumbnail_id(); 
+ * $image = vt_resize( $thumb, '', 140, 110, true );
+ * ?>
+ * <img src="<?php echo $image[url]; ?>" width="<?php echo $image[width]; ?>" height="<?php echo $image[height]; ?>" />
+ *
+ * @param int $attach_id
+ * @param string $img_url
+ * @param int $width
+ * @param int $height
+ * @param bool $crop
+ * @return array
+ */
+function vt_resize( $attach_id = null, $img_url = null, $width, $height, $crop = false ) {
+
+	// this is an attachment, so we have the ID
+	if ( $attach_id ) {
+	
+		$image_src = wp_get_attachment_image_src( $attach_id, 'full' );
+		$file_path = get_attached_file( $attach_id );
+	
+	// this is not an attachment, let's use the image url
+	} else if ( $img_url ) {
+//echo $img_url . "<br />";
+		$file_path = parse_url( $img_url );
+//echo $file_path . "<br />";
+		$file_path = $_SERVER['DOCUMENT_ROOT'] . $file_path['path'];
+//echo $file_path . "<br />";
+		
+		//$file_path = ltrim( $file_path['path'], '/' );
+		//$file_path = rtrim( ABSPATH, '/' ).$file_path['path'];
+		
+		$orig_size = getimagesize( $file_path );
+//echo $orig_size . "<br />";
+		
+		$image_src[0] = $img_url;
+		$image_src[1] = $orig_size[0];
+		$image_src[2] = $orig_size[1];
+	}
+	
+	$file_info = pathinfo( $file_path );
+	$extension = '.'. $file_info['extension'];
+
+	// the image path without the extension
+	$no_ext_path = $file_info['dirname'].'/'.$file_info['filename'];
+
+	$cropped_img_path = $no_ext_path.'-'.$width.'x'.$height.$extension;
+
+	// checking if the file size is larger than the target size
+	// if it is smaller or the same size, stop right here and return
+	if ( $image_src[1] > $width || $image_src[2] > $height ) {
+
+		// the file is larger, check if the resized version already exists (for $crop = true but will also work for $crop = false if the sizes match)
+		if ( file_exists( $cropped_img_path ) ) {
+
+			$cropped_img_url = str_replace( basename( $image_src[0] ), basename( $cropped_img_path ), $image_src[0] );
+			
+			$vt_image = array (
+				'url' => $cropped_img_url,
+				'width' => $width,
+				'height' => $height
+			);
+			
+			return $vt_image;
+		}
+
+		// $crop = false
+		if ( $crop == false ) {
+		
+			// calculate the size proportionaly
+			$proportional_size = wp_constrain_dimensions( $image_src[1], $image_src[2], $width, $height );
+			$resized_img_path = $no_ext_path.'-'.$proportional_size[0].'x'.$proportional_size[1].$extension;			
+
+			// checking if the file already exists
+			if ( file_exists( $resized_img_path ) ) {
+			
+				$resized_img_url = str_replace( basename( $image_src[0] ), basename( $resized_img_path ), $image_src[0] );
+
+				$vt_image = array (
+					'url' => $resized_img_url,
+					'width' => $proportional_size[0],
+					'height' => $proportional_size[1]
+				);
+				
+				return $vt_image;
+			}
+		}
+
+		// no cache files - let's finally resize it
+		$new_img_path = image_resize( $file_path, $width, $height, $crop );
+		$new_img_size = getimagesize( $new_img_path );
+		$new_img = str_replace( basename( $image_src[0] ), basename( $new_img_path ), $image_src[0] );
+
+		// resized output
+		$vt_image = array (
+			'url' => $new_img,
+			'width' => $new_img_size[0],
+			'height' => $new_img_size[1]
+		);
+		
+		return $vt_image;
+	}
+
+	// default output - without resizing
+	$vt_image = array (
+		'url' => $image_src[0],
+		'width' => $image_src[1],
+		'height' => $image_src[2]
+	);
+	
+	return $vt_image;
 }
 ?>

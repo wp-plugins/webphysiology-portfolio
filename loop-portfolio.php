@@ -162,10 +162,10 @@ if ( $loop->have_posts() ) {
 		if ($options['display_portfolio_desc'] == 'True') {
 			$description = get_the_content();
 		}
-		$type = get_post_meta(get_the_ID(), "_portfolio_type", true);
-		$portfolio_type = get_term_by( 'slug', $type, 'portfolio_type' );
-		if (isset($portfolio_type->name)) {
-			$type = $portfolio_type->name;
+		$type = get_post_meta(get_the_ID(), "_webphys_portfolio_type", true);
+		$webphys_portfolio_type = get_term_by( 'slug', $type, 'webphys_portfolio_type' );
+		if (isset($webphys_portfolio_type->name)) {
+			$type = $webphys_portfolio_type->name;
 		} else {
 			$type = "";
 		}
