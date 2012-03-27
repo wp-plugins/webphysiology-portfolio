@@ -10,8 +10,13 @@
 
 /*  UPDATES
 	
-	1.4.2 - * changed Portfolio Type taxomony from "portfolio_type" to "webphys_portfolio_type" to further reduce contentions with other custom taxonomies
+	1.4.2 - * found and corrected a defect that would clear the Portfolio Type on a portfolio and also resulted in the Portfolio Type count from being updated
+			* changed Portfolio Type taxomony from "portfolio_type" to "webphys_portfolio_type" to further reduce contentions with other custom taxonomies
 			* added deleting Portfolio Tags if the plugin is deactivated and the deletion of Portfolio Records is selected in the options
+			* replaced the use of TimThumb with WordPress built-in image handling for generating thumbnails
+			* added the ability to put a hard limit on the number of portfolios to return by using the "limit" shortcode paraemeter
+			* added the ability to crop and restrict the height of built-in generated thumbnails
+			* added code to the thumbnailing routine to push up to a CDN if using W3 Total Cache
 	1.4.1 - * added custom Portfolio Tag taxonomy and added update code to convert any existing post tags to this custom Portfolio tag
 			* added Portfolio Tag Cloud widget
 			* by default any custom Portfolio tags are included in the standard Tag Cloud widget, but an option to override this behavior is available within the plugin options
@@ -65,44 +70,56 @@ function webphys_portfolio_type_taxonomy_count($post_id) {
 		$postid = $post_id;
 	}
 	
-	$wpdb->query("	DELETE	FROM $wpdb->term_relationships
-				 	WHERE	object_id = '".$postid."'
-					AND		EXISTS (
-							SELECT	1
-							FROM	$wpdb->term_taxonomy stt
-							WHERE	stt.term_taxonomy_id = $wpdb->term_relationships.term_taxonomy_id
-							AND		stt.taxonomy = 'webphys_portfolio_type')");
+	$wpdb->query(
+		"
+		DELETE	FROM $wpdb->term_relationships
+		WHERE	object_id = '".$postid."'
+		AND		EXISTS (
+				SELECT	1
+				FROM	$wpdb->term_taxonomy stt
+				WHERE	stt.term_taxonomy_id = $wpdb->term_relationships.term_taxonomy_id
+				AND		stt.taxonomy = 'webphys_portfolio_type')
+		"
+	);
 	
-	$wpdb->query("	INSERT INTO $wpdb->term_relationships (object_id, term_taxonomy_id, term_order)
-					SELECT	sp.id 'object_id',
-						(	SELECT	ssstt.term_taxonomy_id
-							FROM	$wpdb->postmeta spm INNER JOIN
-									$wpdb->terms ssst ON spm.meta_value = ssst.slug INNER JOIN
-									$wpdb->term_taxonomy ssstt ON ssst.term_id = ssstt.term_id AND ssstt.taxonomy = 'webphys_portfolio_type'
-							WHERE	spm.meta_key = '_webphys_portfolio_type'
-							AND		spm.post_id = sp.id) 'term_taxonomy_id',
-							0 'term_order'
-					FROM	$wpdb->posts sp
-					WHERE	sp.id = '".$postid."'
-					AND		sp.post_type = 'webphys_portfolio'
-					AND		EXISTS (
-							SELECT	1
-							FROM	sss_postmeta sspm INNER JOIN
-									sss_terms sssst ON sspm.meta_value = sssst.slug INNER JOIN
-									sss_term_taxonomy sssstt ON sssst.term_id = sssstt.term_id AND sssstt.taxonomy = 'webphys_portfolio_type'
-							WHERE	sspm.meta_key = '_webphys_portfolio_type'
-							AND		sspm.post_id = sp.id)
-					AND		NOT EXISTS (
-							SELECT	1
-							FROM	$wpdb->term_relationships str INNER JOIN
-									$wpdb->term_taxonomy stt ON str.term_taxonomy_id = stt.term_taxonomy_id AND stt.taxonomy = 'webphys_portfolio_type' INNER JOIN
-									$wpdb->terms st ON stt.term_id = st.term_id
-							WHERE	str.object_id = sp.id)");
+	$wpdb->query(
+		"
+		INSERT INTO $wpdb->term_relationships (object_id, term_taxonomy_id, term_order)
+		SELECT	sp.id 'object_id',
+			(	SELECT	ssstt.term_taxonomy_id
+				FROM	$wpdb->postmeta spm INNER JOIN
+						$wpdb->terms ssst ON spm.meta_value = ssst.slug INNER JOIN
+						$wpdb->term_taxonomy ssstt ON ssst.term_id = ssstt.term_id AND ssstt.taxonomy = 'webphys_portfolio_type'
+				WHERE	spm.meta_key = '_webphys_portfolio_type'
+				AND		spm.post_id = sp.id) 'term_taxonomy_id',
+				0 'term_order'
+		FROM	$wpdb->posts sp
+		WHERE	sp.id = '".$postid."'
+		AND		sp.post_type = 'webphys_portfolio'
+		AND		EXISTS (
+				SELECT	1
+				FROM	$wpdb->postmeta sspm INNER JOIN
+						$wpdb->terms sssst ON sspm.meta_value = sssst.slug INNER JOIN
+						$wpdb->term_taxonomy sssstt ON sssst.term_id = sssstt.term_id AND sssstt.taxonomy = 'webphys_portfolio_type'
+				WHERE	sspm.meta_key = '_webphys_portfolio_type'
+				AND		sspm.post_id = sp.id)
+		AND		NOT EXISTS (
+				SELECT	1
+				FROM	$wpdb->term_relationships str INNER JOIN
+						$wpdb->term_taxonomy stt ON str.term_taxonomy_id = stt.term_taxonomy_id AND stt.taxonomy = 'webphys_portfolio_type' INNER JOIN
+						$wpdb->terms st ON stt.term_id = st.term_id
+				WHERE	str.object_id = sp.id)
+		"
+	);
 	
 	// update the Portfolio (Post) counts on the Portfolio Types
-	$wpdb->query("	UPDATE	$wpdb->term_taxonomy
-					SET		count = (SELECT count(ssp.id) FROM $wpdb->posts ssp INNER JOIN $wpdb->term_relationships str ON ssp.id = str.object_id WHERE ssp.post_type = 'webphys_portfolio' AND ssp.post_status = 'publish' AND str.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id)
-					WHERE	taxonomy = 'webphys_portfolio_type'");
+	$wpdb->query(
+		"
+		UPDATE	$wpdb->term_taxonomy
+		SET		count = (SELECT count(ssp.id) FROM $wpdb->posts ssp INNER JOIN $wpdb->term_relationships str ON ssp.id = str.object_id WHERE ssp.post_type = 'webphys_portfolio' AND ssp.post_status = 'publish' AND str.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id)
+		WHERE	taxonomy = 'webphys_portfolio_type'
+		"
+	);
 	
 }
 
@@ -149,10 +166,6 @@ function portfolio_post_type_init() {
 	$args = array(
 		'labels' => $labels,
 		'public' => true,
-//		'publicly_queryable' => false,
-//		'show_ui' => true,
-//		'show_in_nav_menus' => true,
-//		'has_archive' => true,
 		'show_in_menu' => true,
 		'query_var' => true,
 		'rewrite' => array("slug" => "webphys_portfolio"), //false, // since we aren't pushing to single pages we don't need a re-write rule or permastructure.
@@ -366,10 +379,23 @@ function add_portfolio_metaboxes() {
 	add_meta_box('webphys_portfolio_edit_init', 'Portfolio Details', 'webphys_portfolio_edit_init', 'webphys_portfolio', 'normal', 'high');
 }
 
+function webphys_session_start() {
+	
+	if ( ! session_id() ) {
+		session_start();
+	}
+	
+}
+
+function webphys_end_session() {
+	
+	session_destroy();
+	
+}
+
 // define the Portfolio Plugin settings admin page
 function portfolio_plugin_page() {
 	
-//	session_start();
 	$_SESSION['cache'] = plugin_dir_path(__FILE__);
 	
     //must check that the user has the required capability 
@@ -399,6 +425,7 @@ function portfolio_plugin_page() {
 	$display_tech = 'webphysiology_portfolio_display_tech'; // default true
 	$missing_img_url = 'webphysiology_portfolio_missing_image_url'; // default images/empty_window.png
 	$allowed_sites = 'webphysiology_portfolio_allowed_image_sites'; // default none
+	$crop_thumbnail = 'webphysiology_portfolio_crop_thumbnail'; // default false
 	$use_stw = 'webphysiology_portfolio_use_stw'; // default false
 	$use_stw_pro = 'webphysiology_portfolio_use_stw_pro'; // default false
 	$stw_ak = 'webphysiology_portfolio_stw_ak'; // default ""
@@ -422,6 +449,7 @@ function portfolio_plugin_page() {
 	$gridcolor = 'webphysiology_portfolio_gridcolor'; // default #eee
 	$use_css = 'webphysiology_portfolio_use_css'; // default true
 	$overall_width = 'webphysiology_portfolio_overall_width'; // default is 660px
+	$max_img_height = 'webphysiology_portfolio_max_img_height'; // default is 200px
 	$img_width = 'webphysiology_portfolio_image_width'; // default is 200px
 	$header_color = 'webphysiology_portfolio_header_color'; // default is #004813
 	$link_color = 'webphysiology_portfolio_link_color'; // default is #004813
@@ -505,6 +533,11 @@ function portfolio_plugin_page() {
 				$opt_val_missing_img_url = 'images/empty_window.png';
 			}
 			$opt_val_allowed_sites = $_POST[ $allowed_sites ];
+			if ( !empty($_POST[ $crop_thumbnail ]) ) {
+				$opt_val_crop_thumbnail = $_POST[ $crop_thumbnail ];
+			} else {
+				$opt_val_crop_thumbnail = "False";
+			}
 			if ( !empty($_POST[ $use_stw ]) ) {
 				$opt_val_use_stw = $_POST[ $use_stw ];
 			} else {
@@ -557,6 +590,7 @@ function portfolio_plugin_page() {
 			$opt_val_gridcolor = $_POST[ $gridcolor ];
 			$opt_val_css = $_POST[ $use_css ];
 			$opt_val_overall_width = $_POST[ $overall_width ];
+			$opt_val_max_img_height = $_POST[ $max_img_height ];
 			$opt_val_img_width = $_POST[ $img_width ];
 			$opt_val_header_color = $_POST[ $header_color ];
 			$opt_val_link_color = $_POST[ $link_color ];
@@ -601,6 +635,9 @@ function portfolio_plugin_page() {
 			} elseif ( !check_admin_referer('portfolio_config', 'portolio-nonce') ) {
 				$validated = false;
 				$validation_msg = __('settings NOT saved - authentication error.', 'Portfolio' );
+			} elseif ( ! is_numeric($opt_val_max_img_height)) {
+				$validated = false;
+				$validation_msg = __('settings NOT saved - maximum image height must be stated as a numeric value.', 'Portfolio' );
 			}
 			
 			// if everything is still okay
@@ -642,6 +679,7 @@ function portfolio_plugin_page() {
 			$opt_val_display_tech = "True";
 			$opt_val_missing_img_url = "images/empty_window.png";
 			$opt_val_allowed_sites = "";
+			$opt_val_crop_thumbnail = "False";
 			$opt_val_use_stw = "False";
 			$opt_val_use_stw_pro = "False";
 			$opt_val_stw_ak = "";
@@ -663,6 +701,7 @@ function portfolio_plugin_page() {
 			$opt_val_gridcolor = "#eeeeee";
 			$opt_val_css = "True";
 			$opt_val_overall_width = "660";
+			$opt_val_max_img_height = "200";
 			$opt_val_img_width = "200";
 			$opt_val_header_color = "#004813";
 			$opt_val_link_color = "#004813";
@@ -690,6 +729,7 @@ function portfolio_plugin_page() {
 			update_option( $display_tech, $opt_val_display_tech );
 			update_option( $missing_img_url, $opt_val_missing_img_url );
 			update_option( $allowed_sites, $opt_val_allowed_sites );
+			update_option( $crop_thumbnail, $opt_val_crop_thumbnail );
 			update_option( $use_stw, $opt_val_use_stw );
 			update_option( $use_stw_pro, $opt_val_use_stw_pro );
 			update_option( $stw_ak, $opt_val_stw_ak );
@@ -711,6 +751,7 @@ function portfolio_plugin_page() {
 			update_option( $gridcolor, $opt_val_gridcolor );
 			update_option( $use_css, $opt_val_css );
 			update_option( $overall_width, $opt_val_overall_width );
+			update_option( $max_img_height, $opt_val_max_img_height );
 			update_option( $img_width, $opt_val_img_width );
 			update_option( $header_color, $opt_val_header_color );
 			update_option( $link_color, $opt_val_link_color );
@@ -738,6 +779,7 @@ function portfolio_plugin_page() {
 		$opt_val_display_tech = get_option( $display_tech );
 		$opt_val_missing_img_url = get_option( $missing_img_url );
 		$opt_val_allowed_sites = get_option( $allowed_sites );
+		$opt_val_crop_thumbnail = get_option( $crop_thumbnail );
 		$opt_val_use_stw = get_option( $use_stw );
 		$opt_val_use_stw_pro = get_option( $use_stw_pro );
 		$opt_val_stw_ak = get_option( $stw_ak );
@@ -759,6 +801,7 @@ function portfolio_plugin_page() {
 		$opt_val_gridcolor = get_option( $gridcolor );
 		$opt_val_css = get_option( $use_css );
 		$opt_val_overall_width = get_option( $overall_width );
+		$opt_val_max_img_height = get_option( $max_img_height );
 		$opt_val_img_width = get_option( $img_width );
 		$opt_val_header_color = get_option( $header_color );
 		$opt_val_link_color = get_option( $link_color );
@@ -778,6 +821,7 @@ function portfolio_plugin_page() {
 	if ($opt_val_display_clientname=="True" ) {$opt_val_display_clientname="checked";}
 	if ($opt_val_display_siteurl=="True" ) {$opt_val_display_siteurl="checked";}
 	if ($opt_val_display_tech=="True" ) {$opt_val_display_tech="checked";}
+	if ($opt_val_crop_thumbnail=="True" ) {$opt_val_crop_thumbnail="checked";} else {$opt_val_crop_thumbnail="";}
 	if ($opt_val_use_stw=="True" ) {$opt_val_use_stw="checked";} else {$opt_val_use_stw="";}
 	if ($opt_val_use_stw_pro=="True" ) {$opt_val_use_stw_pro="checked";} else {$opt_val_use_stw_pro="";}
 	if ($opt_val_img_click_behavior == "litebox") { $check_openlitebox = 'checked'; } else { $check_nav2page = 'checked'; }
@@ -809,6 +853,7 @@ function portfolio_plugin_page() {
 	if ($opt_val_legacy_even_odd_class=="True" ) {$opt_val_legacy_even_odd_class="checked";}
 	if ($opt_val_delete_options=="True" ) {$opt_val_delete_options="checked";}
 	if ($opt_val_delete_data=="True" ) {$opt_val_delete_data="checked";}
+	
 	
 	echo "\n";
 	echo '<script type="text/javascript">' . "\n";
@@ -867,11 +912,18 @@ function portfolio_plugin_page() {
 //	echo "							<li>PageSeeker.com Support: This is a thumbnail generation service that will take a supplied URL and return a thumbnail of that page. This adds a second such service to our plugin, providing a choice for auto-generating site thumbnails.</li>";
 //	echo "						</ul>";
 //	echo "					</p>";
-	echo "					<p style='margin-bottom: 0;'><strong>Release 1.4.1</strong> : This release brings with it a couple of significant items:";
+//	echo "					<p style='margin-bottom: 0;'><strong>Release 1.4.1</strong> : This release brings with it a couple of significant items:";
+//	echo "						<ul style='list-style:square;margin-left:25px;'>";
+//	echo "							<li>The individual Portfolio template, single-webphys_portfolio.php, now is overridable, allowing a user to create a theme based template.</li>";
+//	echo "							<li>True support for Portfolio tags has been added and any existing post tags have been shifted into the new Portfolio tag taxonomy. The option to exclude Portfolio tags from the standard Tag Cloud widget is available.</li>";
+//	echo "							<li>A Portfolio Tag Cloud widget has been added.</li>";
+//	echo "						</ul>";
+//	echo "					</p>";
+	echo "					<p style='margin-bottom: 0;'><strong>Release 1.4.2</strong> : This release brings with it some items of note:";
 	echo "						<ul style='list-style:square;margin-left:25px;'>";
-	echo "							<li>The individual Portfolio template, single-webphys_portfolio.php, now is overridable, allowing a user to create a theme based template.</li>";
-	echo "							<li>True support for Portfolio tags has been added and any existing post tags have been shifted into the new Portfolio tag taxonomy. The option to exclude Portfolio tags from the standard Tag Cloud widget is available.</li>";
-	echo "							<li>A Portfolio Tag Cloud widget has been added.</li>";
+	echo "							<li>TimThumb PHP code has been removed and built-in WordPress graphic management has been utilized in its place.</li>";
+	echo "							<li>Added the ability to crop and restrict the height of built-in generated thumbnails.</li>";
+	echo "							<li>Added the ability to put a hard limit on the number of Portfolio items returned by adding a 'limit' parameter to the shortcode.</li>";
 	echo "						</ul>";
 	echo "					</p>";
 	echo "				</div>";
@@ -944,15 +996,17 @@ function portfolio_plugin_page() {
 	echo '							<label for="' . $stw_ak . '">Access key:</label><input type="text" id="' . $stw_ak . '" name="' . $stw_ak . '" value="' . $opt_val_stw_ak . '" />&nbsp;&nbsp;&nbsp;' . "\n";
 	echo '							<label for="' . $stw_sk . '">Secret key:</label><input type="password" id="' . $stw_sk . '" name="' . $stw_sk . '" value="' . $opt_val_stw_sk . '" /><br />' . "\n";
 	echo '							<span class="attribute_instructions">Get your own <a href="http://www.shrinktheweb.com">Website Preview from ShrinkTheWeb</a></span><br />' . "\n";
-	echo '							<span class="attribute_instructions" style="line-height:2.5em;"><strong>NOTE:</strong> ShrinkTheWeb.com Basic/Plus version with Pro features are needed to display inner pages of a website and to display a ShrinkTheWeb.com generated thumbnail in a thickbox.</span><br class="tallbottom"/>' . "\n";
+	echo '							<span class="attribute_instructions" style="line-height:2.5em;"><strong>NOTE:</strong> ShrinkTheWeb.com Basic/Plus version with Pro features are needed to display inner pages of a website and to display a ShrinkTheWeb.com generated thumbnail in a thickbox.</span><br />' . "\n";
 	echo '						</div>';
 	echo '						<div id="pp_settings" style="margin-left:30px;' . $pp_display . '">PagePeeker Settings: ';
 	echo '							<label for="' . $pp_account . '">Custom Account:</label><input type="text" id="' . $pp_account . '" name="' . $pp_account . '" value="' . $opt_val_pp_account . '" /><br />' . "\n";
 	echo '							<span class="attribute_instructions">For unbranded thumbnails get a custom account from <a href="http://pagepeeker.com/custom_solutions">PagePeeker.com</a></span><br />' . "\n";
 	echo '						</div>';
-	echo '						<input id="clear_img_caches" type="button" class="button" value="Clear Image Caches" name="Clear Image Caches" onClick="sendClearImageRequest()" style="margin: 10px 10px 5px 10px;" /><div id="show-clear-response" class="HideAjaxContent"></div><br />' . "\n";
-	echo '						<input id="chmod_img_caches" type="button" class="button" value="Permission Image Cache to 0777" name="Chmod Image Cache" onClick="sendChmodImageRequest()" /><div id="show-chmod-response" class="HideAjaxContent"></div><br />' . "\n";
-	echo '							<span class="attribute_instructions">If images aren\'t displaying, and you\'ve checked the image URL\'s, try upping the caching folder permissions.</span><br />' . "\n";
+	echo '						<div style="margin:10px 0 0 10px;">Built-In Thumbnail Settings: ';
+	echo '							<input type="checkbox" id="' . $crop_thumbnail . '" name="' . $crop_thumbnail . '" value="True" ' . $opt_val_crop_thumbnail . ' /><label for="' . $crop_thumbnail . '" class="half_input shortbottom">Crop Thumbnails</label>&nbsp;&nbsp;&nbsp;&nbsp;<label for="' . $max_img_height . '">Maximum Thumbnail Height:</label><input type="text" id="' . $max_img_height . '" name="' . $max_img_height . '" value="' . $opt_val_max_img_height . '" class="webphysiology_portfolio_small_input" /> pixels';
+	echo '							<br /><span class="attribute_instructions" style="margin-left: 20px;">The maximum image height ONLY works for built-in thumbnails AND only if you select to crop the image.</span><br />' . "\n";
+	echo '						</div>';
+	echo '						<input id="clear_img_caches" type="button" class="button" value="Clear Image Caches" name="Clear Image Caches" onClick="sendClearImageRequest()" style="margin: 20px 10px 5px 0;" /><div id="show-clear-response" class="HideAjaxContent"></div><br />' . "\n";
 	echo '					</div>' . "\n";
 	echo '					<div class="inside">' . "\n";
 	echo '						<h4>User Interface Actions - <a class="alert_text" href="' . esc_attr(plugin_dir_url(__FILE__)) . 'images/thumbnail_click_flow.png" title="Thumbnail Click Behavior Flow" style="text-decoration:none;">image click behavior flowchart</a></h4>' . "\n";
@@ -1063,9 +1117,19 @@ function check_options() {
 	
 	// ASTERISK = make certain to update this with new releases //
 	// check the most recently added option, if it doesn't exist then pass down through all of them and add any that are missing
-	$return = get_option('webphysiology_portfolio_include_portfolio_tags_in_tag_cloud');
+	$return = get_option('webphysiology_portfolio_max_img_height');
 	
 	if ( empty($return) ) {
+		
+		// added in v1.4.2
+		$return = get_option('webphysiology_portfolio_max_img_height');
+		if ( empty($return) ) {
+			add_option("webphysiology_portfolio_max_img_height", '200'); // This is the default value for thumbnail image height
+		}
+		$return = get_option('webphysiology_portfolio_crop_thumbnail');
+		if ( empty($return) ) {
+			add_option("webphysiology_portfolio_crop_thumbnail", 'False'); // This is the default value for whether to crop thumbnail images
+		}
 		
 		// added in v1.4.1
 		$return = get_option('webphysiology_portfolio_include_portfolio_tags_in_tag_cloud');
@@ -1261,6 +1325,7 @@ function portfolio_install() {
 		add_option("webphysiology_portfolio_display_tech", 'True'); // This is the default value for whether to display the technical data
 		add_option("webphysiology_portfolio_missing_image_url", 'images/empty_window.png'); // This is the default value for the missing image url
 		add_option("webphysiology_portfolio_allowed_image_sites",""); // This is the default value for the allowed image sites
+		add_option("webphysiology_portfolio_crop_thumbnail", 'False'); // This is the default value for whether to crop thumbnail images
 		add_option("webphysiology_portfolio_use_stw", 'False'); // This is the default value for whether to display images using ShrinkTheWeb.com
 		add_option("webphysiology_portfolio_use_stw_pro", 'False'); // This is the default value for whether user is using ShrinkTheWeb.com PRO version
 		add_option("webphysiology_portfolio_stw_ak", ""); // This is the default value for the ShrinkTheWeb.com Access Key
@@ -1283,6 +1348,7 @@ function portfolio_install() {
 		add_option("webphysiology_portfolio_delete_data", "False"); // This is the default value for whether to delete Portfolio data on plugin deactivation
 		add_option("webphysiology_portfolio_use_css", 'True'); // This is the default value for the Portfolio CSS usage switch
 		add_option("webphysiology_portfolio_overall_width", '660'); // This is the overall width of the portfolio listing
+		add_option("webphysiology_portfolio_max_img_height", '200'); // This is the maximum height to use on the portfolio image in the listing
 		add_option("webphysiology_portfolio_image_width", '200'); // This is the width to use on the portfolio image in the listing
 		add_option("webphysiology_portfolio_header_color", '#004813'); // This is the h1 and h2 color
 		add_option("webphysiology_portfolio_link_color", '#004813'); // This is the anchor link color
@@ -1317,6 +1383,7 @@ function portfolio_remove() {
 		delete_option('webphysiology_portfolio_display_tech');
 		delete_option('webphysiology_portfolio_missing_image_url');
 		delete_option('webphysiology_portfolio_allowed_image_sites');
+		delete_option('webphysiology_portfolio_crop_thumbnail');
 		delete_option('webphysiology_portfolio_use_stw');
 		delete_option('webphysiology_portfolio_use_stw_pro');
 		delete_option('webphysiology_portfolio_stw_ak');
@@ -1337,6 +1404,7 @@ function portfolio_remove() {
 		delete_option('webphysiology_portfolio_gridcolor');
 		delete_option('webphysiology_portfolio_use_css');
 		delete_option('webphysiology_portfolio_overall_width');
+		delete_option('webphysiology_portfolio_max_img_height');
 		delete_option('webphysiology_portfolio_image_width');
 		delete_option('webphysiology_portfolio_header_color');
 		delete_option('webphysiology_portfolio_link_color');
@@ -1482,6 +1550,13 @@ function version_update($pluginver, $alert_msg) {
 	// if the current plugin version is newwer than the last version installed
 	if ( version_compare(WEBPHYSIOLOGY_VERSION, $pluginver, ">" ) ) {
 		
+		// if the currently installed version is less than version 1.4.2 then run the updates that came with version 1.4.2
+		if ( version_compare($pluginver, '1.4.2', '<=') ) {
+			// we no longer utilized the timthumb PHP script to size images, so, delete the timthumb code and related files
+			$timthumbdir = dirname ( __FILE__ ) . '/scripts/imageresizer';
+			rrmdir($timthumbdir);
+		}
+		
 		// if the currently installed version is less than version 1.4.0 then run the updates that came with version 1.4.0
 		if ( version_compare($pluginver, '1.4.0', '<=') ) {
 			update_option('webphysiology_portfolio_legacy_even_odd_class','True');
@@ -1551,12 +1626,6 @@ function version_update($pluginver, $alert_msg) {
 				chmod($dir, 0744);
 			}
 			
-			// set the permissions of the timthumb cache directory to 744
-			$dir = str_replace("function.php","",__FILE__)."scripts/imageresizer/cache";
-			if ( is_dir($dir) ) {
-				chmod($dir, 0744);
-			}
-			
 		} // if ( version_compare($pluginver, '1.3.1', '<') )
 		
 	} // if ( version_compare(WEBPHYSIOLOGY_VERSION, $pluginver, ">" ) )
@@ -1590,7 +1659,6 @@ function update_database($ver) {
 			
 			// if old "Portfolio" records were found update them to "webphys_portfolio"
 			if ( $row->portfolio_count > 0 ) {
-	//			echo $row->portfolio_count . '<br />';
 				/* update post types from "Portfolio" to "webphys_portfolio" */
 				$wpdb->query("UPDATE $wpdb->posts SET post_type = 'webphys_portfolio' WHERE post_type = 'Portfolio'");
 				
@@ -1649,26 +1717,46 @@ function update_database($ver) {
 		// if this version of WEBphysiology Portfolio is using the 3.3.1 db version or better
 		if ( version_compare($ver, '3.3.2', '<=') ) {
 			
-			/* update Post Types hooked to Portfolio records to set them to be WEBphysioology Portfolio Type */
-			$wpdb->query("	UPDATE	$wpdb->term_taxonomy
-							SET		taxonomy = 'webphys_portfolio_type'
-							WHERE	taxonomy = 'portfolio_type'");
-//							AND		EXISTS (
-//									SELECT	1
-//									FROM	$wpdb->term_relationships tr INNER JOIN
-//											$wpdb->posts p ON tr.object_id = p.id AND p.post_type = 'webphys_portfolio'
-//									WHERE	tr.term_taxonomy_id = tt.term_taxonomy_id)");
+			/* update Post Types hooked to Portfolio records to set them to be a more targeted post type */
+			$wpdb->query(
+				"
+				UPDATE	$wpdb->term_taxonomy
+				SET		taxonomy = 'webphys_portfolio_type'
+				WHERE	taxonomy = 'portfolio_type'
+				AND		NOT EXISTS (
+						SELECT	1
+						FROM	$wpdb->postmeta
+						WHERE	meta_key = '_webphys_portfolio_type')
+				"
+			);
 			
 			/* update Posts meta keys of _portfolio_type to the new _webphys_portfolio_type */
-			$wpdb->query("	UPDATE	$wpdb->postmeta
-							SET		meta_key = '_webphys_portfolio_type'
-							WHERE	meta_key = '_portfolio_type'");
+			$wpdb->query(
+				"
+				UPDATE	$wpdb->postmeta
+				SET		meta_key = '_webphys_portfolio_type'
+				WHERE	meta_key = '_portfolio_type'
+				AND		EXISTS (
+						SELECT	1
+						FROM	$wpdb->term_taxonomy
+						WHERE	taxonomy = 'webphys_portfolio_type')
+				"
+			);
 			
 			
 			// update the Portfolio (Post) counts on the Portfolio Types
-			$wpdb->query("	UPDATE	$wpdb->term_taxonomy
-							SET		count = (SELECT count(ssp.id) FROM $wpdb->posts ssp INNER JOIN $wpdb->term_relationships str ON ssp.id = str.object_id WHERE ssp.post_type = 'webphys_portfolio' AND ssp.post_status = 'publish' AND str.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id)
-							WHERE	taxonomy = 'webphys_portfolio_type'");
+			$wpdb->query(
+				"
+				UPDATE	$wpdb->term_taxonomy
+				SET		count = (	SELECT	count(ssp.id)
+									FROM	$wpdb->posts ssp INNER JOIN
+											$wpdb->term_relationships str ON ssp.id = str.object_id
+									WHERE	ssp.post_type = 'webphys_portfolio'
+									AND		ssp.post_status = 'publish'
+									AND		str.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id)
+				WHERE	taxonomy = 'webphys_portfolio_type'
+				"
+			);
 			
 		}
 	}
@@ -1860,7 +1948,7 @@ function manage_portfolio_columns($column_name, $id) {
 		if (!empty($webphys_portfolio_type->name)) {
 			echo $webphys_portfolio_type->name;
 		} else {
-			echo "";
+			echo ""; //asterisk
 		}
 		break;
 	case 'id':
@@ -2127,6 +2215,7 @@ function portfolio_loop($atts, $content = null) {
 	global $portfolio_types;
 	global $portfolio_output;
 	global $num_per_page;
+	global $limit_portfolios_returned;
 	global $display_the_credit;
 	
 	clear_globals();
@@ -2142,6 +2231,7 @@ function portfolio_loop($atts, $content = null) {
 	  'thickbox' => $on_click,
 	  'id' => '',
 	  'per_page' => '',
+	  'limit' => '',
       'credit' => $showme_the_credit), $atts ) );
 	
 	get_click_behavior($thickbox);
@@ -2169,6 +2259,10 @@ function portfolio_loop($atts, $content = null) {
 		$portfolio_output .= '<div class="webphysiology_portfolio_page_content">' . $content . '</div>';
 	}
 	
+	if ( !empty($limit) && is_numeric($limit) ) {
+		$limit_portfolios_returned = $limit;
+	}
+	
 	include('loop-portfolio.php');
 	
 	if ( !empty($id) ) {
@@ -2189,6 +2283,7 @@ function clear_globals() {
 	global $click_behavior;
 	global $portfolio_output;
 	global $num_per_page;
+	global $limit_portfolios_returned;
 	global $display_the_credit;
 	
 	$wp_query->query_vars['portfoliotype'] = '';
@@ -2197,6 +2292,7 @@ function clear_globals() {
 	$click_behavior = '';
 	$portfolio_output = '';
 	$num_per_page = '';
+	$limit_portfolios_returned = '';
 	$display_the_credit = '';
 	
 }
@@ -2569,24 +2665,18 @@ function admin_settings_jquery() {
 	echo ( "		jQuery('#tt_settings').show();" . "\n");
 	echo ( "		jQuery('#stw_settings').hide();" . "\n");
 	echo ( "		jQuery('#pp_settings').hide();" . "\n");
-//	echo ( "		jQuery('#stw_settings :input').attr('disabled', true);" . "\n");
-//	echo ( "		jQuery('#pp_settings :input').attr('disabled', true);" . "\n");
 	echo ( "		return true;" . "\n");
 	echo ( "	});" . "\n");
 	echo ( '	jQuery("#webphys_portfolio_stw_gen").click(function() {' . "\n");
 	echo ( "		jQuery('#tt_settings').hide();" . "\n");
 	echo ( "		jQuery('#stw_settings').show();" . "\n");
 	echo ( "		jQuery('#pp_settings').hide();" . "\n");
-//	echo ( "		jQuery('#stw_settings :input').removeAttr('disabled', true);" . "\n");
-//	echo ( "		jQuery('#pp_settings :input').attr('disabled', true);" . "\n");
 	echo ( "		return true;" . "\n");
 	echo ( "	});" . "\n");
 	echo ( '	jQuery("#webphys_portfolio_pp_gen").click(function() {' . "\n");
 	echo ( "		jQuery('#tt_settings').hide();" . "\n");
 	echo ( "		jQuery('#stw_settings').hide();" . "\n");
 	echo ( "		jQuery('#pp_settings').show();" . "\n");
-//	echo ( "		jQuery('#stw_settings :input').attr('disabled', true);" . "\n");
-//	echo ( "		jQuery('#pp_settings :input').removeAttr('disabled', true);" . "\n");
 	echo ( "		return true;" . "\n");
 	echo ( "	});" . "\n");
 	echo ( "\n");
@@ -2830,12 +2920,10 @@ function get_Loop_Site_Image() {
 			break;
 		case 'pp':
 			$pp = 'true';
-//asterisk			$pp_pro = 'true';  // Maybe someday
+			//$pp_pro = 'true';  // Maybe someday - asterisk
 			break;
 	}
 	
-//	$stw = strtolower(get_option( 'webphysiology_portfolio_use_stw' ));
-//	$stw_pro = strtolower(get_option( 'webphysiology_portfolio_use_stw_pro' ));
 	$target = get_option( 'webphysiology_portfolio_anchor_click_behavior' );
 	$opt_val_img_width = get_option( 'webphysiology_portfolio_image_width' );
 	$missing_img_url = get_option( 'webphysiology_portfolio_missing_image_url' );
@@ -2899,15 +2987,18 @@ function get_Loop_Site_Image() {
 	if ( ( ! empty($full_size_img_url) ) && ( $continue == 'true' ) ) {
 		
 		$img_url = clean_source($full_size_img_url);
-//asterisk asterisk		$img_url = $full_size_img_url;
 		
 		// if there was an issue with the image url
 		if ( empty($img_url) ) { $full_size_img_url = ""; }
 		
 		// if the image url was cleaned and not cleared, check that it really exists
 		if ( ($img_url != $full_size_img_url) && ( !empty($img_url)) ) {
-			if (!file_exists(dirname ( __FILE__ ) . '/' . $img_url)) {
-				if (!file_exists($img_url)) {
+			
+			// strip out the HTTP / domain as we need to look for the actual path of the file
+			$src = str_replace(home_url() . "/","",$img_url);
+			
+			if ( ! file_exists(dirname ( __FILE__ ) . '/' . $src)) {
+				if ( ! file_exists($src)) {
 					$full_size_img_url = "";
 				}
 			}
@@ -2920,7 +3011,7 @@ function get_Loop_Site_Image() {
 		$img_url = $missing_img_url;
 		
 		if ( empty($img_url) ) {
-			$img_url = 'images/empty_window.png';
+			$img_url = plugin_dir_url(__FILE__) . 'images/empty_window.png';
 		}
 		if ( ! empty($img_url) ) {
 			$class = ' class="missing"';
@@ -2935,11 +3026,10 @@ function get_Loop_Site_Image() {
 	
 	$vid = false;
 	
-//$img_url = 'http://nononsense.loc/wpb/wp-content/plugins/webphysiology-portfolio/images/empty_window.png';
-if ( $img_url == 'images/empty_window.png' ) { // asterisk asterisk
-	$img_url = 'http://nononsense.loc/wpb/wp-content/plugins/webphysiology-portfolio/images/empty_window.png';
-}
-//echo $opt_val_img_width . "<br />";
+	if ( $img_url == 'images/empty_window.png' ) {
+		$img_url = plugin_dir_url(__FILE__) . $img_url;
+	}
+	
 	// if the portfolio is a supported video, it is being displayed in a litebox and there was no image associated, allow the litebox
 	//   to still be used as the video hosting services supported will provide a thumbnail
 	if ( ( $click_behavior == 'litebox' ) && ( $supported_video ) && ( $continue != 'true' ) ) { $continue = 'true'; }
@@ -2955,19 +3045,13 @@ if ( $img_url == 'images/empty_window.png' ) { // asterisk asterisk
 				$img_html = get_Video_Thumbnail($site_url, $img_url, $opt_val_img_width);
 				$vid = true;
 			} else {
-				$u = $img_url;
-				$img_html = vt_resize( null, $u, 200, 150, false );
-//				$img_html = vt_resize( $attach_id = null, $img_url = $u, $width = $opt_val_img_width, $height = 150, $crop = false );
-//				$img_html = esc_attr(plugin_dir_url(__FILE__) . 'scripts/imageresizer/thumbnail.php?src=' . $img_url . '&w=' . $opt_val_img_width . '&zc=1');
+				$img_html = webphys_portfolio_image_resize($img_url);
 			};
 			
 		} else {
 			
-			$anchor_open = '<a c;lass="Portfolio-Link thickbox" href="' . $full_size_img_url . '" title="' . the_title_attribute( 'echo=0' ) . '"' . $target . '>';
-			$u = $img_url;
-			$img_html = vt_resize( null, $u, 200, 150, false );
-//			$img_html = vt_resize( $attach_id = null, $img_url = $u, $width = $opt_val_img_width, $height = 150, $crop = false );
-//			$img_html = esc_attr(plugin_dir_url(__FILE__) . 'scripts/imageresizer/thumbnail.php?src=' . $img_url . '&w=' . $opt_val_img_width . '&zc=1');
+			$anchor_open = '<a class="Portfolio-Link thickbox" href="' . $full_size_img_url . '" title="' . the_title_attribute( 'echo=0' ) . '"' . $target . '>';
+			$img_html = webphys_portfolio_image_resize($img_url);
 			
 		}
 		
@@ -2982,37 +3066,26 @@ if ( $img_url == 'images/empty_window.png' ) { // asterisk asterisk
 			$img_html = get_Video_Thumbnail($site_url, $img_url, $opt_val_img_width);
 			$vid = true;
 		} else {
-			$u = $img_url;
-			$img_html = vt_resize( null, $u, 200, 150, false );
-//			$img_html = vt_resize( $attach_id = null, $img_url = $u, $width = $opt_val_img_width, $height = 150, $crop = false );
-//			$img_html = esc_attr(plugin_dir_url(__FILE__) . 'scripts/imageresizer/thumbnail.php?src=' . $img_url . '&w=' . $opt_val_img_width . '&zc=1');
+			$img_html = webphys_portfolio_image_resize($img_url);
 		};
 		
 	} elseif ( ( $click_behavior == 'nav2page' ) && ( ! empty($site_url) ) && ($continue == 'true') ) {
 		
 		$anchor_open = '<a href="' . $site_url . '" title="' . the_title_attribute( 'echo=0' ) . '" class="Portfolio-Link"' . $target . '>';
 		$anchor_close = '</a>';
-		$u = $img_url;
-		$img_html = vt_resize( null, $u, 200, 150, false );
-//		$img_html = vt_resize( $attach_id = null, $img_url = $u, $width = $opt_val_img_width, $height = 150, $crop = false );
-//		$img_html = esc_attr(plugin_dir_url(__FILE__) . 'scripts/imageresizer/thumbnail.php?src=' . $img_url . '&w=' . $opt_val_img_width . '&zc=1');
+		$img_html = webphys_portfolio_image_resize($img_url);
 		
 	} elseif ( ( ! empty($img_url) ) && ($continue == 'true') ) {
 				
-		$u = $img_url;
-		$img_html = vt_resize( null, $u, 200, 150, false );
-//		$img_html = vt_resize( $attach_id = null, $img_url = $u, $width = $opt_val_img_width, $height = 150, $crop = false );
-//		$img_html = esc_attr(plugin_dir_url(__FILE__) . 'scripts/imageresizer/thumbnail.php?src=' . $img_url . '&w=' . $opt_val_img_width . '&zc=1');
+		$img_html = webphys_portfolio_image_resize( $img_url);
 		
 	}
 	
 	if ( ! empty($img_html) ) {
-		if ( ! $vid ) {
-//print_r($img_html);
-//echo "<br />";
-			$path = $anchor_open . '<img src="' . $img_html[url] . '" width="' . $img_html[width] . '" height="' . $img_html[height] . '" />' . $anchor_close;
+		if ( isset($img_html[width]) ) {
+			$path = $anchor_open . '<img src="' . $img_html[url] . '" alt="' . the_title_attribute('echo=0') . '" width="' . $img_html[width] . '" height="' . $img_html[height] . '"' . $class . ' />' . $anchor_close;
 		} else {
-			$path = $anchor_open . '<img src="' . $img_html . '" alt="' . the_title_attribute('echo=0') . '"' . $class . ' width="' . $opt_val_img_width . '" />' . $anchor_close;
+			$path = $anchor_open . '<img src="' . $img_html[url] . '" alt="' . the_title_attribute('echo=0') . '"' . $class . ' />' . $anchor_close;
 		}
 	} elseif ( ($continue == 'false') && ($stw == "true") ) {
 		$path = $anchor_open . $full_size_img_url . $anchor_close;
@@ -3092,6 +3165,8 @@ if ( ! function_exists( 'get_Video_Thumbnail' ) ) :
 
 function get_Video_Thumbnail($vid, $stw, $img_width) {
 	
+	$img_html = array('url'=>'');
+	
 	if ( strpos($vid, 'vimeo.com/') !== false ) {
 		$thumb = str_replace("http://vimeo.com/","",$vid);
 		if ( is_numeric($thumb) ) {
@@ -3115,10 +3190,12 @@ function get_Video_Thumbnail($vid, $stw, $img_width) {
 		if ( empty($img_width) ) {
 			$img_width = get_option( 'webphysiology_portfolio_image_width' );
 		}
-		$img_url = esc_attr(plugin_dir_url(__FILE__) . 'scripts/imageresizer/thumbnail.php?src=' . $stw . '&w=' . $img_width . '&zc=1');
+		$img_html = webphys_portfolio_image_resize($stw);
+	} elseif ( ! empty($img_url) ) {
+		$img_html = array('url'=>$img_url);
 	}
 	
-	return $img_url;
+	return $img_html;
 	
 }
 
@@ -3267,6 +3344,7 @@ function nav_pages($qryloop, $pageurl, $class) {
 	global $for;
 	global $portfolio_output;
 	global $navcontrol;
+	global $limit_portfolios_returned;
 	
 	// get total number of pages in the query results
 	$pages = $qryloop->max_num_pages;
@@ -3277,6 +3355,14 @@ function nav_pages($qryloop, $pageurl, $class) {
 		$top = " top";
 		$bottom = " bottom";
 	}
+	
+	// if the user has set a hard value for the number of portfolios to return in the shortcode
+	if ( is_numeric($limit_portfolios_returned) ) {
+		if ($limit_portfolios_returned > 0) {
+			$pages = 1;
+		}
+	}
+	
 	// if there is more than one page of Portfolio query results
 	if ($pages > 1) {
 		
@@ -3420,22 +3506,18 @@ function clean_source($src) {
 	
 	$orig_src = "";
 	
-	$src = multisite_image_adjustment($src);
-	
 	// if the image file is on the current server, grab the path as we'll be setting it back to this if all is good
 	if (strpos(strtoupper($src),strtoupper($_SERVER['HTTP_HOST'])) > 0) {
 		$orig_src = $src;
 	}
 	
+	$src = multisite_image_adjustment($src);
+	
 	$host = str_replace ('www.', '', $_SERVER['HTTP_HOST']);
 	$regex = "/^(http(s|):\/\/)(www\.|)" . $host . "\//i";
 	$src = preg_replace ($regex, '', $src);
 	$src = strip_tags ($src);
-echo $src . "<br />";
 	$src = check_external ($src);
-echo $src . "<br />";
-$src = str_replace("http://NoNonsense.loc/","",$src);
-echo $src . "<br />";
 	
 	if ( empty($src) ) {return $src;}
 	
@@ -3448,11 +3530,6 @@ echo $src . "<br />";
     // in order to gain access to files below document root
     $src = preg_replace ("/\.\.+\//", "", $src);
 	
-    // get path to image on file system
-	if (substr($src,0,4) != 'temp') {
-    	$src = str_replace("//","/",get_document_root($src) . '/' . $src);
-	}
-	
 	if ( ! empty($orig_src) ) {
 		if (file_exists($src)) {
 			$src = $orig_src;
@@ -3461,7 +3538,7 @@ echo $src . "<br />";
 		}
 	}
 	
-    return $src;
+	return $src;
 
 }
 
@@ -3480,7 +3557,7 @@ function validate_url ($url) {
  * @return string
  */
 function check_external($src) {
-
+	
 	// external domains that are allowed to be displayed on your website
 	$allowedSites = explode (",", get_option( 'webphysiology_portfolio_allowed_image_sites' ));
 	
@@ -3512,11 +3589,11 @@ function check_external($src) {
 			$newsrc = 'temp/' . $filename . '.' . $ext;
 			
 			$local_filepath = dirname ( __FILE__ ) . '/' . $newsrc;
-//asterisk s3.amazon.com echo "1 - ".$local_filepath."<br />";
+			
 			if (!file_exists ($local_filepath)) {
 				
 				if (function_exists ('curl_init')) {
-
+					
 					$fh = fopen ($local_filepath, 'w');
 					$ch = curl_init ($src);
 					curl_setopt ($ch, CURLOPT_URL, $src);
@@ -3533,7 +3610,6 @@ function check_external($src) {
 					}
 					
 					if (curl_exec ($ch) === FALSE) {
-//asterisk s3.amazon.com echo "2 - ".$local_filepath."<br />";
 						if (file_exists ($local_filepath)) {
 							unlink ($local_filepath);
 						}
@@ -3551,7 +3627,6 @@ function check_external($src) {
 						$error = true;
 					}
 					
-//asterisk s3.amazon.com echo "3 - ".$local_filepath."<br />";
 					if (file_put_contents ($local_filepath, $img) == FALSE) {
 						display_error ('error writing temporary file');
 						$error = true;
@@ -3580,11 +3655,9 @@ function check_external($src) {
 		}
 
     }
-//	echo $src . "<br />";
-//	echo substr($src,0,4) . "<br />";
+	
 	if (substr($src,0,4) == "temp") {
 		$src = plugin_dir_url(__FILE__) . $src;
-//asterisk asterisk		echo $src . "<br />";
 	}
 	
     return $src;
@@ -3629,52 +3702,6 @@ function get_document_root($src) {
 	
 }
 
-function get_document_rootie($src) {
-
-    // check for unix servers
-    if (file_exists ($_SERVER['DOCUMENT_ROOT'] . '/' . $src)) {
-        return $_SERVER['DOCUMENT_ROOT'];
-    }
-
-    // check from script filename (to get all directories to imageresizer location)
-    $parts = array_diff (explode ('/', $_SERVER['SCRIPT_FILENAME']), explode('/', $_SERVER['DOCUMENT_ROOT']));
-    $path = $_SERVER['DOCUMENT_ROOT'];
-    foreach ($parts as $part) {
-        $path .= '/' . $part;
-        if (file_exists($path . '/' . $src)) {
-            return $path;
-        }
-    }
-
-    // the relative paths below are useful if imageresizer is moved outside of document root
-    // specifically if installed in wordpress themes
-	$paths = array (
-        ".",
-        "..",
-        "../..",
-        "../../..",
-        "../../../..",
-        "../../../../.."
-    );
-
-    foreach ($paths as $path) {
-        if (file_exists($path . '/' . $src)) {
-            return $path;
-        }
-    }
-
-	// special check for microsoft servers
-    if (!isset ($_SERVER['DOCUMENT_ROOT'])) {
-        $path = str_replace ("/", "\\", $_SERVER['ORIG_PATH_INFO']);
-        $path = str_replace ($path, "", $_SERVER['SCRIPT_FILENAME']);
-
-        if (file_exists ($path . '/' . $src)) {
-            return $path;
-        }
-    }
-
-}
-
 function display_error ($errorString = '') {
 
 	echo '<pre>' . htmlentities($errorString) . '</pre>';
@@ -3710,7 +3737,7 @@ function portfolio_requirements_message() {
 					$message .= " - <strong>MySql</strong> (Current version: " .  $wpdb->db_version() . ", Required: 5.0)<br/> ";
 				}
 		
-				if(!$is_wp_valid){
+				if(!$is_wp_valid){	
 					$message .= " - <strong>Wordpress</strong> (Current version: " .  get_bloginfo("version") . ", Required: 3.0)<br/> ";
 				}
 		
@@ -3724,71 +3751,110 @@ function portfolio_requirements_message() {
 
 }
 
+function webphys_portfolio_set_admin_css() {
+	wp_register_style('portfolio_all_admin_css', $file);
+	wp_enqueue_style('portfolio_all_admin_css');
+}
+
+// add in support for the "clear image caches" button
+function webphys_portfolio_set_admin_scripts() {
+	$base = esc_attr(plugin_dir_url(__FILE__) . 'scripts/');
+	wp_enqueue_script('prototype');
+	wp_register_script('clear_images', $base.'manage_img_caches.js');
+	wp_enqueue_script('clear_images');
+}
 
 
 /*
  * Resize images dynamically using wp built in functions
- * Victor Teixeira
  *
- * php 5.2+
- *
- * Exemplo de uso:
- * 
- * <?php 
- * $thumb = get_post_thumbnail_id(); 
- * $image = vt_resize( $thumb, '', 140, 110, true );
- * ?>
- * <img src="<?php echo $image[url]; ?>" width="<?php echo $image[width]; ?>" height="<?php echo $image[height]; ?>" />
- *
- * @param int $attach_id
  * @param string $img_url
- * @param int $width
- * @param int $height
- * @param bool $crop
  * @return array
  */
-function vt_resize( $attach_id = null, $img_url = null, $width, $height, $crop = false ) {
-
-	// this is an attachment, so we have the ID
-	if ( $attach_id ) {
+function webphys_portfolio_image_resize( $img_url ) {
 	
-		$image_src = wp_get_attachment_image_src( $attach_id, 'full' );
-		$file_path = get_attached_file( $attach_id );
+	global $user_level;
 	
-	// this is not an attachment, let's use the image url
-	} else if ( $img_url ) {
-//echo $img_url . "<br />";
-		$file_path = parse_url( $img_url );
-//echo $file_path . "<br />";
-		$file_path = $_SERVER['DOCUMENT_ROOT'] . $file_path['path'];
-//echo $file_path . "<br />";
-		
-		//$file_path = ltrim( $file_path['path'], '/' );
-		//$file_path = rtrim( ABSPATH, '/' ).$file_path['path'];
-		
-		$orig_size = getimagesize( $file_path );
-//echo $orig_size . "<br />";
-		
-		$image_src[0] = $img_url;
-		$image_src[1] = $orig_size[0];
-		$image_src[2] = $orig_size[1];
+	$debug = true;  //asterisk
+	
+	if ( empty($img_url) ) { return; }
+	
+	$orig_img_url = $img_url;
+	
+	$width = get_option( 'webphysiology_portfolio_image_width' );
+	$height = get_option( 'webphysiology_portfolio_max_img_height' );
+	
+	if ( get_option( 'webphysiology_portfolio_crop_thumbnail' ) == "False" ) {
+		$crop = false;
+	} else {
+		$crop = true;
 	}
 	
-	$file_info = pathinfo( $file_path );
+	$file_path = parse_url( $img_url );
+	
+	// if the image does not include a full URL we need to build this out
+	if ( empty($file_path['host']) ) {
+		
+		$img_url = get_bloginfo('wpurl') . $img_url;
+		
+		$file_path = parse_url( $img_url );
+		
+		if ( empty($file_path['host']) ) {
+			$img_url = $orig_img_url;
+			return;
+		}
+	}
+	
+	$file_path['path'] = multisite_image_adjustment($file_path['path']);
+	
+	if ( substr($img_url, 0, 1) != "/" ) { $img_url = "/" . $img_url; }
+	
+	if ( ( $user_level >= 10 ) && ( $debug == true ) ) {
+		echo "file_path['path'] = " . $file_path['path'] . "<br />";
+	}
+	
+	$filepath = $_SERVER['DOCUMENT_ROOT'] . $file_path['path'];
+
+	if ( ( $user_level >= 10 ) && ( $debug == true ) ) {
+		echo "filepath = " . $filepath . "<br />";
+	}
+	
+	if ( ! file_exists( $filepath )) {
+		echo "bad image path = " . $orig_img_url . "<br />";
+		return;
+	}
+
+	$orig_size = getimagesize( $filepath );
+	
+	$image_src[0] = $img_url;
+	$image_src[1] = $orig_size[0];
+	$image_src[2] = $orig_size[1];
+	
+	// if the maximum thumbnail height is not specified or the user hasn't specified to crop the image,
+	// then set the maximum height to the original image height
+	if ((($height == 0) || ($crop == false)) && ( ! empty($orig_size[1]))) {
+		$height = $orig_size[1];
+	}
+	
+	$file_info = pathinfo( $filepath );
 	$extension = '.'. $file_info['extension'];
 
 	// the image path without the extension
 	$no_ext_path = $file_info['dirname'].'/'.$file_info['filename'];
-
+	
 	$cropped_img_path = $no_ext_path.'-'.$width.'x'.$height.$extension;
-
+	
+	if ( ( $user_level >= 10 ) && ( $debug == true ) ) {
+		echo "cropped_img_path = " . $cropped_img_path . "<br />" . "img_url = " . $image_src[0] . "<br />";
+	}
+	
 	// checking if the file size is larger than the target size
 	// if it is smaller or the same size, stop right here and return
 	if ( $image_src[1] > $width || $image_src[2] > $height ) {
-
+		
 		// the file is larger, check if the resized version already exists (for $crop = true but will also work for $crop = false if the sizes match)
-		if ( file_exists( $cropped_img_path ) ) {
-
+		if ( file_exists( $cropped_img_path )) {
+			
 			$cropped_img_url = str_replace( basename( $image_src[0] ), basename( $cropped_img_path ), $image_src[0] );
 			
 			$vt_image = array (
@@ -3797,16 +3863,21 @@ function vt_resize( $attach_id = null, $img_url = null, $width, $height, $crop =
 				'height' => $height
 			);
 			
+			if ( ( $user_level >= 10 ) && ( $debug == true ) ) {
+				echo "cropped_img_url = " . $cropped_img_url . "<br />";
+			}
+			
 			return $vt_image;
+			
 		}
 
-		// $crop = false
 		if ( $crop == false ) {
-		
+			
 			// calculate the size proportionaly
 			$proportional_size = wp_constrain_dimensions( $image_src[1], $image_src[2], $width, $height );
+			
 			$resized_img_path = $no_ext_path.'-'.$proportional_size[0].'x'.$proportional_size[1].$extension;			
-
+			
 			// checking if the file already exists
 			if ( file_exists( $resized_img_path ) ) {
 			
@@ -3818,12 +3889,22 @@ function vt_resize( $attach_id = null, $img_url = null, $width, $height, $crop =
 					'height' => $proportional_size[1]
 				);
 				
+				if ( ( $user_level >= 10 ) && ( $debug == true ) ) {
+					echo "resized_img_url = " . $resized_img_url . "<br />resized_img_path = " . $resized_img_path . "<br />";
+				}
+				
 				return $vt_image;
 			}
 		}
 
 		// no cache files - let's finally resize it
-		$new_img_path = image_resize( $file_path, $width, $height, $crop );
+		$new_img_path = image_resize( $filepath, $width, $height, $crop );
+		
+		if ( is_wp_error( $new_img_path ) ) {
+			echo "error creating thumbnail image = " . $orig_img_url . "<br />";
+			return;
+		}
+		
 		$new_img_size = getimagesize( $new_img_path );
 		$new_img = str_replace( basename( $image_src[0] ), basename( $new_img_path ), $image_src[0] );
 
@@ -3833,6 +3914,16 @@ function vt_resize( $attach_id = null, $img_url = null, $width, $height, $crop =
 			'width' => $new_img_size[0],
 			'height' => $new_img_size[1]
 		);
+		
+		if ( ( $user_level >= 10 ) && ( $debug == true ) ) {
+			echo "new_img = " . $new_img . "<br />new_img_path = " . $new_img_path . "<br />";
+		}
+		
+		if ( defined("W3TC_LIB_W3_DIR") ) {
+			require_once W3TC_LIB_W3_DIR . '/Plugin/Cdn.php';
+			$w3_plugin_cdn = New W3_Plugin_Cdn();
+			$w3_plugin_cdn->update_attached_file($new_img_path);
+		}
 		
 		return $vt_image;
 	}

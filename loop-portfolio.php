@@ -9,11 +9,13 @@
 
 /*  UPDATES
 
+	1.4.2 - added code to support paging within a Post, even though using a Page for the portfolio is the only recommended method
+	      - added the ability to put a hard limit on the number of portfolios to return by using the "limit" shortcode paraemeter
 	1.4.0 - consolidated many options into an array that is now populated via the get_webphys_port_options function
-	1.3.2 - * better isolated navigation controls by adding "webphysport_nav_top" and "webphysport_nav_bottom" classes.
-			  top and bottom classes will be deprecated in a later release.
-			* better isolated portfolio odd/even stripe styling by adding new webphysport_odd_stripe and webphysport_even_stripe classes.
-			  odd and even classes will be deprecated in a later release.
+	1.3.2 - better isolated navigation controls by adding "webphysport_nav_top" and "webphysport_nav_bottom" classes.
+			top and bottom classes will be deprecated in a later release.
+	      - better isolated portfolio odd/even stripe styling by adding new webphysport_odd_stripe and webphysport_even_stripe classes.
+			odd and even classes will be deprecated in a later release.
 	1.3.0 - implemented new option that allows for positioning the Portfolio description after the Portfolio meta data
 	1.2.7 - fixed an issue where $portfolio_open_empty was not being defined for non-grid styled portfolios
 	1.2.4 - exchanged per page code that was grabbing the per page option to using the global var for the per page portfolio count defined in portfolio-main.php
@@ -37,11 +39,12 @@
 	
 */
 
-global $loop;
+//global $loop;
 global $wp_query;
 global $portfolio_types;
 global $portfolio_output;
 global $num_per_page;
+global $limit_portfolios_returned;
 global $currpageurl;
 global $port;
 global $display_the_credit;
@@ -111,15 +114,32 @@ if ( !empty($siteURL_label) ) $siteURL_label .= ": ";
 $tech_label = $options['detail_labels']["Tech"];
 if ( !empty($tech_label) ) $tech_label .= ": ";
 
-// if the portfolio shortcode had no portfolio types defined
-if ( empty($portfolio_types) ) {
-	$loop = new WP_Query( array( 'post_type' => 'webphys_portfolio', 'posts_per_page' => $num_per_page, 'orderby' => 'meta_value' . $options['sort_numerically'], 'meta_key' => '_sortorder', 'order' => 'ASC', 'paged'=> $paged ) );
-} else {
-	$wp_query->query_vars['portfoliotype'] = $portfolio_types;
-	$loop = new WP_Query( array( 'post_type' => 'webphys_portfolio', 'portfoliotype' => $portfolio_types, 'posts_per_page' => $num_per_page, 'orderby' => 'meta_value' . $options['sort_numerically'], 'meta_key' => '_sortorder', 'order' => 'ASC', 'paged'=> $paged ) );
+$wp_query_holder = $wp_query;
+$wp_query = null;
+
+// if the user has set a hard value for the number of portfolios to return in the shortcode
+if ( is_numeric($limit_portfolios_returned) ) {
+	if ($limit_portfolios_returned > 0) {
+		$paged = 0;
+		$num_per_page = $limit_portfolios_returned;
+	}
 }
 
-if ( $loop->have_posts() ) {
+// if the portfolio shortcode had no portfolio types defined
+if ( empty($portfolio_types) ) {
+//	$loop = new WP_Query( array( 'post_type' => 'webphys_portfolio', 'posts_per_page' => $num_per_page, 'orderby' => 'meta_value' . $options['sort_numerically'], 'meta_key' => '_sortorder', 'order' => 'ASC', 'paged'=> $paged ) );
+	$wp_query = new WP_Query();
+	$wp_query->query(array( 'post_type' => 'webphys_portfolio', 'posts_per_page' => $num_per_page, 'orderby' => 'meta_value' . $options['sort_numerically'], 'meta_key' => '_sortorder', 'order' => 'ASC', 'paged'=> $paged ) );
+} else {
+//	$wp_query_holder->query_vars['portfoliotype'] = $portfolio_types;
+//	$loop = new WP_Query( array( 'post_type' => 'webphys_portfolio', 'portfoliotype' => $portfolio_types, 'posts_per_page' => $num_per_page, 'orderby' => 'meta_value' . $options['sort_numerically'], 'meta_key' => '_sortorder', 'order' => 'ASC', 'paged'=> $paged ) );
+	$wp_query = new WP_Query();
+	$wp_query->query( array( 'post_type' => 'webphys_portfolio', 'portfoliotype' => $portfolio_types, 'posts_per_page' => $num_per_page, 'orderby' => 'meta_value' . $options['sort_numerically'], 'meta_key' => '_sortorder', 'order' => 'ASC', 'paged'=> $paged ) );
+//	echo "wp_query = ".print_r($wp_query)."<br />";
+}
+
+//if ( $loop->have_posts() ) {
+if ( $wp_query->have_posts() ) {
 	
 //	echo $loop->request . '<br />';  //asterisk
 	
@@ -132,16 +152,19 @@ if ( $loop->have_posts() ) {
 	$portfolio_output .= $portfolio_open;
 
 	// Display page navigation when applicable
-	nav_pages($loop, $currpageurl, "webphysport_nav_top");
+//	nav_pages($loop, $currpageurl, "webphysport_nav_top");
+	nav_pages($wp_query, $currpageurl, "webphysport_nav_top");
 	
 	// set odd/even indicator for portfolio background highlighting
 	$odd = true;
 	
 	$portfolio_output .= $ul_open;
 	
-	while ( $loop->have_posts() ) {
+//	while ( $loop->have_posts() ) {
+	while ( $wp_query->have_posts() ) {
 		
-		$loop->the_post();
+//		$loop->the_post();
+		$wp_query->the_post();
 		
 		if ($odd==true) {
 			$post_class = 'portfolio_entry ' . $odd_class;
@@ -243,7 +266,8 @@ if ( $loop->have_posts() ) {
 	}
 	
 	// Display page navigation when applicable
-	nav_pages($loop, $currpageurl, "webphysport_nav_bottom");
+//	nav_pages($loop, $currpageurl, "webphysport_nav_bottom");
+	nav_pages($wp_query, $currpageurl, "webphysport_nav_bottom");
 	
 } else {
 	
@@ -258,4 +282,5 @@ if ( $loop->have_posts() ) {
 	
 }
 $portfolio_output .= '</div><!-- #portfolios -->';
+$wp_query = $wp_query_holder;
 ?>

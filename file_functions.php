@@ -9,7 +9,7 @@
 
 /*  UPDATES
 
-	1.4.? - ???
+	1.4.2 - added webphys_portfolio_delete_files function
 	
 */
 
@@ -28,11 +28,6 @@ function check_temp_dir() {
 	
 	// define the path to the temp folder's index.php file
 	$filestr = $tempdir."/index.php";
-	create_index_file($filestr);
-	
-	// define the TimThumb cache folder's local path and index.php within it
-	$cachedir = dirname ( __FILE__ ) . '/scripts/imageresizer/cache';
-	$filestr = $cachedir."/index.php";
 	create_index_file($filestr);
 	
 	// define the ShrinkTheWeb cache folder's local path and index.php within it
@@ -91,4 +86,20 @@ function deletefile($path, $filedir, $sep) {
 	}
 }
 
+// delete file(s) that match the specified filepath
+function webphys_portfolio_delete_files($filepath) {
+	
+	// this will cover for the specified file being a wildcarded filepath
+	$files = glob($filepath);
+	
+	foreach($files as $file){
+		
+		if(is_file($file)){
+			
+			$delete_files .= $file . "<br />";
+			unlink($file);
+			
+		}
+	}
+}
 ?>

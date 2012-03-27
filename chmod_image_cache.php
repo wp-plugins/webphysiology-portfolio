@@ -15,7 +15,9 @@
 
 $response = "Unable to update Image Cache permissions. You will need to update via File Manager.";
 
-session_start();
+if ( ! session_id() ) {
+	session_start();
+}
 
 if ( isset($_SESSION['cache']) ) {
 	
@@ -32,38 +34,41 @@ function webphys_port_cache_chmod($dir, $perm) {
 	
 	$dir = $dir . 'scripts/imageresizer/cache';
 	
-	$perms = substr(sprintf('%o', fileperms($dir)), -4);
-	
-	if ( $perms != $perm ) {
+	if (is_dir($dir)) {
 		
-		switch ($perm) {
+		$perms = substr(sprintf('%o', fileperms($dir)), -4);
 		
-			case "0744":
+		if ( $perms != $perm ) {
 			
-				$chmod = chmod($dir, 0744);
-				break;
+			switch ($perm) {
+			
+				case "0744":
 				
-			case "0777":
-			
-				$chmod = chmod($dir, 0777);
-				break;
+					$chmod = chmod($dir, 0744);
+					break;
+					
+				case "0777":
 				
-		}
-		
-		if ( $chmod ) {
+					$chmod = chmod($dir, 0777);
+					break;
+					
+			}
 			
-			$response = "Image cache permissions have been set to " . $perm;
+			if ( $chmod ) {
+				
+				$response = "Image cache permissions have been set to " . $perm;
+				
+			} else {
+				
+				$response = "Unable to update Image Cache permissions from " . $perms . " to " . $perm . ". You will need to update via File Manager.";
+				
+			}
 			
 		} else {
 			
-			$response = "Unable to update Image Cache permissions from " . $perms . " to " . $perm . ". You will need to update via File Manager.";
+			$response = "Permissions are already set to " . $perm;
 			
 		}
-		
-	} else {
-		
-		$response = "Permissions are already set to " . $perm;
-		
 	}
 	
 	return $response;

@@ -2,7 +2,7 @@
 /*
 Plugin Name: WEBphysiology Portfolio
 Plugin URI: http://webphysiology.com/redir/webphysiology-portfolio/
-Version: 1.4.1
+Version: 1.4.2
 Description: Provides a clean Portfolio listing with image, details and portfolio type taxonomy. A [portfolio] shortcode is used to include the portfolio on any page.
 Author: Jeff Lambert
 Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
@@ -40,8 +40,15 @@ Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 */
 
 /*  UPDATES
-
-	1.4.2 - * changed Portfolio Type taxomony from "portfolio_type" to "webphys_portfolio_type" to further reduce contentions with other custom taxonomies
+	
+	1.4.2 - * found and corrected a defect that would clear the Portfolio Type on a portfolio and also resulted in the Portfolio Type count from being updated
+			* changed Portfolio Type taxomony from "portfolio_type" to "webphys_portfolio_type" to further reduce contentions with other custom taxonomies
+			* added deleting Portfolio Tags if the plugin is deactivated and the deletion of Portfolio Records is selected in the options
+			* replaced the use of TimThumb with WordPress built-in image handling for generating thumbnails
+			* added the ability to put a hard limit on the number of portfolios to return by using the "limit" shortcode paraemeter
+			* added the ability to crop and restrict the height of built-in generated thumbnails
+			* added code to the thumbnailing routine to push up to a CDN if using W3 Total Cache
+			* enhanced cached thumbnail clearing by also clearing out cached thumbnails that are down within the uploads directory
 	1.4.1 - * removed un-used conditionally_add_scripts_and_styles function as there was another plugin, my-record-collection, that also had this function defined.
 			* added custom Portfolio Tag taxonomy and added update code to convert any existing post tags to this custom Portfolio tag
 			* added Portfolio Tag Cloud widget
@@ -169,7 +176,7 @@ Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 
 // ASTERISK = make certain to update these as appropriate with new releases //
 
-define ( 'WEBPHYSIOLOGY_VERSION', '1.4.1' );
+define ( 'WEBPHYSIOLOGY_VERSION', '1.4.2' );
 define ( 'WEBPHYSIOLOGY_DB_VERSION', '3.3.2' );
 define ( 'WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE', basename($_SERVER['PHP_SELF']) );
 
@@ -184,16 +191,20 @@ add_action( 'init', 'create_webphys_portfolio_type_taxonomy', 1 );
 
 if ( is_admin() ) {
 	
+	add_action('init', 'webphys_session_start', 1);
+	add_action('wp_logout', 'webphys_end_session');
+	add_action('wp_login', 'webphys_end_session');
+	
 	$plugin = plugin_basename(__FILE__);
 	$file = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__)) . 'css/portfolio_all_admin.css';
 	
 	check_options();
 	
 	register_activation_hook(__FILE__,'portfolio_install');
+	
 	add_action('admin_menu', 'portolio_admin_menu');
 	add_filter( 'plugin_action_links_' . $plugin, 'add_plugin_settings_link' );
 	add_action("init","check_version",0);
-//	add_action("admin_init","check_version");  // asterisk - should I change to this even though I'm already in the Admin (is_admin)?
 	add_action('admin_print_scripts', 'portfolio_admin_scripts');
 	add_action('admin_print_styles', 'portfolio_admin_styles');
 	add_action('admin_notices', 'display_update_alert');
@@ -209,8 +220,7 @@ if ( is_admin() ) {
 	
 	register_deactivation_hook( __FILE__, 'portfolio_remove' );
 	
-	wp_register_style('portfolio_all_admin_css', $file);
-	wp_enqueue_style('portfolio_all_admin_css');
+	add_action('admin_enqueue_scripts', 'webphys_portfolio_set_admin_css');
 	
 	if ( WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE == "plugins.php" ) {
 		add_action('after_plugin_row_webphysiology-portfolio/portfolio-main.php', 'portfolio_requirements_message');
@@ -235,10 +245,11 @@ if ( is_admin() ) {
 		add_action('init', 'get_colorpicker_jquery');
 		
 		// add in support for the "clear image caches" button
-		$base = esc_attr(plugin_dir_url(__FILE__) . 'scripts/');
-		wp_enqueue_script('prototype');
-		wp_register_script('clear_images', $base.'manage_img_caches.js');
-		wp_enqueue_script('clear_images');
+		add_action('admin_enqueue_scripts', 'webphys_portfolio_set_admin_scripts');
+//		$base = esc_attr(plugin_dir_url(__FILE__) . 'scripts/');
+//		wp_enqueue_script('prototype');
+//		wp_register_script('clear_images', $base.'manage_img_caches.js');
+//		wp_enqueue_script('clear_images');
 
 		// if the default behavior to load the Fancybox jQuery code has not been overwritten
 		$skip_fancybox_jquery_register = strtolower(get_option('webphysiology_portfolio_skip_fancybox_register'));
@@ -250,7 +261,6 @@ if ( is_admin() ) {
 			add_action('init', 'jquery_fancybox_init');
 		}
 		
-//		add_action('admin_head','mailchimpie');
 		add_action('admin_footer', 'admin_settings_jquery');
 		add_action('admin_footer', 'fancy_script', 12);
 	

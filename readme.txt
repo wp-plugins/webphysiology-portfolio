@@ -4,7 +4,7 @@ Donate link: http://webphysiology.com/redir/webphysiology-portfolio/donate/
 Tags: portfolio,website,image,screenshot,gallery,list,grid,posts,post,custom post type,custom taxonomy,pagepeeker,shrinktheweb,thumbnail,webphysiology
 Requires at least: 3.1.0
 Tested up to: 3.3.1
-Stable tag: 1.4.1
+Stable tag: 1.4.2
 
 Allows for the creation of an expanded-list styled or a grid-styled page containing images and supporting detail, perfect for a portfolio presentation.
 
@@ -81,6 +81,16 @@ Try resetting all the options by using the "Revert to Default Values" button at 
 = 1.0.0 was the initial release =
 
 == Changelog ==
+
+= 1.4.2 =
+* found and corrected a defect that would clear the Portfolio Type on a portfolio and also resulted in the Portfolio Type count from being updated
+* changed Portfolio Type taxomony from "portfolio_type" to "webphys_portfolio_type" to further reduce contentions with other custom taxonomies
+* added deleting Portfolio Tags if the plugin is deactivated and the deletion of Portfolio Records is selected in the options
+* replaced the use of TimThumb with WordPress built-in image handling for generating thumbnails
+* added the ability to put a hard limit on the number of portfolios to return by using the "limit" shortcode paraemeter
+* added the ability to crop and restrict the height of built-in generated thumbnails
+* added code to the thumbnailing routine to push up to a CDN if using W3 Total Cache
+* enhanced cached thumbnail clearing by also clearing out cached thumbnails that are down within the uploads directory
 
 = 1.4.1 =
 * removed un-used conditionally_add_scripts_and_styles function as there was another plugin, my-record-collection, that also had this function defined.
