@@ -3469,7 +3469,7 @@ add_action('template_redirect', 'use_portfolio_template');
 
 // For multisite installs, change the virtual path to the true image path
 if ( ! function_exists( 'multisite_image_adjustment' ) ) :
-function multisite_image_adjustment($src) {
+function multisite_image_adjustment($src, $leading_slash=false) {
 	
 	global $blog_id;
 	
@@ -3480,6 +3480,9 @@ function multisite_image_adjustment($src) {
 		$imageParts = explode('/files/' , $src);
 		if(isset($imageParts[1])) {
 			$src = 'wp-content/blogs.dir/' . $blog_id . '/files/' . $imageParts[1];
+			if ( ( substr($img_url, 0, 1) != "/" ) && ($leading_slash == true) ) {
+				$img_url = "/" . $img_url;
+			}
 		}
 	}
 	
@@ -3511,7 +3514,7 @@ function clean_source($src) {
 		$orig_src = $src;
 	}
 	
-	$src = multisite_image_adjustment($src);
+	$src = multisite_image_adjustment($src, false);
 	
 	$host = str_replace ('www.', '', $_SERVER['HTTP_HOST']);
 	$regex = "/^(http(s|):\/\/)(www\.|)" . $host . "\//i";
@@ -3805,9 +3808,7 @@ function webphys_portfolio_image_resize( $img_url ) {
 		}
 	}
 	
-	$file_path['path'] = multisite_image_adjustment($file_path['path']);
-	
-	if ( substr($img_url, 0, 1) != "/" ) { $img_url = "/" . $img_url; }
+	$file_path['path'] = multisite_image_adjustment($file_path['path'], true);
 	
 	if ( ( $user_level >= 10 ) && ( $debug == true ) ) {
 		echo "file_path['path'] = " . $file_path['path'] . "<br />";
