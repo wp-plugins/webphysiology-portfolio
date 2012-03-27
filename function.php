@@ -3469,7 +3469,7 @@ add_action('template_redirect', 'use_portfolio_template');
 
 // For multisite installs, change the virtual path to the true image path
 if ( ! function_exists( 'multisite_image_adjustment' ) ) :
-function multisite_image_adjustment($src, $leading_slash=false) {
+function multisite_image_adjustment($src, $leading_slash) {
 	
 	global $blog_id;
 	
@@ -3480,8 +3480,8 @@ function multisite_image_adjustment($src, $leading_slash=false) {
 		$imageParts = explode('/files/' , $src);
 		if(isset($imageParts[1])) {
 			$src = 'wp-content/blogs.dir/' . $blog_id . '/files/' . $imageParts[1];
-			if ( ( substr($img_url, 0, 1) != "/" ) && ($leading_slash == true) ) {
-				$img_url = "/" . $img_url;
+			if ( ( substr($src, 0, 1) != "/" ) && ($leading_slash == true) ) {
+				$src = "/" . $src;
 			}
 		}
 	}
