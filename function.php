@@ -3775,7 +3775,7 @@ function webphys_portfolio_image_resize( $img_url ) {
 	
 	global $user_level;
 	
-	$debug = true;  //asterisk
+	$debug = false;  //asterisk
 	
 	if ( empty($img_url) ) { return; }
 	
