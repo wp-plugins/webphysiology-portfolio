@@ -4,7 +4,7 @@ Donate link: http://webphysiology.com/redir/webphysiology-portfolio/donate/
 Tags: portfolio,website,image,screenshot,gallery,list,grid,posts,post,custom post type,custom taxonomy,pagepeeker,shrinktheweb,thumbnail,webphysiology
 Requires at least: 3.1.0
 Tested up to: 3.3.1
-Stable tag: 1.4.2
+Stable tag: 1.4.3
 
 Allows for the creation of an expanded-list styled or a grid-styled page containing images and supporting detail, perfect for a portfolio presentation.
 
@@ -83,7 +83,7 @@ Try resetting all the options by using the "Revert to Default Values" button at 
 == Changelog ==
 
 = 1.4.3 =
-* consolidated and re-used some file path and file existance checking code to deal with some anomolies in how the checking for files was occuring
+* consolidated and re-used some file path and file existence checking code to deal with some anomalies in how the checking for files was occurring
 
 = 1.4.2 =
 * found and corrected a defect that would clear the Portfolio Type on a portfolio and also resulted in the Portfolio Type count from being updated
