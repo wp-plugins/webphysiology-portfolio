@@ -10,6 +10,7 @@
 
 /*  UPDATES
 	
+	1.4.3 - * consolidated and re-used some file path and file existance checking code to deal with some anomolies in how the checking for files was occuring
 	1.4.2 - * found and corrected a defect that would clear the Portfolio Type on a portfolio and also resulted in the Portfolio Type count from being updated
 			* changed Portfolio Type taxomony from "portfolio_type" to "webphys_portfolio_type" to further reduce contentions with other custom taxonomies
 			* added deleting Portfolio Tags if the plugin is deactivated and the deletion of Portfolio Records is selected in the options
@@ -47,8 +48,12 @@
 */
 
 //class WEBphysiologyPortfolio {
-	
-	
+
+
+global $debug;
+
+$debug = false; /* asterisk */
+
 include_once('file_functions.php');
 
 // if the Ozh Admin Menu plugin is being used, add the JVHM icon to the menu portfolio menu item
@@ -3507,6 +3512,13 @@ endif;
  */
 function clean_source($src) {
 	
+	global $user_level;
+	global $debug;
+	
+	if ( ($debug == true) && ($user_level < 10) ) {
+		$debug = false;
+	}
+	
 	$orig_src = "";
 	
 	// if the image file is on the current server, grab the path as we'll be setting it back to this if all is good
@@ -3514,7 +3526,11 @@ function clean_source($src) {
 		$orig_src = $src;
 	}
 	
+	if ( $debug == true ) { echo "src start = " . $src . "<br />"; }
+	
 	$src = multisite_image_adjustment($src, false);
+	
+	$path = webphys_portfolio_get_image_path($src);
 	
 	$host = str_replace ('www.', '', $_SERVER['HTTP_HOST']);
 	$regex = "/^(http(s|):\/\/)(www\.|)" . $host . "\//i";
@@ -3533,13 +3549,20 @@ function clean_source($src) {
     // in order to gain access to files below document root
     $src = preg_replace ("/\.\.+\//", "", $src);
 	
+	if ( $debug == true ) { echo "src after clean = " . $src . "<br />"; }
+	
 	if ( ! empty($orig_src) ) {
-		if (file_exists($src)) {
+		
+		if ( $debug == true ) { echo "path = " . $path['filepath'] . "<br />"; }
+		
+		if (file_exists($path['filepath'])) {
 			$src = $orig_src;
 		} else {
 			$src = "";
 		}
 	}
+	
+	if ( $debug == true ) { echo "src before return = " . $src . "<br />"; }
 	
 	return $src;
 
@@ -3767,6 +3790,55 @@ function webphys_portfolio_set_admin_scripts() {
 	wp_enqueue_script('clear_images');
 }
 
+function webphys_portfolio_get_image_path($img_url) {
+	
+	global $user_level;
+	global $debug;
+	
+	if ( ($debug == true) && ($user_level < 10) ) {
+		$debug = false;
+	}
+	
+	$img = $img_url;
+	$orig_img_url = $img;
+	
+	$file_path = parse_url( $img );
+	
+	$filepath = '';
+	
+	// if the image does not include a full URL we need to build this out
+	if ( empty($file_path['host']) ) {
+		
+		$img = get_bloginfo('wpurl') . $img;
+		
+		$file_path = parse_url( $img );
+		
+		if ( empty($file_path['host']) ) {
+			
+			$return = array('filepath'=>$filepath,'imgurl'=>$orig_img_url);
+			
+			return $return;
+		}
+		
+	}
+	
+	$file_path['path'] = multisite_image_adjustment($file_path['path'], true);
+	
+	if ( $debug == true ) {
+		echo "file_path['path'] = " . $file_path['path'] . "<br />";
+	}
+	
+	$filepath = str_replace('//','/',$_SERVER['DOCUMENT_ROOT'] . $file_path['path']);
+
+	if ( ! file_exists( $filepath )) {
+		$filepath = "";
+	}
+	
+	$return = array('filepath'=>$filepath,'imgurl'=>$img);
+	
+	return $return;
+	
+}
 
 /*
  * Resize images dynamically using wp built in functions
@@ -3777,8 +3849,11 @@ function webphys_portfolio_set_admin_scripts() {
 function webphys_portfolio_image_resize( $img_url ) {
 	
 	global $user_level;
+	global $debug;
 	
-	$debug = false;  //asterisk
+	if ( ($debug == true) && ($user_level < 10) ) {
+		$debug = false;
+	}
 	
 	if ( empty($img_url) ) { return; }
 	
@@ -3793,30 +3868,12 @@ function webphys_portfolio_image_resize( $img_url ) {
 		$crop = true;
 	}
 	
-	$file_path = parse_url( $img_url );
+	$path = webphys_portfolio_get_image_path($img_url);
 	
-	// if the image does not include a full URL we need to build this out
-	if ( empty($file_path['host']) ) {
-		
-		$img_url = get_bloginfo('wpurl') . $img_url;
-		
-		$file_path = parse_url( $img_url );
-		
-		if ( empty($file_path['host']) ) {
-			$img_url = $orig_img_url;
-			return;
-		}
-	}
+	$filepath = $path['filepath'];
+	$img_url = $path['imgurl'];
 	
-	$file_path['path'] = multisite_image_adjustment($file_path['path'], true);
-	
-	if ( ( $user_level >= 10 ) && ( $debug == true ) ) {
-		echo "file_path['path'] = " . $file_path['path'] . "<br />";
-	}
-	
-	$filepath = $_SERVER['DOCUMENT_ROOT'] . $file_path['path'];
-
-	if ( ( $user_level >= 10 ) && ( $debug == true ) ) {
+	if ( $debug == true ) {
 		echo "filepath = " . $filepath . "<br />";
 	}
 	
@@ -3824,7 +3881,7 @@ function webphys_portfolio_image_resize( $img_url ) {
 		echo "bad image path = " . $orig_img_url . "<br />";
 		return;
 	}
-
+	
 	$orig_size = getimagesize( $filepath );
 	
 	$image_src[0] = $img_url;
@@ -3845,7 +3902,7 @@ function webphys_portfolio_image_resize( $img_url ) {
 	
 	$cropped_img_path = $no_ext_path.'-'.$width.'x'.$height.$extension;
 	
-	if ( ( $user_level >= 10 ) && ( $debug == true ) ) {
+	if ( $debug == true ) {
 		echo "cropped_img_path = " . $cropped_img_path . "<br />" . "img_url = " . $image_src[0] . "<br />";
 	}
 	
@@ -3864,7 +3921,7 @@ function webphys_portfolio_image_resize( $img_url ) {
 				'height' => $height
 			);
 			
-			if ( ( $user_level >= 10 ) && ( $debug == true ) ) {
+			if ( $debug == true ) {
 				echo "cropped_img_url = " . $cropped_img_url . "<br />";
 			}
 			
@@ -3890,7 +3947,7 @@ function webphys_portfolio_image_resize( $img_url ) {
 					'height' => $proportional_size[1]
 				);
 				
-				if ( ( $user_level >= 10 ) && ( $debug == true ) ) {
+				if ( $debug == true ) {
 					echo "resized_img_url = " . $resized_img_url . "<br />resized_img_path = " . $resized_img_path . "<br />";
 				}
 				
@@ -3916,7 +3973,7 @@ function webphys_portfolio_image_resize( $img_url ) {
 			'height' => $new_img_size[1]
 		);
 		
-		if ( ( $user_level >= 10 ) && ( $debug == true ) ) {
+		if ( $debug == true ) {
 			echo "new_img = " . $new_img . "<br />new_img_path = " . $new_img_path . "<br />";
 		}
 		

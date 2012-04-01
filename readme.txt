@@ -82,6 +82,9 @@ Try resetting all the options by using the "Revert to Default Values" button at 
 
 == Changelog ==
 
+= 1.4.3 =
+* consolidated and re-used some file path and file existance checking code to deal with some anomolies in how the checking for files was occuring
+
 = 1.4.2 =
 * found and corrected a defect that would clear the Portfolio Type on a portfolio and also resulted in the Portfolio Type count from being updated
 * changed Portfolio Type taxomony from "portfolio_type" to "webphys_portfolio_type" to further reduce contentions with other custom taxonomies
