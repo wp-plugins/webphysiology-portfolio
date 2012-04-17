@@ -3556,7 +3556,9 @@ function clean_source($src) {
 	$regex = "/^(http(s|):\/\/)(www\.|)" . $host . "\//i";
 	$src = preg_replace ($regex, '', $src);
 	$src = strip_tags ($src);
+	if ( $debug == true ) { echo "src before check_external = " . $src . "<br />"; }
 	$src = check_external ($src);
+	if ( $debug == true ) { echo "src after check_external = " . $src . "<br />"; }
 	
 	if ( empty($src) ) {return $src;}
 	
@@ -3628,10 +3630,12 @@ function check_external($src) {
 		
 		if ($isAllowedSite) {
 			
-			$fileDetails = pathinfo ($src);
-			$ext = strtolower ($fileDetails['extension']);
-
-			$filename = md5 ($src);
+			$fileDetails = pathinfo($src);
+			
+			$ext = strtolower($fileDetails['extension']);
+			
+			$filename = md5($src);
+			
 			$newsrc = 'temp/' . $filename . '.' . $ext;
 			
 			$local_filepath = dirname ( __FILE__ ) . '/' . $newsrc;
@@ -3639,7 +3643,6 @@ function check_external($src) {
 			if (!file_exists ($local_filepath)) {
 				
 				if (function_exists ('curl_init')) {
-					
 					$fh = fopen ($local_filepath, 'w');
 					$ch = curl_init ($src);
 					curl_setopt ($ch, CURLOPT_URL, $src);
