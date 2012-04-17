@@ -10,6 +10,8 @@
 
 /*  UPDATES
 	
+	1.4.4 - * updated how page navigation URLs are built
+			* solved an issue where sub-domains were not able to find a valid image due to path issues ... appears to only occur with GoDaddy hosting
 	1.4.3 - * consolidated and re-used some file path and file existence checking code to deal with some anomalies in how the checking for files was occurring
 	1.4.2 - * found and corrected a defect that would clear the Portfolio Type on a portfolio and also resulted in the Portfolio Type count from being updated
 			* changed Portfolio Type taxomony from "portfolio_type" to "webphys_portfolio_type" to further reduce contentions with other custom taxonomies
@@ -51,7 +53,7 @@
 
 
 global $debug;
-
+	
 $debug = false; /* asterisk */
 
 include_once('file_functions.php');
@@ -2592,18 +2594,26 @@ function prepare_single_portfolio() {
 
 if(!function_exists('getPageContent')) {
 function getPageContent($pageId) {
+	
 	if(!is_numeric($pageId)) {
 		return;
 	}
+	
 	global $wpdb;
-	$sql_query = 'SELECT DISTINCT * FROM ' . $wpdb->posts .
-	' WHERE ' . $wpdb->posts . '.ID=' . $pageId;
+	
+	$sql_query = 'SELECT DISTINCT * FROM ' . $wpdb->posts . ' WHERE ' . $wpdb->posts . '.ID=' . $pageId;
+	
 	$posts = $wpdb->get_results($sql_query);
+	
 	if(!empty($posts)) {
+		
 		foreach($posts as $post) {
+			
 			return nl2br($post->post_content);
+			
 		}
 	}
+	
 }
 }
 
@@ -3001,7 +3011,7 @@ function get_Loop_Site_Image() {
 			
 			// strip out the HTTP / domain as we need to look for the actual path of the file
 			$src = str_replace(home_url() . "/","",$img_url);
-			
+
 			if ( ! file_exists(dirname ( __FILE__ ) . '/' . $src)) {
 				if ( ! file_exists($src)) {
 					$full_size_img_url = "";
@@ -3381,10 +3391,15 @@ function nav_pages($qryloop, $pageurl, $class) {
 		
 		// if the user is not using pretty permalinks, then the nav page reference is a second parameter
 		// 1.1.5 - also building out a full URL to the particular page
+		$paged_1 = $pageurl;
+		
 		if ( strpos($pageurl, "?page_id=") > 0 ) {
 			$paged = $pageurl . "&paged=";
+			$paged_end = "";
 		} else {
-			$paged = $pageurl . "?paged=";
+//			$paged = $pageurl . "?paged=";
+			$paged = $pageurl . "page/";
+			$paged_end = "/";
 		}		
 		
 		// get current page number
@@ -3413,24 +3428,29 @@ function nav_pages($qryloop, $pageurl, $class) {
 		// now build out the navigation page control elements
 		$nav = '<ul>';
 		if ($before == 1) {
-			$nav .= '<li><a href="' . $paged . ($start - 1) . '">&lt;</a></li>';
+			$nav .= '<li><a href="' . $paged . ($start - 1) . $paged_end . '">&lt;</a></li>';
 		} elseif ($before == 2) {
-			$nav .= '<li><a href="' . $paged . '1">&laquo;</a></li>';
-			$nav .= '<li><a href="' . $paged . ($start - 1) . '">&lt;</a></li>';
+			$nav .= '<li><a href="' . paged_1 . '">&laquo;</a></li>';
+			$nav .= '<li><a href="' . $paged . ($start - 1) . $paged_end . '">&lt;</a></li>';
 		}
 		for ($i=$start;$i<=($start+$for-1);$i++) {
-			if ($curpage!=$i) {
-				$nav .= '<li><a href="' . $paged . $i .'"';
+			if ($i == 1) {
+				$pagenav = $paged_1;
 			} else {
-				$nav .= '<li class="selected"><a href="' . $paged . $i .'" class="selected"';
+				$pagenav = $paged . $i . $paged_end;
+			}
+			if ($curpage!=$i) {
+				$nav .= '<li><a href="' . $pagenav . '"';
+			} else {
+				$nav .= '<li class="selected"><a href="' . $pagenav . '" class="selected"';
 			}
 			$nav .= '>' . $i . '</a></li>';
 		}
 		if ($after == 1) {
-			$nav .= '<li><a href="' . $paged . ($start + $for) . '">&gt;</a></li>';
+			$nav .= '<li><a href="' . $paged . ($start + $for) . $paged_end . '">&gt;</a></li>';
 		} elseif ($after == 2) {
-			$nav .= '<li><a href="' . $paged . ($start + $for) . '">&gt;</a></li>';
-			$nav .= '<li><a href="' . $paged . $pages . '">&raquo;</a></li>';
+			$nav .= '<li><a href="' . $paged . ($start + $for) . $paged_end . '">&gt;</a></li>';
+			$nav .= '<li><a href="' . $paged . $pages . $paged_end . '">&raquo;</a></li>';
 		}
 		$nav .= '</ul>';
 		
@@ -3697,13 +3717,19 @@ function check_external($src) {
  */
 function get_document_root($src) {
 	
+	if ( empty($_SERVER['SUBDOMAIN_DOCUMENT_ROOT']) ) {
+		$doc_root = $_SERVER['DOCUMENT_ROOT'];
+	} else {
+		$doc_root = $_SERVER['SUBDOMAIN_DOCUMENT_ROOT'];
+	}
+	
     // check for unix servers
-    if (file_exists ($_SERVER['DOCUMENT_ROOT'] . '/' . $src)) {
-        return $_SERVER['DOCUMENT_ROOT'];
+    if (file_exists ($doc_root . '/' . $src)) {
+        return $doc_root;
     }
 	
     // check from script filename (to get all directories to timthumb location)
-    $parts = array_diff (explode ('/', $_SERVER['SCRIPT_FILENAME']), explode ('/', $_SERVER['DOCUMENT_ROOT']));
+    $parts = array_diff (explode ('/', $_SERVER['SCRIPT_FILENAME']), explode ('/', $doc_root));
 	
 	$path = './';
 	
@@ -3715,7 +3741,7 @@ function get_document_root($src) {
 	}
 	
     // special check for microsoft servers
-    if (!isset ($_SERVER['DOCUMENT_ROOT'])) {
+    if (( ! isset($_SERVER['DOCUMENT_ROOT'])) && ( ! isset($_SERVER['SUBDOMAIN_DOCUMENT_ROOT']))) {
         $path = str_replace ("/", "\\", $_SERVER['ORIG_PATH_INFO']);
         $path = str_replace ($path, '', $_SERVER['SCRIPT_FILENAME']);
 
@@ -3795,8 +3821,18 @@ function webphys_portfolio_get_image_path($img_url) {
 	global $user_level;
 	global $debug;
 	
+	if ( empty($_SERVER['SUBDOMAIN_DOCUMENT_ROOT']) ) {
+		$doc_root = $_SERVER['DOCUMENT_ROOT'];
+	} else {
+		$doc_root = $_SERVER['SUBDOMAIN_DOCUMENT_ROOT'];
+	}
+	
 	if ( ($debug == true) && ($user_level < 10) ) {
 		$debug = false;
+	}
+	
+	if ( $debug == true ) {
+		echo "get_image_path start = " . $img_url . "<br />";
 	}
 	
 	$img = $img_url;
@@ -3805,6 +3841,7 @@ function webphys_portfolio_get_image_path($img_url) {
 	$file_path = parse_url( $img );
 	
 	$filepath = '';
+	$svr_filepath = '';
 	
 	// if the image does not include a full URL we need to build this out
 	if ( empty($file_path['host']) ) {
@@ -3815,7 +3852,7 @@ function webphys_portfolio_get_image_path($img_url) {
 		
 		if ( empty($file_path['host']) ) {
 			
-			$return = array('filepath'=>$filepath,'imgurl'=>$orig_img_url);
+			$return = array('filepath'=>$filepath,'imgurl'=>$orig_img_url,'svr_filepath'=>$svr_filepath);
 			
 			return $return;
 		}
@@ -3828,13 +3865,22 @@ function webphys_portfolio_get_image_path($img_url) {
 		echo "file_path['path'] = " . $file_path['path'] . "<br />";
 	}
 	
-	$filepath = str_replace('//','/',$_SERVER['DOCUMENT_ROOT'] . $file_path['path']);
+	$filepath = str_replace('//','/', $doc_root . $file_path['path']);
+	$svr_filepath = $filepath;
 
+	if ( $debug == true ) {
+		echo "whole filepath = " . $svr_filepath . "<br />";
+	}
+	
 	if ( ! file_exists( $filepath )) {
 		$filepath = "";
 	}
 	
-	$return = array('filepath'=>$filepath,'imgurl'=>$img);
+	if ( $debug == true ) {
+		echo "filepath before return = " . $filepath . "<br />";
+	}
+	
+	$return = array('filepath'=>$filepath,'imgurl'=>$img,'svr_filepath'=>$svr_filepath);
 	
 	return $return;
 	
@@ -3878,8 +3924,11 @@ function webphys_portfolio_image_resize( $img_url ) {
 	}
 	
 	if ( ! file_exists( $filepath )) {
-		echo "bad image path = " . $orig_img_url . "<br />";
-		return;
+		if ($user_level < 10) {
+			echo "bad image path = " . $orig_img_url . "<br />";
+		} else {
+			echo "bad image path = " . $path['svr_filepath'] . "<br />";
+		}
 	}
 	
 	$orig_size = getimagesize( $filepath );

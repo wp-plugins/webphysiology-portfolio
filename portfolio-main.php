@@ -41,6 +41,8 @@ Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 
 /*  UPDATES
 	
+	1.4.4 - * updated how page navigation URLs are built
+			* solved an issue where sub-domains were not able to find a valid image due to path issues ... appears to only occur with GoDaddy hosting
 	1.4.3 - * consolidated and re-used some file path and file existence checking code to deal with some anomalies in how the checking for files was occurring
 	1.4.2 - * found and corrected a defect that would clear the Portfolio Type on a portfolio and also resulted in the Portfolio Type count from being updated
 			* changed Portfolio Type taxomony from "portfolio_type" to "webphys_portfolio_type" to further reduce contentions with other custom taxonomies
@@ -177,7 +179,7 @@ Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 
 // ASTERISK = make certain to update these as appropriate with new releases //
 
-define ( 'WEBPHYSIOLOGY_VERSION', '1.4.3' );
+define ( 'WEBPHYSIOLOGY_VERSION', '1.4.4' );
 define ( 'WEBPHYSIOLOGY_DB_VERSION', '3.3.2' );
 define ( 'WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE', basename($_SERVER['PHP_SELF']) );
 
@@ -247,10 +249,6 @@ if ( is_admin() ) {
 		
 		// add in support for the "clear image caches" button
 		add_action('admin_enqueue_scripts', 'webphys_portfolio_set_admin_scripts');
-//		$base = esc_attr(plugin_dir_url(__FILE__) . 'scripts/');
-//		wp_enqueue_script('prototype');
-//		wp_register_script('clear_images', $base.'manage_img_caches.js');
-//		wp_enqueue_script('clear_images');
 
 		// if the default behavior to load the Fancybox jQuery code has not been overwritten
 		$skip_fancybox_jquery_register = strtolower(get_option('webphysiology_portfolio_skip_fancybox_register'));

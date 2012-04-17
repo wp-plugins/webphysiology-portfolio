@@ -4,7 +4,7 @@ Donate link: http://webphysiology.com/redir/webphysiology-portfolio/donate/
 Tags: portfolio,website,image,screenshot,gallery,list,grid,posts,post,custom post type,custom taxonomy,pagepeeker,shrinktheweb,thumbnail,webphysiology
 Requires at least: 3.1.0
 Tested up to: 3.3.1
-Stable tag: 1.4.3
+Stable tag: 1.4.4
 
 Allows for the creation of an expanded-list styled or a grid-styled page containing images and supporting detail, perfect for a portfolio presentation.
 
@@ -16,9 +16,9 @@ The plugin utilizes a Custom Post Type as well as a Custom Taxonomy. It provides
 
 The Portfolio entry screen is customized to include just the items that make up a Portfolio entry. Attributes that aren't populated will not be displayed on the end user interface as well as custom fields whose display has been turned off. Attaching an image to a Portfolio entry also has been made relatively painless.
 
-To enhance the design, and also reduce page weight, TimThumb 2.0 is utilized to display thumbnails of full-size imported images.  The ability to add automatic web site thumbnails utilizing ShrinkTheWeb.com was added in version 1.2.0.  And in version 1.4.0, the PagePeeker.com thumbnail service was incorporated.
+To enhance the design, and also reduce page weight, thumbnails of full-size imported images are generated.  Or, if you prefer, the ability to add automatic web site thumbnails utilizing ShrinkTheWeb.com or PagePeeker.com can be used.
 
-The end user interface can be adjusted using styling Portfolio Options or via your own CSS. Managing how things work within the end user interface is very customizable. Clicking thumbnail images can result in an image opening in a thickbox or it can take the visitor to the specified website URL....  The plugin also supports video media types, such that they can be played within a thickbox.
+The end user interface can be adjusted using styling Portfolio Options or via your own CSS. Managing how things work within the end user interface is very customizable. Clicking thumbnail images can result in an image opening in a thickbox or it can take the visitor to the specified website URL....  The plugin also supports video media types, such that they can be played within a thickbox.  YouTube and Vimeo URLs will automagically generate thumbnails from the referenced video without the need to provide an image URL.
 
 A good many hours have been poured into this plugin, so, appreciation in the form of a donation always brightens our day.
 
@@ -81,6 +81,10 @@ Try resetting all the options by using the "Revert to Default Values" button at 
 = 1.0.0 was the initial release =
 
 == Changelog ==
+
+= 1.4.4
+* updated how page navigation URLs are built
+* solved an issue where sub-domains were not able to find a valid image due to path issues ... appears to only occur with GoDaddy hosting
 
 = 1.4.3 =
 * consolidated and re-used some file path and file existence checking code to deal with some anomalies in how the checking for files was occurring
