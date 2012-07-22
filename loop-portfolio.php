@@ -130,12 +130,14 @@ if ( empty($portfolio_types) ) {
 //	$loop = new WP_Query( array( 'post_type' => 'webphys_portfolio', 'posts_per_page' => $num_per_page, 'orderby' => 'meta_value' . $options['sort_numerically'], 'meta_key' => '_sortorder', 'order' => 'ASC', 'paged'=> $paged ) );
 	$wp_query = new WP_Query();
 	$wp_query->query(array( 'post_type' => 'webphys_portfolio', 'posts_per_page' => $num_per_page, 'orderby' => 'meta_value' . $options['sort_numerically'], 'meta_key' => '_sortorder', 'order' => 'ASC', 'paged'=> $paged ) );
+//	echo "wp_query 1 = ".print_r($wp_query)."<br />";
 } else {
 //	$wp_query_holder->query_vars['portfoliotype'] = $portfolio_types;
 //	$loop = new WP_Query( array( 'post_type' => 'webphys_portfolio', 'portfoliotype' => $portfolio_types, 'posts_per_page' => $num_per_page, 'orderby' => 'meta_value' . $options['sort_numerically'], 'meta_key' => '_sortorder', 'order' => 'ASC', 'paged'=> $paged ) );
 	$wp_query = new WP_Query();
 	$wp_query->query( array( 'post_type' => 'webphys_portfolio', 'portfoliotype' => $portfolio_types, 'posts_per_page' => $num_per_page, 'orderby' => 'meta_value' . $options['sort_numerically'], 'meta_key' => '_sortorder', 'order' => 'ASC', 'paged'=> $paged ) );
-//	echo "wp_query = ".print_r($wp_query)."<br />";
+//	echo "wp_query 2 = ".print_r($wp_query)."<br />";
+//	echo "wp_query 2 = ".$wp_query->request."<br />";
 }
 
 //if ( $loop->have_posts() ) {

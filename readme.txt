@@ -3,8 +3,8 @@ Contributors: lambje
 Donate link: http://webphysiology.com/redir/webphysiology-portfolio/donate/
 Tags: portfolio,website,image,screenshot,gallery,list,grid,posts,post,custom post type,custom taxonomy,pagepeeker,shrinktheweb,thumbnail,webphysiology
 Requires at least: 3.1.0
-Tested up to: 3.3.1
-Stable tag: 1.4.4
+Tested up to: 3.4.1
+Stable tag: 1.4.5
 
 Allows for the creation of an expanded-list styled or a grid-styled page containing images and supporting detail, perfect for a portfolio presentation.
 
@@ -81,6 +81,13 @@ Try resetting all the options by using the "Revert to Default Values" button at 
 = 1.0.0 was the initial release =
 
 == Changelog ==
+
+= 1.4.5
+* updated to handle document root definition when running from a Windows server where $_SERVER['DOCUMENT_ROOT'] is not available
+* updated to handle document root definition when running within an environment where the $_SERVER['DOCUMENT_ROOT'] is mapped to a different directory
+* enhanced code that checks if image is on local server to handle instances where an image URL is specified without "www" and the site is running under "www"
+* corrected bad formed <option> tag in Portoflio Type select list and also enhanced it to allow setting the type to None (clear it)
+* fixed a typo in the page navigation adjustment where << was not pushing to page 1
 
 = 1.4.4
 * updated how page navigation URLs are built

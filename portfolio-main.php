@@ -2,7 +2,7 @@
 /*
 Plugin Name: WEBphysiology Portfolio
 Plugin URI: http://webphysiology.com/redir/webphysiology-portfolio/
-Version: 1.4.4
+Version: 1.4.5
 Description: Provides a clean Portfolio listing with image, details and portfolio type taxonomy. A [portfolio] shortcode is used to include the portfolio on any page.
 Author: Jeff Lambert
 Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
@@ -41,6 +41,11 @@ Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 
 /*  UPDATES
 	
+	1.4.5 - * updated to handle document root definition when running from a Windows server where $_SERVER['DOCUMENT_ROOT'] is not available
+			* updated to handle document root definition when running within an environment where the $_SERVER['DOCUMENT_ROOT'] is mapped to a different directory
+			* enhanced code that checks if image is on local server to handle instances where an image URL is specified without "www" and the site is running under "www"
+			* corrected bad formed <option> tag in Portoflio Type select list and also enhanced it to allow setting the type to None (clear it)
+			* fixed a typo in the page navigation adjustment where << was not pushing to page 1
 	1.4.4 - * updated how page navigation URLs are built
 			* solved an issue where sub-domains were not able to find a valid image due to path issues ... appears to only occur with GoDaddy hosting
 	1.4.3 - * consolidated and re-used some file path and file existence checking code to deal with some anomalies in how the checking for files was occurring
@@ -179,7 +184,7 @@ Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 
 // ASTERISK = make certain to update these as appropriate with new releases //
 
-define ( 'WEBPHYSIOLOGY_VERSION', '1.4.4' );
+define ( 'WEBPHYSIOLOGY_VERSION', '1.4.5' );
 define ( 'WEBPHYSIOLOGY_DB_VERSION', '3.3.2' );
 define ( 'WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE', basename($_SERVER['PHP_SELF']) );
 

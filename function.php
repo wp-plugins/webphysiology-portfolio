@@ -10,6 +10,11 @@
 
 /*  UPDATES
 	
+	1.4.5 - * updated to handle document root definition when running from a Windows server where $_SERVER['DOCUMENT_ROOT'] is not available
+			* updated to handle document root definition when running within an environment where the $_SERVER['DOCUMENT_ROOT'] is mapped to a different directory
+			* enhanced code that checks if image is on local server to handle instances where an image URL is specified without "www" and the site is running under "www"
+			* corrected bad formed <option> tag in Portoflio Type select list and also enhanced it to allow setting the type to None (clear it)
+			* fixed a typo in the page navigation adjustment where << was not pushing to page 1
 	1.4.4 - * updated how page navigation URLs are built
 			* solved an issue where sub-domains were not able to find a valid image due to path issues ... appears to only occur with GoDaddy hosting
 	1.4.3 - * consolidated and re-used some file path and file existence checking code to deal with some anomalies in how the checking for files was occurring
@@ -352,8 +357,11 @@ function webphys_portfolio_edit_init() {
 
     echo '<select name="_webphys_portfolio_type" id="_webphys_portfolio_type">';
         echo '<!-- Display portfolio types as options -->';
-            echo '<option class="portfolio_type_option" value=""';
-            if ( !count($portfolio_type_list) || is_wp_error($webphys_portfolio_type) || empty($webphys_portfolio_type) ) echo 'selected>None</option>'; // asterisk 330
+		if ( !count($portfolio_type_list) || is_wp_error($webphys_portfolio_type) || empty($webphys_portfolio_type) ) {
+			echo '<option class="portfolio_type_option" value="" selected>None</option>';
+		} else {
+			echo '<option class="portfolio_type_option" value="">None</option>';
+		}
         foreach ($portfolio_type_list as $portfolio_item) {
             if ($portfolio_item->slug == $webphys_portfolio_type) {
                 echo '<option class="portfolio_type_option" value="' . $portfolio_item->slug . '" selected>' . $portfolio_item->name . '</option>\n'; 
@@ -375,7 +383,7 @@ function webphys_portfolio_edit_init() {
 	echo '<input id="upload_portfolio_image_button" class="upload_image_button" type="button" value="Upload Image" /><br />';
 	echo '<input type="text" id="_imageurl" name="_imageurl" value="' . $imageurl . '" class="widefat shortbottom" /><br />';
 	echo '<span class="attribute_instructions">Enter the URL for the portfolio image. Clicking "Insert into Post" from &lt;Upload Image&gt; will paste the inserted image\'s URL.' . $stwcomments . '</span></p>';
-    echo '<p><label for="_sortorder">Enter Site Sort Order: </label>';
+    echo '<p><label for="_sortorder">Sort Order: </label>';
 	echo '<input type="text" id="_sortorder" name="_sortorder" value="' . $sortorder . '" class="code" />';
 	echo '<input type="hidden" name="autosave_quickedit_check" value="true" />'. $sortcomments . '</p>';
 
@@ -940,7 +948,9 @@ function portfolio_plugin_page() {
 	echo '						</div>' . "\n";
 	echo portfolio_admin_section_wrap('top', 'Portfolio Display Settings', null);
 	echo '						<h4>Labeling &amp; Data Display</h4>' . "\n";
+	echo '						<div class="display_and_label">' . "\n";
 	echo '						<input type="checkbox" id="' . $display_portfolio_title . '" name="' . $display_portfolio_title . '" value="True" ' . $opt_val_display_portfolio_title . '/><label for="' . $display_portfolio_title . '">Display portfolio title</label><br/>' . "\n";
+	echo '							</div>' . "\n";
 	echo '						<div class="display_and_label">' . "\n";
 	echo '							<div class="display_attrib">' . "\n";
 	echo '						<input type="checkbox" id="' . $display_portfolio_desc . '" name="' . $display_portfolio_desc . '" value="True" ' . $opt_val_display_portfolio_desc . '/><label for="' . $display_portfolio_desc . '">Display portfolio description</label><br />' . "\n";
@@ -3430,7 +3440,7 @@ function nav_pages($qryloop, $pageurl, $class) {
 		if ($before == 1) {
 			$nav .= '<li><a href="' . $paged . ($start - 1) . $paged_end . '">&lt;</a></li>';
 		} elseif ($before == 2) {
-			$nav .= '<li><a href="' . paged_1 . '">&laquo;</a></li>';
+			$nav .= '<li><a href="' . $paged_1 . '">&laquo;</a></li>';
 			$nav .= '<li><a href="' . $paged . ($start - 1) . $paged_end . '">&lt;</a></li>';
 		}
 		for ($i=$start;$i<=($start+$for-1);$i++) {
@@ -3544,7 +3554,12 @@ function clean_source($src) {
 	// if the image file is on the current server, grab the path as we'll be setting it back to this if all is good
 	if (strpos(strtoupper($src),strtoupper($_SERVER['HTTP_HOST'])) > 0) {
 		$orig_src = $src;
+	} elseif (( strpos($src, "http://") >= 0 ) && ( ! strpos($src, "http://www.") )) {
+		if (strpos(strtoupper(str_replace("http://","http://www.",$src)),strtoupper($_SERVER['HTTP_HOST'])) > 0) {
+			$orig_src = $src;
+		}
 	}
+		
 	
 	if ( $debug == true ) { echo "src start = " . $src . "<br />"; }
 	
@@ -3726,6 +3741,22 @@ function get_document_root($src) {
 		$doc_root = $_SERVER['SUBDOMAIN_DOCUMENT_ROOT'];
 	}
 	
+	// if the document root didn't populate, we may be having issues as we are running on a Windows server, so, try the following
+	if ( empty($doc_root) ) {
+		
+		if ( isset($_SERVER['SCRIPT_FILENAME']) ) {
+			$doc_root = str_replace( '\\', '/', substr($_SERVER['SCRIPT_FILENAME'], 0, 0-strlen($_SERVER['PHP_SELF'])));
+		}
+		
+		// if still no joy try this
+		if ( empty($doc_root) ) {
+			if ( isset($_SERVER['PATH_TRANSLATED']) ) {
+				$doc_root = str_replace( '\\', '/', substr(str_replace('\\\\', '\\', $_SERVER['PATH_TRANSLATED']), 0, 0-strlen($_SERVER['PHP_SELF'])));
+			}
+		}
+		
+	}
+	
     // check for unix servers
     if (file_exists ($doc_root . '/' . $src)) {
         return $doc_root;
@@ -3744,7 +3775,7 @@ function get_document_root($src) {
 	}
 	
     // special check for microsoft servers
-    if (( ! isset($_SERVER['DOCUMENT_ROOT'])) && ( ! isset($_SERVER['SUBDOMAIN_DOCUMENT_ROOT']))) {
+    if ( ( ! isset($_SERVER['DOCUMENT_ROOT'])) && ( ! isset($_SERVER['SUBDOMAIN_DOCUMENT_ROOT'])) && ( empty($doc_root)) ) {
         $path = str_replace ("/", "\\", $_SERVER['ORIG_PATH_INFO']);
         $path = str_replace ($path, '', $_SERVER['SCRIPT_FILENAME']);
 
@@ -3824,10 +3855,29 @@ function webphys_portfolio_get_image_path($img_url) {
 	global $user_level;
 	global $debug;
 	
+// $_SERVER['DOCUMENT_ROOT'] is now set - you can use it as usual...
+	
+	// GoDaddy handles sub-domains a bit different, so, look for a SERVER setting for sub-domain root
 	if ( empty($_SERVER['SUBDOMAIN_DOCUMENT_ROOT']) ) {
 		$doc_root = $_SERVER['DOCUMENT_ROOT'];
 	} else {
 		$doc_root = $_SERVER['SUBDOMAIN_DOCUMENT_ROOT'];
+	}
+	
+	// if the document root didn't populate, we may be having issues as we are running on a Windows server, so, try the following
+	if ( empty($doc_root) ) {
+		
+		if ( isset($_SERVER['SCRIPT_FILENAME']) ) {
+			$doc_root = str_replace( '\\', '/', substr($_SERVER['SCRIPT_FILENAME'], 0, 0-strlen($_SERVER['PHP_SELF'])));
+		}
+		
+		// if still no joy try this
+		if ( empty($doc_root) ) {
+			if ( isset($_SERVER['PATH_TRANSLATED']) ) {
+				$doc_root = str_replace( '\\', '/', substr(str_replace('\\\\', '\\', $_SERVER['PATH_TRANSLATED']), 0, 0-strlen($_SERVER['PHP_SELF'])));
+			}
+		}
+		
 	}
 	
 	if ( ($debug == true) && ($user_level < 10) ) {
@@ -3845,6 +3895,18 @@ function webphys_portfolio_get_image_path($img_url) {
 	
 	$filepath = '';
 	$svr_filepath = '';
+	
+	$filepath = str_replace('//','/', $doc_root . $file_path['path']);
+	$svr_filepath = $filepath;
+	
+	// if we've already got a valid filepath, let's get out of here
+	if ( file_exists( $filepath )) {
+		$return = array('filepath'=>$filepath,'imgurl'=>$img,'svr_filepath'=>$svr_filepath);
+		return $return;
+	} else {
+		$filepath = '';
+		$svr_filepath = '';
+	}
 	
 	// if the image does not include a full URL we need to build this out
 	if ( empty($file_path['host']) ) {
@@ -3876,7 +3938,37 @@ function webphys_portfolio_get_image_path($img_url) {
 	}
 	
 	if ( ! file_exists( $filepath )) {
-		$filepath = "";
+		
+		// Added in v1.4.5
+		
+		// if the standard wp-config file does not exist in the defined standard path, then chances are some path mapping is going on, so...
+		if ( ! file_exists($doc_root . "/wp-config.php") ) {
+			
+			// get the upload directory details
+			$upload_dir = wp_upload_dir();
+			
+			// define the document root path by stripping the wp-content/uploads directories from the upload directory path
+			$map_dir = str_replace("/wp-content/uploads","",$upload_dir['basedir']);
+			
+			// update the standard document root with the mapped document root
+			$doc_root = str_replace($doc_root, $map_dir, $doc_root);
+			
+			// strip out any doubled slashes
+			$filepath = str_replace('//','/', $doc_root . $file_path['path']);
+			
+			// update the complete image path with the new path using the mapped document root
+			$svr_filepath = $filepath;
+			
+			if ( $debug == true ) {
+				echo "mapped whole filepath = " . $svr_filepath . "<br />";
+			}
+		}
+		
+		
+		if ( ! file_exists( $filepath )) {
+			$filepath = "";
+		}
+		
 	}
 	
 	if ( $debug == true ) {
