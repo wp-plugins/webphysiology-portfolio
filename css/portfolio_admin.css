@@ -1,6 +1,7 @@
 @charset "UTF-8";
 /* Portfolio Admin area CSS Document */
 /* updated 1.4.0 */
+/* updated 1.4.5 - WP 3.4.1 thru checkbox and radio buttons down, so, removed some or all of the top margin */
 
 #poststuff .inside, #poststuff .inside p {
 	font-size: 1em !important;
@@ -72,8 +73,8 @@ a.webphys_logo {
 .postbox .inside label {
 	margin: 10px 0 10px 10px;
 }
-.postbox .inside input {
-	margin: 10px 0 10px 10px;
+.postbox .inside input { /* 1.4.5 - for 3.4b1 */
+	margin: 0 0 10px 10px;
 }
 #upload_image_button {
 	margin: 0 0 0 10px;
@@ -179,7 +180,11 @@ input.webphysiology_portfolio_small_input {
 	width: 70px;
 }
 #portolio-conf input[type="checkbox"], #portolio-conf input[type="radio"] {
+	margin-top: 0;
 	margin-bottom: 1px;
+}
+#portolio-conf input[type="checkbox"] {
+	margin-top: -2px;
 }
 #option_alerts {
 	float: left;
