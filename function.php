@@ -200,7 +200,7 @@ function portfolio_post_type_init() {
 	); 
 	
 	register_post_type('webphys_portfolio',$args);
-	flush_rewrite_rules();
+	
 }
 
 // add links to the plugin list for the Portfolio plugin such that a user can get to Settings and other links from that screen
@@ -1108,10 +1108,10 @@ function portfolio_plugin_page() {
 	echo '						<span class="attribute_instructions">if you are using another plugin that registers Fancybox or Thickbox, you may need to disable one if there are version conflicts</span><br class="tallbottom"/>' . "\n";
 	echo '						<input type="checkbox" id="' . $use_full_path . '" name="' . $use_full_path . '" value="True" ' . $opt_val_use_full_path . '/><label for="' . $use_full_path . '">Use full paths on images and css/js files</label><br/>' . "\n";
 	echo '						<span class="attribute_instructions">some hosts don\'t like HTTP:// within the resource paths while others require it, so, if images aren\'t displaying you might try turning this on</span><br class="tallbottom"/>' . "\n";
-	echo '						<label for="' . $rewrite_slug . '">Portfolio Category Slug:</label><input type="text" id="' . $rewrite_slug . '" name="' . $rewrite_slug . '" value="' . $opt_val_rewrite_slug . '" class="webphysiology_portfolio_medium_input half_input shortbottom" /><br /><span class="attribute_instructions">Though this plugin was not specifically built to display individual portfolios on their own page, should you work this into the mix you may change</span><br />' . "\n";
+	echo '						<label for="' . $rewrite_slug . '">Portfolio Permastruct Slug:</label><input type="text" id="' . $rewrite_slug . '" name="' . $rewrite_slug . '" value="' . $opt_val_rewrite_slug . '" class="webphysiology_portfolio_medium_input half_input shortbottom" /><br /><span class="attribute_instructions">Though this plugin was not specifically built to display individual portfolios on their own page, should you work this into the mix you may change</span><br />' . "\n";
 	echo '<span class="attribute_instructions">the custom post type slug from the default, webphys_portfolio. Just be certain that it is unique across all your post types, categories and tags</span><br />' . "\n";
 	echo '<span class="attribute_instructions">or you will have conflicts.  If you are changing this after having had this plugin installed for awhile, be aware that the URLs will change,</span><br />' . "\n";
-	echo '<span class="attribute_instructions">which could break links already pointing to the original URL.</span><br class="tallbottom" />' . "\n";
+	echo '<span class="attribute_instructions">which could break links already pointing to the original URL. If you change this permastruct, go to Settings/Permalinks and click the &lt;Save Changes&gt; button.</span><br class="tallbottom" />' . "\n";
 	echo '						<input type="checkbox" id="' . $display_credit . '" name="' . $display_credit . '" value="True" ' . $opt_val_display_credit . '/><label for="' . $display_credit . '">Display WEBphysiology credit and/or a donation would be nice (though neither is required).</label>' . "\n";
 	echo portfolio_admin_section_wrap('bottom', null, null);
 	echo portfolio_admin_section_wrap('top', 'Portfolio Deactivation Settings', null);
@@ -1373,6 +1373,7 @@ function portfolio_admin_section_wrap($wrap_location, $title, $style) {
 	
 }
 
+
 /* Define Portfolio Plugin Activation process */
 function portfolio_install() {
 	
@@ -1426,7 +1427,7 @@ function portfolio_install() {
 		add_option("webphysiology_portfolio_delete_data", "False"); // This is the default value for whether to delete Portfolio data on plugin deactivation
 		add_option("webphysiology_portfolio_use_css", 'True'); // This is the default value for the Portfolio CSS usage switch
 		add_option("webphysiology_portfolio_overall_width", '660'); // This is the overall width of the portfolio listing
-		add_option("webphysiology_portfolio_overall_width", '320'); // This is the overall width of the portfolio listing on a mobile device
+		add_option("webphysiology_portfolio_overall_mobile_width", '320'); // This is the overall width of the portfolio listing on a mobile device
 		add_option("webphysiology_portfolio_max_img_height", '200'); // This is the maximum height to use on the portfolio image in the listing
 		add_option("webphysiology_portfolio_image_width", '200'); // This is the width to use on the portfolio image in the listing
 		add_option("webphysiology_portfolio_header_color", '#004813'); // This is the h1 and h2 color
@@ -1438,6 +1439,11 @@ function portfolio_install() {
 		check_temp_dir(); // check to see that the temp directory exists, as this is needed when images from different domains are utilized
 		
 	}
+
+	portfolio_post_type_init();
+	
+	flush_rewrite_rules();
+	
 }
 
 /* Define Portfolio Plugin De-activation process */
@@ -1496,6 +1502,8 @@ function portfolio_remove() {
 		delete_option('webphysiology_portfolio_delete_data');
 		delete_option('webphysiology_portfolio_message');
 		delete_option('webphysiology_portfolio_version');
+		
+		flush_rewrite_rules();
 		
 	}
 	
