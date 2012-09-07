@@ -3,8 +3,8 @@ Contributors: lambje
 Donate link: http://webphysiology.com/redir/webphysiology-portfolio/donate/
 Tags: portfolio,website,image,screenshot,gallery,list,grid,posts,post,custom post type,custom taxonomy,pagepeeker,shrinktheweb,thumbnail,webphysiology
 Requires at least: 3.1.0
-Tested up to: 3.4.1
-Stable tag: 1.4.5
+Tested up to: 3.4.2
+Stable tag: 1.4.6
 
 Allows for the creation of an expanded-list styled or a grid-styled page containing images and supporting detail, perfect for a portfolio presentation.
 
@@ -81,6 +81,12 @@ Try resetting all the options by using the "Revert to Default Values" button at 
 = 1.0.0 was the initial release =
 
 == Changelog ==
+
+= 1.4.6 =
+* ShrinkTheWeb has changed their service such that free accounts can now use the process that allows for local caching instead of having to use stw_pagepix.  This is how it use to be, so, updated code to all work like ShrinkTheWeb pro with regard to not using stw_pagepix and, instead, caching images locally.
+* changed "thickbox" class to "wpp-thickbox" to remove conflict with WP eCommerce plugin, who uses the same class.
+* added the ability to reduce the portfolio width for mobile devices.  currently basic implementation and is off by default.
+* added the ability to override the default custom post category, webphys_portfolio, with regard to the slug it uses
 
 = 1.4.5 =
 * updated to handle document root definition when running from a Windows server where $_SERVER['DOCUMENT_ROOT'] is not available

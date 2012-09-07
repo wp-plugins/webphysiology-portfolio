@@ -179,6 +179,9 @@ input.button-primary, button.button-primary, a.button-primary, .button {
 input.webphysiology_portfolio_small_input {
 	width: 70px;
 }
+input.webphysiology_portfolio_medium_input {
+	width: 200px;
+}
 #portolio-conf input[type="checkbox"], #portolio-conf input[type="radio"] {
 	margin-top: 0;
 	margin-bottom: 1px;

@@ -10,6 +10,10 @@
 
 /*  UPDATES
 	
+	1.4.6 - * ShrinkTheWeb has changed their service such that free accounts can now use the process that allows for local caching instead of having to use stw_pagepix.  This is how it use to be, so,  updated code to all work like ShrinkTheWeb pro with regard to not using stw_pagepix and, instead, caching images locally.
+			* changed "thickbox" class to "wpp-thickbox" to remove conflict with WP eCommerce plugin, who uses the same class
+			* added the ability to reduce the portfolio width for mobile devices.  currently basic implementation and is off by default.
+			* added the ability to override the default custom post category, webphys_portfolio, with regard to the slug it uses
 	1.4.5 - * updated to handle document root definition when running from a Windows server where $_SERVER['DOCUMENT_ROOT'] is not available
 			* updated to handle document root definition when running within an environment where the $_SERVER['DOCUMENT_ROOT'] is mapped to a different directory
 			* enhanced code that checks if image is on local server to handle instances where an image URL is specified without "www" and the site is running under "www"
@@ -161,6 +165,10 @@ function portfolio_updated_messages( $messages ) {
 function portfolio_post_type_init() {
 	
 	$script = plugins_url('images/jvhm_pinwheel_bullet.png', __FILE__);
+	$rewrite_slug = get_option( 'webphysiology_portfolio_rewrite_slug' );
+	if ( empty($rewrite_slug) ) {
+		$rewrite_slug = 'webphys_portfolio';
+	}
 
 	$labels = array(
 		'name' => __('Portfolio', 'post type general name'),
@@ -180,7 +188,7 @@ function portfolio_post_type_init() {
 		'public' => true,
 		'show_in_menu' => true,
 		'query_var' => true,
-		'rewrite' => array("slug" => "webphys_portfolio"), //false, // since we aren't pushing to single pages we don't need a re-write rule or permastructure.
+		'rewrite' => array("slug" => $rewrite_slug), //false, // since we aren't pushing to single pages we don't need a re-write rule or permastructure.
 							// if we were it would look something like 'rewrite' => array("slug" => "portfolio")
 		'capability_type' => 'post',
 		'hierarchical' => false,
@@ -439,8 +447,10 @@ function portfolio_plugin_page() {
 	$display_siteurl = 'webphysiology_portfolio_display_siteurl'; // default true
 	$display_tech = 'webphysiology_portfolio_display_tech'; // default true
 	$missing_img_url = 'webphysiology_portfolio_missing_image_url'; // default images/empty_window.png
+	$rewrite_slug = 'webphysiology_portfolio_rewrite_slug'; // default webphys_portfolio
 	$allowed_sites = 'webphysiology_portfolio_allowed_image_sites'; // default none
 	$crop_thumbnail = 'webphysiology_portfolio_crop_thumbnail'; // default false
+	$mobile_styling = 'webphysiology_portfolio_mobile_styling'; // default false
 	$use_stw = 'webphysiology_portfolio_use_stw'; // default false
 	$use_stw_pro = 'webphysiology_portfolio_use_stw_pro'; // default false
 	$stw_ak = 'webphysiology_portfolio_stw_ak'; // default ""
@@ -464,6 +474,7 @@ function portfolio_plugin_page() {
 	$gridcolor = 'webphysiology_portfolio_gridcolor'; // default #eee
 	$use_css = 'webphysiology_portfolio_use_css'; // default true
 	$overall_width = 'webphysiology_portfolio_overall_width'; // default is 660px
+	$overall_mobile_width = 'webphysiology_portfolio_overall_mobile_width'; // default is 320px
 	$max_img_height = 'webphysiology_portfolio_max_img_height'; // default is 200px
 	$img_width = 'webphysiology_portfolio_image_width'; // default is 200px
 	$header_color = 'webphysiology_portfolio_header_color'; // default is #004813
@@ -547,11 +558,21 @@ function portfolio_plugin_page() {
 			} else {
 				$opt_val_missing_img_url = 'images/empty_window.png';
 			}
+			if (!empty($_POST[ $rewrite_slug ])) {
+				$opt_val_rewrite_slug = $_POST[ $rewrite_slug ];
+			} else {
+				$opt_val_rewrite_slug = 'webphys_portfolio';
+			}
 			$opt_val_allowed_sites = $_POST[ $allowed_sites ];
 			if ( !empty($_POST[ $crop_thumbnail ]) ) {
 				$opt_val_crop_thumbnail = $_POST[ $crop_thumbnail ];
 			} else {
 				$opt_val_crop_thumbnail = "False";
+			}
+			if ( !empty($_POST[ $mobile_styling ]) ) {
+				$opt_val_mobile_styling = $_POST[ $mobile_styling ];
+			} else {
+				$opt_val_mobile_styling = "False";
 			}
 			if ( !empty($_POST[ $use_stw ]) ) {
 				$opt_val_use_stw = $_POST[ $use_stw ];
@@ -605,6 +626,7 @@ function portfolio_plugin_page() {
 			$opt_val_gridcolor = $_POST[ $gridcolor ];
 			$opt_val_css = $_POST[ $use_css ];
 			$opt_val_overall_width = $_POST[ $overall_width ];
+			$opt_val_overall_mobile_width = $_POST[ $overall_mobile_width ];
 			$opt_val_max_img_height = $_POST[ $max_img_height ];
 			$opt_val_img_width = $_POST[ $img_width ];
 			$opt_val_header_color = $_POST[ $header_color ];
@@ -693,8 +715,10 @@ function portfolio_plugin_page() {
 			$opt_val_display_siteurl = "True";
 			$opt_val_display_tech = "True";
 			$opt_val_missing_img_url = "images/empty_window.png";
+			$opt_val_rewrite_slug = "webphys_portfolio";
 			$opt_val_allowed_sites = "";
 			$opt_val_crop_thumbnail = "False";
+			$opt_val_mobile_styling = "False";
 			$opt_val_use_stw = "False";
 			$opt_val_use_stw_pro = "False";
 			$opt_val_stw_ak = "";
@@ -716,6 +740,7 @@ function portfolio_plugin_page() {
 			$opt_val_gridcolor = "#eeeeee";
 			$opt_val_css = "True";
 			$opt_val_overall_width = "660";
+			$opt_val_overall_mobile_width = "320";
 			$opt_val_max_img_height = "200";
 			$opt_val_img_width = "200";
 			$opt_val_header_color = "#004813";
@@ -743,8 +768,10 @@ function portfolio_plugin_page() {
 			update_option( $display_siteurl, $opt_val_display_siteurl );
 			update_option( $display_tech, $opt_val_display_tech );
 			update_option( $missing_img_url, $opt_val_missing_img_url );
+			update_option( $rewrite_slug, $opt_val_rewrite_slug );
 			update_option( $allowed_sites, $opt_val_allowed_sites );
 			update_option( $crop_thumbnail, $opt_val_crop_thumbnail );
+			update_option( $mobile_styling, $opt_val_mobile_styling );
 			update_option( $use_stw, $opt_val_use_stw );
 			update_option( $use_stw_pro, $opt_val_use_stw_pro );
 			update_option( $stw_ak, $opt_val_stw_ak );
@@ -766,6 +793,7 @@ function portfolio_plugin_page() {
 			update_option( $gridcolor, $opt_val_gridcolor );
 			update_option( $use_css, $opt_val_css );
 			update_option( $overall_width, $opt_val_overall_width );
+			update_option( $overall_mobile_width, $opt_val_overall_mobile_width );
 			update_option( $max_img_height, $opt_val_max_img_height );
 			update_option( $img_width, $opt_val_img_width );
 			update_option( $header_color, $opt_val_header_color );
@@ -793,8 +821,10 @@ function portfolio_plugin_page() {
 		$opt_val_display_siteurl = get_option( $display_siteurl );
 		$opt_val_display_tech = get_option( $display_tech );
 		$opt_val_missing_img_url = get_option( $missing_img_url );
+		$opt_val_rewrite_slug = get_option( $rewrite_slug );
 		$opt_val_allowed_sites = get_option( $allowed_sites );
 		$opt_val_crop_thumbnail = get_option( $crop_thumbnail );
+		$opt_val_mobile_styling = get_option( $mobile_styling );
 		$opt_val_use_stw = get_option( $use_stw );
 		$opt_val_use_stw_pro = get_option( $use_stw_pro );
 		$opt_val_stw_ak = get_option( $stw_ak );
@@ -816,6 +846,7 @@ function portfolio_plugin_page() {
 		$opt_val_gridcolor = get_option( $gridcolor );
 		$opt_val_css = get_option( $use_css );
 		$opt_val_overall_width = get_option( $overall_width );
+		$opt_val_overall_mobile_width = get_option( $overall_mobile_width );
 		$opt_val_max_img_height = get_option( $max_img_height );
 		$opt_val_img_width = get_option( $img_width );
 		$opt_val_header_color = get_option( $header_color );
@@ -837,6 +868,7 @@ function portfolio_plugin_page() {
 	if ($opt_val_display_siteurl=="True" ) {$opt_val_display_siteurl="checked";}
 	if ($opt_val_display_tech=="True" ) {$opt_val_display_tech="checked";}
 	if ($opt_val_crop_thumbnail=="True" ) {$opt_val_crop_thumbnail="checked";} else {$opt_val_crop_thumbnail="";}
+	if ($opt_val_mobile_styling=="True" ) {$opt_val_mobile_styling="checked";} else {$opt_val_mobile_styling="";}
 	if ($opt_val_use_stw=="True" ) {$opt_val_use_stw="checked";} else {$opt_val_use_stw="";}
 	if ($opt_val_use_stw_pro=="True" ) {$opt_val_use_stw_pro="checked";} else {$opt_val_use_stw_pro="";}
 	if ($opt_val_img_click_behavior == "litebox") { $check_openlitebox = 'checked'; } else { $check_nav2page = 'checked'; }
@@ -934,11 +966,19 @@ function portfolio_plugin_page() {
 //	echo "							<li>A Portfolio Tag Cloud widget has been added.</li>";
 //	echo "						</ul>";
 //	echo "					</p>";
-	echo "					<p style='margin-bottom: 0;'><strong>Release 1.4.2</strong> : This release brings with it some items of note:";
+//	echo "					<p style='margin-bottom: 0;'><strong>Release 1.4.2</strong> : This release brings with it some items of note:";
+//	echo "						<ul style='list-style:square;margin-left:25px;'>";
+//	echo "							<li>TimThumb PHP code has been removed and built-in WordPress graphic management has been utilized in its place.</li>";
+//	echo "							<li>Added the ability to crop and restrict the height of built-in generated thumbnails.</li>";
+//	echo "							<li>Added the ability to put a hard limit on the number of Portfolio items returned by adding a 'limit' parameter to the shortcode.</li>";
+//	echo "						</ul>";
+//	echo "					</p>";
+	echo "					<p style='margin-bottom: 0;'><strong>Release 1.4.6</strong> : This release brings with it some items of note:";
 	echo "						<ul style='list-style:square;margin-left:25px;'>";
-	echo "							<li>TimThumb PHP code has been removed and built-in WordPress graphic management has been utilized in its place.</li>";
-	echo "							<li>Added the ability to crop and restrict the height of built-in generated thumbnails.</li>";
-	echo "							<li>Added the ability to put a hard limit on the number of Portfolio items returned by adding a 'limit' parameter to the shortcode.</li>";
+	echo "							<li>The ability to change the default slug, webphys_portfolio. Useful if a user lands on an individual portfolio page.</li>";
+	echo "							<li>Corrected a contention between the use of a thickbox in our plugin and WP eCommerce's use of thickboxes.</li>";
+	echo "							<li>ShrinkTheWeb no longer requires the middle page for non-Pro accounts, so, we have reverted back to the STW API that allows local caching of images and links directly to the site.</li>";
+	echo "							<li>The option to turn on the narrowing of the portfolio for mobile devices has been made available (off by default).</li>";
 	echo "						</ul>";
 	echo "					</p>";
 	echo "				</div>";
@@ -1041,8 +1081,10 @@ function portfolio_plugin_page() {
 	echo '						<div class="portfolio_admin_style">' . "\n";
 	echo '							<input type="checkbox" id="' . $use_css . '" name="' . $use_css . '" value="True" ' . $opt_val_css . '/><label for="' . $use_css . '">Use Portfolio plugin CSS</label><br/>' . "\n";
 	echo '								<input type="checkbox" id="' . $gridstyle . '" name="' . $gridstyle . '" value="True" ' . $opt_val_gridstyle . '/><label for="' . $gridstyle . '">Use Grid Style layout</label>&nbsp;&nbsp;&nbsp;' . "\n"; //<br/>' . "\n";
-	echo '									<label for="' . $gridcolor . '">Grid background color:</label><input type="text" id="' . $gridcolor . '" name="' . $gridcolor . '" value="' . $opt_val_gridcolor . '" class="webphysiology_portfolio_small_input" /><br />' . "\n";
-	echo '							<label for="' . $overall_width . '">Portfolio List - overall width:</label><input type="text" id="' . $overall_width . '" name="' . $overall_width . '" value="' . $opt_val_overall_width . '" class="webphysiology_portfolio_small_input" /> pixels<br />' . "\n";
+	echo '									<label for="' . $gridcolor . '">Grid background color:</label><input type="text" id="' . $gridcolor . '" name="' . $gridcolor . '" value="' . $opt_val_gridcolor . '" class="webphysiology_portfolio_small_input" style="margin-bottom: 0;" /><br />' . "\n";
+	echo '							<input type="checkbox" id="' . $mobile_styling . '" name="' . $mobile_styling . '" value="True" ' . $opt_val_mobile_styling . ' /><label for="' . $mobile_styling . '">Include mobile styling for <span style="font-style: italic; font-size: 0.85em;">@media only screen and (min-device-width: 320px) and (max-device-width: 480px)</span></label><br /><br />' . "\n";
+	echo '							<label for="' . $overall_width . '">Portfolio List - overall width:</label><input type="text" id="' . $overall_width . '" name="' . $overall_width . '" value="' . $opt_val_overall_width . '" class="webphysiology_portfolio_small_input" /> pixels&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' . "\n";
+	echo '							<label for="' . $overall_mobile_width . '">overall mobile width:</label><input type="text" id="' . $overall_mobile_width . '" name="' . $overall_mobile_width . '" value="' . $opt_val_overall_mobile_width . '" class="webphysiology_portfolio_small_input" /> pixels&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br />' . "\n";
 	echo '							<label for="' . $img_width . '">Portfolio List - image width:</label><input type="text" id="' . $img_width . '" name="' . $img_width . '" value="' . $opt_val_img_width . '" class="webphysiology_portfolio_small_input" /> pixels<br /><span class="attribute_instructions">note: if you use the Grid Style layout, this is your overall cell width</span><br class="tallbottom" />' . "\n";
 	echo '							<label for="' . $header_color . '">Portfolio Title color:</label><input type="text" id="' . $header_color . '" name="' . $header_color . '" value="' . $opt_val_header_color . '" class="webphysiology_portfolio_small_input" /><span style="color:' . $opt_val_header_color . ';margin-left:10px;">title color</span><br />' . "\n";
 	echo '							<label for="' . $link_color . '">Portfolio Nav color:</label><input type="text" id="' . $link_color . '" name="' . $link_color . '" value="' . $opt_val_link_color . '" class="webphysiology_portfolio_small_input" /><span style="color:' . $opt_val_link_color . ';margin-left:10px;">link color</span><br /><span class="attribute_instructions">note: this is the color of the page navigation numbers</span><br class="tallbottom" />' . "\n";
@@ -1066,6 +1108,10 @@ function portfolio_plugin_page() {
 	echo '						<span class="attribute_instructions">if you are using another plugin that registers Fancybox or Thickbox, you may need to disable one if there are version conflicts</span><br class="tallbottom"/>' . "\n";
 	echo '						<input type="checkbox" id="' . $use_full_path . '" name="' . $use_full_path . '" value="True" ' . $opt_val_use_full_path . '/><label for="' . $use_full_path . '">Use full paths on images and css/js files</label><br/>' . "\n";
 	echo '						<span class="attribute_instructions">some hosts don\'t like HTTP:// within the resource paths while others require it, so, if images aren\'t displaying you might try turning this on</span><br class="tallbottom"/>' . "\n";
+	echo '						<label for="' . $rewrite_slug . '">Portfolio Category Slug:</label><input type="text" id="' . $rewrite_slug . '" name="' . $rewrite_slug . '" value="' . $opt_val_rewrite_slug . '" class="webphysiology_portfolio_medium_input half_input shortbottom" /><br /><span class="attribute_instructions">Though this plugin was not specifically built to display individual portfolios on their own page, should you work this into the mix you may change</span><br />' . "\n";
+	echo '<span class="attribute_instructions">the custom post type slug from the default, webphys_portfolio. Just be certain that it is unique across all your post types, categories and tags</span><br />' . "\n";
+	echo '<span class="attribute_instructions">or you will have conflicts.  If you are changing this after having had this plugin installed for awhile, be aware that the URLs will change,</span><br />' . "\n";
+	echo '<span class="attribute_instructions">which could break links already pointing to the original URL.</span><br class="tallbottom" />' . "\n";
 	echo '						<input type="checkbox" id="' . $display_credit . '" name="' . $display_credit . '" value="True" ' . $opt_val_display_credit . '/><label for="' . $display_credit . '">Display WEBphysiology credit and/or a donation would be nice (though neither is required).</label>' . "\n";
 	echo portfolio_admin_section_wrap('bottom', null, null);
 	echo portfolio_admin_section_wrap('top', 'Portfolio Deactivation Settings', null);
@@ -1134,9 +1180,23 @@ function check_options() {
 	
 	// ASTERISK = make certain to update this with new releases //
 	// check the most recently added option, if it doesn't exist then pass down through all of them and add any that are missing
-	$return = get_option('webphysiology_portfolio_max_img_height');
+	$return = get_option('webphysiology_portfolio_overall_mobile_width');
 	
 	if ( empty($return) ) {
+		
+		// added in v1.4.6
+		$return = get_option('webphysiology_portfolio_mobile_styling');
+		if ( empty($return) ) {
+			add_option("webphysiology_portfolio_mobile_styling", 'False'); // This is the default value for whether to crop thumbnail images
+		}
+		$return = get_option('webphysiology_portfolio_overall_mobile_width');
+		if ( empty($return) ) {
+			add_option("webphysiology_portfolio_overall_mobile_width", '320'); // This is the default value for the width of the portfolio on a mobile device
+		}
+		$return = get_option('webphysiology_portfolio_rewrite_slug');
+		if ( empty($return) ) {
+			add_option("webphysiology_portfolio_rewrite_slug", 'webphys_portfolio'); // This is the default value for the custom post type slug
+		}
 		
 		// added in v1.4.2
 		$return = get_option('webphysiology_portfolio_max_img_height');
@@ -1343,6 +1403,7 @@ function portfolio_install() {
 		add_option("webphysiology_portfolio_missing_image_url", 'images/empty_window.png'); // This is the default value for the missing image url
 		add_option("webphysiology_portfolio_allowed_image_sites",""); // This is the default value for the allowed image sites
 		add_option("webphysiology_portfolio_crop_thumbnail", 'False'); // This is the default value for whether to crop thumbnail images
+		add_option("webphysiology_portfolio_mobile_styling", 'False'); // This is the default value for whether to enable the styling changes for mobile devices
 		add_option("webphysiology_portfolio_use_stw", 'False'); // This is the default value for whether to display images using ShrinkTheWeb.com
 		add_option("webphysiology_portfolio_use_stw_pro", 'False'); // This is the default value for whether user is using ShrinkTheWeb.com PRO version
 		add_option("webphysiology_portfolio_stw_ak", ""); // This is the default value for the ShrinkTheWeb.com Access Key
@@ -1365,6 +1426,7 @@ function portfolio_install() {
 		add_option("webphysiology_portfolio_delete_data", "False"); // This is the default value for whether to delete Portfolio data on plugin deactivation
 		add_option("webphysiology_portfolio_use_css", 'True'); // This is the default value for the Portfolio CSS usage switch
 		add_option("webphysiology_portfolio_overall_width", '660'); // This is the overall width of the portfolio listing
+		add_option("webphysiology_portfolio_overall_width", '320'); // This is the overall width of the portfolio listing on a mobile device
 		add_option("webphysiology_portfolio_max_img_height", '200'); // This is the maximum height to use on the portfolio image in the listing
 		add_option("webphysiology_portfolio_image_width", '200'); // This is the width to use on the portfolio image in the listing
 		add_option("webphysiology_portfolio_header_color", '#004813'); // This is the h1 and h2 color
@@ -1401,6 +1463,7 @@ function portfolio_remove() {
 		delete_option('webphysiology_portfolio_missing_image_url');
 		delete_option('webphysiology_portfolio_allowed_image_sites');
 		delete_option('webphysiology_portfolio_crop_thumbnail');
+		delete_option('webphysiology_portfolio_mobile_styling');
 		delete_option('webphysiology_portfolio_use_stw');
 		delete_option('webphysiology_portfolio_use_stw_pro');
 		delete_option('webphysiology_portfolio_stw_ak');
@@ -1421,6 +1484,7 @@ function portfolio_remove() {
 		delete_option('webphysiology_portfolio_gridcolor');
 		delete_option('webphysiology_portfolio_use_css');
 		delete_option('webphysiology_portfolio_overall_width');
+		delete_option('webphysiology_portfolio_overall_mobile_width');
 		delete_option('webphysiology_portfolio_max_img_height');
 		delete_option('webphysiology_portfolio_image_width');
 		delete_option('webphysiology_portfolio_header_color');
@@ -2720,7 +2784,7 @@ function fancy_script() {
 	echo ( "\n");
 	echo ( "jQuery(document).ready(function() {" . "\n");
 	echo ( "\n");
-	echo ( '	jQuery("a.thickbox").fancybox({' . "\n");
+	echo ( '	jQuery("a.wpp-thickbox").fancybox({' . "\n");
 	echo ( "			'overlayOpacity'		: 0.95," . "\n");
 	echo ( "			'overlayColor'			: '#333'," . "\n");
 	echo ( "			'transitionIn'			: 'fade'," . "\n");
@@ -2941,7 +3005,10 @@ function get_Loop_Site_Image() {
 	switch ($generator) {
 		case 'stw':
 			$stw = 'true';
-			$stw_pro = strtolower(get_option( 'webphysiology_portfolio_use_stw_pro' ));
+			// as of 2012/07/30 - stw_pagepix is no longer required for free accounts and local caching can be utilized
+			// -- this means that all instances where STW is being used will be servced up via xino.php
+			//$stw_pro = strtolower(get_option( 'webphysiology_portfolio_use_stw_pro' ));
+			$stw_pro = 'true';
 			break;
 		case 'pp':
 			$pp = 'true';
@@ -3075,7 +3142,7 @@ function get_Loop_Site_Image() {
 			
 		} else {
 			
-			$anchor_open = '<a class="Portfolio-Link thickbox" href="' . $full_size_img_url . '" title="' . the_title_attribute( 'echo=0' ) . '"' . $target . '>';
+			$anchor_open = '<a class="Portfolio-Link wpp-thickbox" href="' . $full_size_img_url . '" title="' . the_title_attribute( 'echo=0' ) . '"' . $target . '>';
 			$img_html = webphys_portfolio_image_resize($img_url);
 			
 		}
@@ -3271,38 +3338,50 @@ function set_portfolio_css() {
 		$gridstyle = 'webphysiology_portfolio_gridstyle'; // default false
 		$gridcolor = 'webphysiology_portfolio_gridcolor'; // default #eee
 		$overall_width = 'webphysiology_portfolio_overall_width'; // default is 660px
+		$overall_mobile_width = 'webphysiology_portfolio_overall_mobile_width'; // default is 320px
 		$img_width = 'webphysiology_portfolio_image_width'; // default is 200px
 		$meta_key_width = 'webphysiology_portfolio_label_width'; // default is 60px
 		$header_color = 'webphysiology_portfolio_header_color'; // default is #004813
 		$link_color = 'webphysiology_portfolio_link_color'; // default is #004813
 		$odd_stripe_color = 'webphysiology_portfolio_odd_stripe_color'; // default is #eee
 		$even_stripe_color = 'webphysiology_portfolio_even_stripe_color'; // default is #f9f9f9
+		$mobile_styling = 'webphysiology_portfolio_mobile_styling'; // default false
+		
 		$opt_val_gridstyle = get_option( $gridstyle );
 		$opt_val_gridcolor = get_option( $gridcolor );
 		$opt_val_overall_width = get_option( $overall_width );
+		$opt_val_overall_mobile_width = get_option( $overall_mobile_width );
 		$opt_val_img_width = get_option( $img_width );
 		$opt_val_meta_key_width = get_option( $meta_key_width );
 		$opt_val_header_color = get_option( $header_color );
 		$opt_val_link_color = get_option( $link_color );
 		$opt_val_odd_stripe_color = get_option( $odd_stripe_color );
 		$opt_val_even_stripe_color = get_option( $even_stripe_color );
+		$opt_val_mobile_styling = get_option( $mobile_styling );			
 		
 		$overall_image_width = $opt_val_img_width + 20;
+		
 		if ($opt_val_gridstyle != 'True') {
 			$detail_width = $opt_val_overall_width - $overall_image_width - 30;
 			$meta_value_width = $detail_width - ($opt_val_meta_key_width + 4);
+			$detail_width_mobile = $opt_val_overall_mobile_width - 40;
 			$class = '.portfolio_details';
 		} else {
 			$detail_width = $overall_image_width - 10;
 			$meta_value_width = $detail_width - ($opt_val_meta_key_width + 4);
+			$detail_width_mobile = $opt_val_overall_mobile_width - 20;
 			$class = '.portfolio_entry';
 		}
+		
+		$detail_img_margin_mobile = (($detail_width_mobile - $opt_val_img_width) / 2) + 5;
 		$grid_image_width = $detail_width - 10;
-		$single_details_width = $detail_width + 30;
+		$single_details_width = $detail_width + 10;
+		$meta_value_width_mobile = $detail_width_mobile;
+		$single_details_width_mobile = $detail_width_mobile + 10;
 		
 		$embedded_css = "\n" .
 						'<style type="text/css" id="webphysiology_portfolio_embedded_css">' . "\n" .
-						'    .webphysiology_portfolio {	' . "\n" .
+						'    .webphysiology_portfolio, #webphysiology_portfolio.single_portfolio_page {	' . "\n" .
 						'        width: ' . $opt_val_overall_width . 'px;' . "\n" .
 						'    }' . "\n" .
 						'    .webphysiology_portfolio ' . $class . ' {' . "\n" .
@@ -3343,6 +3422,32 @@ function set_portfolio_css() {
 						'        background-color: ' . $opt_val_odd_stripe_color . ';' . "\n" .
 						'    }' . "\n" .
 						'</style>' . "\n";
+		if ($opt_val_mobile_styling) {
+		$embedded_css =	$embedded_css .
+						'<style type="text/css" id="webphysiology_portfolio_embedded_mobile_css">' . "\n" .
+						'    @media only screen and (min-device-width: 320px) and (max-device-width: 480px) {' . "\n" .
+						'        .webphysiology_portfolio, #webphysiology_portfolio.single_portfolio_page {	' . "\n" .
+						'            width: ' . $opt_val_overall_mobile_width . 'px;' . "\n" .
+						'        }' . "\n" .
+						'        .webphysiology_portfolio ' . $class . ' {' . "\n" .
+						'            width: ' . $detail_width_mobile . 'px;' . "\n" .
+						'        }' . "\n" .
+						'        #webphysiology_portfolio.single_portfolio_page .portfolio_details {' . "\n" .
+						'            width: ' . $single_details_width_mobile . 'px;' . "\n" .
+						'        }' . "\n" .
+						'        .webphysiology_portfolio .portfolio_page_img {' . "\n" .
+						'            width: ' . $detail_width_mobile . 'px;' . "\n" .
+						'            margin-left: ' . $detail_img_margin_mobile . 'px;' . "\n" .
+						'        }' . "\n" .
+						'        .webphysiology_portfolio .grid .portfolio_page_img {' . "\n" .
+						'            width: ' . $detail_width_mobile . 'px;' . "\n" .
+						'        }' . "\n" .
+						'        .webphysiology_portfolio .portfolio_meta .value, #webphysiology_portfolio.single_portfolio_page .portfolio_meta .value {' . "\n" .
+						'            width: ' . $meta_value_width_mobile . 'px;' . "\n" .
+						'        }' . "\n" .
+						'    }' . "\n" .
+						'</style>' . "\n";
+		}
 		
 		echo "\n";
 		echo "<!-- WEBphysiology Portfolio " . WEBPHYSIOLOGY_VERSION . " by http://WEBphysiology.com -->";

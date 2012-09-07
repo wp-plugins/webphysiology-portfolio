@@ -2,7 +2,7 @@
 /*
 Plugin Name: WEBphysiology Portfolio
 Plugin URI: http://webphysiology.com/redir/webphysiology-portfolio/
-Version: 1.4.5
+Version: 1.4.6
 Description: Provides a clean Portfolio listing with image, details and portfolio type taxonomy. A [portfolio] shortcode is used to include the portfolio on any page.
 Author: Jeff Lambert
 Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
@@ -41,6 +41,10 @@ Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 
 /*  UPDATES
 	
+	1.4.6 - * ShrinkTheWeb has changed their service such that free accounts can now use the process that allows for local caching instead of having to use stw_pagepix.  This is how it use to be, so, updated code to all work like ShrinkTheWeb pro with regard to not using stw_pagepix and, instead, caching images locally
+			* changed "thickbox" class to "wpp-thickbox" to remove conflict with WP eCommerce plugin, who uses the same class.
+			* added the ability to reduce the portfolio width for mobile devices.  currently basic implementation and is off by default.
+			* added the ability to override the default custom post category, webphys_portfolio, with regard to the slug it uses
 	1.4.5 - * updated to handle document root definition when running from a Windows server where $_SERVER['DOCUMENT_ROOT'] is not available
 			* updated to handle document root definition when running within an environment where the $_SERVER['DOCUMENT_ROOT'] is mapped to a different directory
 			* enhanced code that checks if image is on local server to handle instances where an image URL is specified without "www" and the site is running under "www"
@@ -184,7 +188,7 @@ Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 
 // ASTERISK = make certain to update these as appropriate with new releases //
 
-define ( 'WEBPHYSIOLOGY_VERSION', '1.4.5' );
+define ( 'WEBPHYSIOLOGY_VERSION', '1.4.6' );
 define ( 'WEBPHYSIOLOGY_DB_VERSION', '3.3.2' );
 define ( 'WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE', basename($_SERVER['PHP_SELF']) );
 
