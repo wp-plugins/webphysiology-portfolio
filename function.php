@@ -10,6 +10,11 @@
 
 /*  UPDATES
 	
+	1.4.7 - * Added the ability to sort the Portfolio admin listing by Portfolio Type and Sort Order.
+			* Added the ability to specify a list styled Portfolio Tag cloud.
+			* Deprecated the has_shortcode function by renaming it to webphys_has_shortcode.
+			* Added the ability to specify a stylesheet that will be referenced after the WEBphysiology Portfolio plugin's stylesheet. Note, this still is before the embedded styling if the plugin styling is being used.
+			* Added links to generate a pop-up thickbox containing the styling from the plugin and plugin settings. Handy if you want to know what to adjust or what exists before turning off the plugin styling.
 	1.4.6 - * ShrinkTheWeb has changed their service such that free accounts can now use the process that allows for local caching instead of having to use stw_pagepix.  This is how it use to be, so,  updated code to all work like ShrinkTheWeb pro with regard to not using stw_pagepix and, instead, caching images locally.
 			* changed "thickbox" class to "wpp-thickbox" to remove conflict with WP eCommerce plugin, who uses the same class
 			* added the ability to reduce the portfolio width for mobile devices.  currently basic implementation and is off by default.
@@ -447,6 +452,7 @@ function portfolio_plugin_page() {
 	$display_siteurl = 'webphysiology_portfolio_display_siteurl'; // default true
 	$display_tech = 'webphysiology_portfolio_display_tech'; // default true
 	$missing_img_url = 'webphysiology_portfolio_missing_image_url'; // default images/empty_window.png
+	$custom_css_url = 'webphysiology_portfolio_custom_css_url'; // default ""
 	$rewrite_slug = 'webphysiology_portfolio_rewrite_slug'; // default webphys_portfolio
 	$allowed_sites = 'webphysiology_portfolio_allowed_image_sites'; // default none
 	$crop_thumbnail = 'webphysiology_portfolio_crop_thumbnail'; // default false
@@ -557,6 +563,11 @@ function portfolio_plugin_page() {
 				$opt_val_missing_img_url = $_POST[ $missing_img_url ];
 			} else {
 				$opt_val_missing_img_url = 'images/empty_window.png';
+			}
+			if (!empty($_POST[ $custom_css_url ])) {
+				$opt_val_custom_css_url = $_POST[ $custom_css_url ];
+			} else {
+				$opt_val_custom_css_url = '';
 			}
 			if (!empty($_POST[ $rewrite_slug ])) {
 				$opt_val_rewrite_slug = $_POST[ $rewrite_slug ];
@@ -715,6 +726,7 @@ function portfolio_plugin_page() {
 			$opt_val_display_siteurl = "True";
 			$opt_val_display_tech = "True";
 			$opt_val_missing_img_url = "images/empty_window.png";
+			$opt_val_custom_css_url = '';
 			$opt_val_rewrite_slug = "webphys_portfolio";
 			$opt_val_allowed_sites = "";
 			$opt_val_crop_thumbnail = "False";
@@ -768,6 +780,7 @@ function portfolio_plugin_page() {
 			update_option( $display_siteurl, $opt_val_display_siteurl );
 			update_option( $display_tech, $opt_val_display_tech );
 			update_option( $missing_img_url, $opt_val_missing_img_url );
+			update_option( $custom_css_url, $opt_val_custom_css_url );
 			update_option( $rewrite_slug, $opt_val_rewrite_slug );
 			update_option( $allowed_sites, $opt_val_allowed_sites );
 			update_option( $crop_thumbnail, $opt_val_crop_thumbnail );
@@ -821,6 +834,7 @@ function portfolio_plugin_page() {
 		$opt_val_display_siteurl = get_option( $display_siteurl );
 		$opt_val_display_tech = get_option( $display_tech );
 		$opt_val_missing_img_url = get_option( $missing_img_url );
+		$opt_val_custom_css_url = get_option( $custom_css_url );
 		$opt_val_rewrite_slug = get_option( $rewrite_slug );
 		$opt_val_allowed_sites = get_option( $allowed_sites );
 		$opt_val_crop_thumbnail = get_option( $crop_thumbnail );
@@ -901,6 +915,7 @@ function portfolio_plugin_page() {
 	if ($opt_val_delete_options=="True" ) {$opt_val_delete_options="checked";}
 	if ($opt_val_delete_data=="True" ) {$opt_val_delete_data="checked";}
 	
+	$installed_version = get_option('webphysiology_portfolio_version');
 	
 	echo "\n";
 	echo '<script type="text/javascript">' . "\n";
@@ -926,7 +941,7 @@ function portfolio_plugin_page() {
 	echo '				<form action="https://www.paypal.com/cgi-bin/webscr" method="post" class="portfolio_donate">' . "\n";
 	echo '					<input type="hidden" name="cmd" value="_s-xclick">' . "\n";
 	echo '					<input type="hidden" name="hosted_button_id" value="G6YDH57GS9PCJ">' . "\n";
-	echo '					<input style="background:none . "\n";border:none . "\n";" type="image" src="https://www.paypal.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">' . "\n";
+	echo '					<input style="background:none; border:none;" type="image" src="https://www.paypal.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">' . "\n";
 	echo '					<img alt="" border="0" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1">' . "\n";
 	echo '				</form>' . "\n";
 	echo "			</div>";
@@ -936,52 +951,56 @@ function portfolio_plugin_page() {
 	echo '				<input type="hidden" name="' . $hidden_field_name . '" value="Y">' . "\n";
 	echo '				<input type="hidden" name="page_options" value="WEBphysiology_portolio_plugin_data" />' . "\n";
 	echo '				<input type="hidden" value="' . get_option('version') . '" name="version"/>' . "\n";
-	echo portfolio_admin_section_wrap('top', 'Portfolio Release Notes&nbsp;&nbsp;|&nbsp;&nbsp;installed version = ' . get_option('webphysiology_portfolio_version'), ' style="padding: 10px 10px; overflow: hidden;"');
-	echo "				<div id='option_alerts'>";
+	echo portfolio_admin_section_wrap('top', 'Portfolio Release Notes&nbsp;&nbsp;|&nbsp;&nbsp;installed version = ' . $installed_version, ' style="padding: 10px 10px; overflow: hidden;"');
+	echo '				<div id="option_comments_right">' . "\n";
+	echo '					<div class="option_right_details">' . "\n";
+	echo '						<div>' . "\n";
+	echo '							<h2 style="margin-top: 0; padding-top: 0;">WordPress Development</h2>' . "\n";
+	echo '							<p>WEBphysiology is well versed in all aspects of WordPress, and web design and development in general. Our development work follows best coding practices and adheres to WordPress development standards.</p>' . "\n";
+	echo '							<p>If you would like to partner with us on a project, or require customizations on this plugin, or others, <a href="http://webphysiology.com/contact/" target="_blank">please contact us with the details</a>.</p>' . "\n";
+	echo '						</div>' . "\n";
+	echo '					</div>' . "\n";
+	echo '					<div class="option_right_details">' . "\n";
+	echo '						<div>' . "\n";
+	echo '							<h2 style="margin-top: 0; padding-top: 0;">Bi-Directional Support</h2>' . "\n";
+	echo '							<p>While we have limited resources to apply to this plugin we have put in a great many hours and are committed to ensuring it remains error free and stable.</p>' . "\n";
+	echo '							<p>We provide support through our <a href="https://refr.us/wphelp" target="_blank">Help Desk</a>.  We simply ask that you first <a href="http://refr.us/wpport" target="_blank">review the available documentation</a> as answers to many questions can be found there.</p>' . "\n";
+	echo '							<div style="float: left;">' . "\n";
+	echo '								<form action="https://www.paypal.com/cgi-bin/webscr" method="post" class="portfolio_donate">' . "\n";
+	echo '									<input type="hidden" name="cmd" value="_s-xclick">' . "\n";
+	echo '									<input type="hidden" name="hosted_button_id" value="G6YDH57GS9PCJ">' . "\n";
+	echo '									<input style="background:none; border:none; margin: 3px 5px 0 0; padding-left: 0;" type="image" src="https://www.paypal.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">' . "\n";
+	echo '									<img alt="" border="0" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1">' . "\n";
+	echo '								</form>' . "\n";
+	echo '							</div>' . "\n";
+	echo '							<p>We also would like to be supported in return.  We know this plugin is of benefit, so, show your support with a donation.</p>' . "\n";
+	echo '							<p>And while you\'re sharing the love, <a href="http://wordpress.org/extend/plugins/webphysiology-portfolio/">head on over and give us a 5* rating</a> and write a blog post with a link to our <a href="http://refr.us/wpport">plugin page</a>. Thanks!</p>' . "\n";
+	echo '						</div>' . "\n";
+	echo '					</div>' . "\n";
+	echo '				</div>' . "\n";
+	echo "				<div id='option_comments_left'>" . "\n";
+	echo '					<div class="option_left_details">' . "\n";
+	echo '						<div>' . "\n";
+	echo "							<h2>WEBphysiology Portfolio v{$installed_version}</h2>" . "\n";
+	echo "							<p>Thank you for using the WEBphysiology Portfolio plugin.  We feel it has a lot of versatility, only limited by one's imagination. For full details on how to incorporate this plugin into your website hop over to our <a href='http://refr.us/wpport' title='WEBphysiology Portfolio Plugin Page' target='_blank'>plugin page</a>,</p>" . "\n";
+	echo "							<p>Proud of how you've implemented WEBphysiology Portfolio?  <a href='http://webphysiology.com/contact/'>Send a brief description and the URL</a> to your portfolio and we'll add it to our <a href='http://refr.us/wpshow'>Showcase</a>.</p>" . "\n";
+	echo '						</div>' . "\n";
+	echo '					</div>' . "\n";
+	echo '					<div class="option_left_details">' . "\n";
+	echo '						<div>' . "\n";
+	echo "							<h2>Release Notes &amp; Help</h2>" . "\n";
+	echo "							<p style='margin-bottom: 0;'><strong>Release 1.4.7</strong> : Some items of note in this release:" . "\n";
+	echo "								<ul style='list-style:square;margin-left:25px;'>" . "\n";
+	echo "									<li>The ability to specify a custom CSS file has been added to the 'Portfolio Styling' options.  It will be added after the standard plugin CSS but before the dynamic Portfolio Styling inlines CSS.</li>" . "\n";
+	echo "									<li>The Portfolio list may now be sorted by clicking on the 'Type' or 'Sort Order' column headers.</li>" . "\n";
+	echo "									<li>The Portfolio tag cloud may now be displayed as a list.</li>" . "\n";
+	echo "								</ul>" . "\n";
+	echo "							</p>" . "\n";
 	echo portfolio_version_alert(WEBPHYSIOLOGY_VERSION, True);  // 1.4.0
-	// asterisk - add previous version alert 
-	echo portfolio_version_alert('1.3.2', True);
-	echo portfolio_version_alert('1.3.1', True);
-	echo portfolio_version_alert('1.3.0', True);
-	echo portfolio_version_alert('1.2.7', True);
-	echo portfolio_version_alert('1.2.4', True);
-	echo portfolio_version_alert('shortcode', False);
 	echo portfolio_version_alert('release_notes', False);
-	echo "				</div>";
-	echo "				<div id='option_comments'>";
-	echo "					<h2>WEBphysiology Portfolio</h2>";
-	echo "					<p>Thank you for using the WEBphysiology Portfolio plugin.  We feel it has a lot of versatility but, like anything, there always is room for improvement.  While our resources are limited, we still welcome your input on new feature suggetions.  Just leave a comment on our <a href='http://refr.us/wpport' title='WEBphysiology Portfolio Plugin Page' target='_blank'>plugin page</a>, which also covers the many features, so, we ask that you please review the materials provided before reaching out for help.  If you have the budget, and want something more, just <a href='http://WEBphysiology.com/contact/' title='Contact WEBphysiology' target='_blank'>give us a shout</a>.  WEBphysiology services include web site design, development and troubleshooting as well as plugin and other related WordPress development.</p>";
-	echo "					<p>Should you have issues of a techincal nature that require assistance, please request help via our <a href='http://refr.us/wphelp' title='WEBphysiology Online Support' target='_blank'>Online Support</a> facility.</p>";
-//	echo "					<p style='margin-bottom: 0;'><strong>Release 1.3.0</strong> : THE SHORTCODE [portfolio] <span style='color:red; font-weight:bold;'>HAS BEEN DEPRECATED</span>. Check your Portfolio pages to ensure you are using the <span style='color:red;'>[webphysiology_portfolio]</span> shortcode.  This change was initially announced in release 1.2.4 but not implemented until this version.  The change was to further isolate contentions with other plugins that might utilize the same shortcode.</p>";
-//	echo "					<p style='margin-bottom: 0;'><strong>Release 1.4.0</strong> : This release brings with it a couple of significant items:";
-//	echo "						<ul style='list-style:square;margin-left:25px;'>";
-//	echo "							<li>A basic, individual Portfolio post page: The WEBphysiology Portfolio plugin does not limit portfolios from showing up in search results.  This is all fine-and-dandy except that, until now, the WEBphysiology Portfolio plugin also did not support viewing a portfolio record on its own, which would result in a 404 page if a Portfolio was clicked from the search results. Not anymore! Styling is basic and similar to a portfolio entry.</li>";
-//	echo "							<li>PageSeeker.com Support: This is a thumbnail generation service that will take a supplied URL and return a thumbnail of that page. This adds a second such service to our plugin, providing a choice for auto-generating site thumbnails.</li>";
-//	echo "						</ul>";
-//	echo "					</p>";
-//	echo "					<p style='margin-bottom: 0;'><strong>Release 1.4.1</strong> : This release brings with it a couple of significant items:";
-//	echo "						<ul style='list-style:square;margin-left:25px;'>";
-//	echo "							<li>The individual Portfolio template, single-webphys_portfolio.php, now is overridable, allowing a user to create a theme based template.</li>";
-//	echo "							<li>True support for Portfolio tags has been added and any existing post tags have been shifted into the new Portfolio tag taxonomy. The option to exclude Portfolio tags from the standard Tag Cloud widget is available.</li>";
-//	echo "							<li>A Portfolio Tag Cloud widget has been added.</li>";
-//	echo "						</ul>";
-//	echo "					</p>";
-//	echo "					<p style='margin-bottom: 0;'><strong>Release 1.4.2</strong> : This release brings with it some items of note:";
-//	echo "						<ul style='list-style:square;margin-left:25px;'>";
-//	echo "							<li>TimThumb PHP code has been removed and built-in WordPress graphic management has been utilized in its place.</li>";
-//	echo "							<li>Added the ability to crop and restrict the height of built-in generated thumbnails.</li>";
-//	echo "							<li>Added the ability to put a hard limit on the number of Portfolio items returned by adding a 'limit' parameter to the shortcode.</li>";
-//	echo "						</ul>";
-//	echo "					</p>";
-	echo "					<p style='margin-bottom: 0;'><strong>Release 1.4.6</strong> : This release brings with it some items of note:";
-	echo "						<ul style='list-style:square;margin-left:25px;'>";
-	echo "							<li>The ability to change the default slug, webphys_portfolio. Useful if a user lands on an individual portfolio page.</li>";
-	echo "							<li>Corrected a contention between the use of a thickbox in our plugin and WP eCommerce's use of thickboxes.</li>";
-	echo "							<li>ShrinkTheWeb no longer requires the middle page for non-Pro accounts, so, we have reverted back to the STW API that allows local caching of images and links directly to the site.</li>";
-	echo "							<li>The option to turn on the narrowing of the portfolio for mobile devices has been made available (off by default).</li>";
-	echo "						</ul>";
-	echo "					</p>";
-	echo "				</div>";
+	echo portfolio_version_alert('shortcode', False);
+	echo '					</div>' . "\n";
+	echo '				</div>' . "\n";
 	echo portfolio_admin_section_wrap('bottom', null, null);
 	echo '						<div class="submit top portfolio_button">' . "\n";
 	echo '							<input type="submit" class="button-primary" name="Save" value="Save Portfolio Settings" id="submitbutton" />' . "\n";
@@ -1053,7 +1072,7 @@ function portfolio_plugin_page() {
 	echo '							<label for="' . $stw_ak . '">Access key:</label><input type="text" id="' . $stw_ak . '" name="' . $stw_ak . '" value="' . $opt_val_stw_ak . '" />&nbsp;&nbsp;&nbsp;' . "\n";
 	echo '							<label for="' . $stw_sk . '">Secret key:</label><input type="password" id="' . $stw_sk . '" name="' . $stw_sk . '" value="' . $opt_val_stw_sk . '" /><br />' . "\n";
 	echo '							<span class="attribute_instructions">Get your own <a href="http://www.shrinktheweb.com">Website Preview from ShrinkTheWeb</a></span><br />' . "\n";
-	echo '							<span class="attribute_instructions" style="line-height:2.5em;"><strong>NOTE:</strong> ShrinkTheWeb.com Basic/Plus version with Pro features are needed to display inner pages of a website and to display a ShrinkTheWeb.com generated thumbnail in a thickbox.</span><br />' . "\n";
+	echo '							<span class="attribute_instructions" style="line-height:2.5em;"><strong>NOTE:</strong> ShrinkTheWeb.com Basic/Plus version with Pro features are needed to display inner pages of a website.</span><br />' . "\n";
 	echo '						</div>';
 	echo '						<div id="pp_settings" style="margin-left:30px;' . $pp_display . '">PagePeeker Settings: ';
 	echo '							<label for="' . $pp_account . '">Custom Account:</label><input type="text" id="' . $pp_account . '" name="' . $pp_account . '" value="' . $opt_val_pp_account . '" /><br />' . "\n";
@@ -1090,9 +1109,11 @@ function portfolio_plugin_page() {
 	echo '							<label for="' . $link_color . '">Portfolio Nav color:</label><input type="text" id="' . $link_color . '" name="' . $link_color . '" value="' . $opt_val_link_color . '" class="webphysiology_portfolio_small_input" /><span style="color:' . $opt_val_link_color . ';margin-left:10px;">link color</span><br /><span class="attribute_instructions">note: this is the color of the page navigation numbers</span><br class="tallbottom" />' . "\n";
 	echo '							<label for="' . $odd_stripe_color . '">Portfolio odd stripe background color:</label><input type="text" id="' . $odd_stripe_color . '" name="' . $odd_stripe_color . '" value="' . $opt_val_odd_stripe_color . '" class="webphysiology_portfolio_small_input" /><span style="background-color:' . $opt_val_odd_stripe_color . ';margin-left:10px;">odd stripe color</span><br />' . "\n";
 	echo '							<label for="' . $even_stripe_color . '">Portfolio even stripe background color:</label><input type="text" id="' . $even_stripe_color . '" name="' . $even_stripe_color . '" value="' . $opt_val_even_stripe_color . '" class="webphysiology_portfolio_small_input" /><span style="background-color:' . $opt_val_even_stripe_color . ';margin-left:10px;">even stripe color</span><br/>' . "\n";
-
-
-	echo '								<input type="checkbox" id="' . $legacy_even_odd_class . '" name="' . $legacy_even_odd_class . '" value="True" ' . $opt_val_legacy_even_odd_class . '/><label for="' . $legacy_even_odd_class . '">Use legacy "even" / "odd" classes on portfolio items and "top" / "bottom" classes on nav elements</label>&nbsp;&nbsp;&nbsp;' . "\n"; //<br/>' . "\n";
+	echo '						<label for="' . $custom_css_url . '">Custom CSS URL:</label><input type="text" id="' . $custom_css_url . '" name="' . $custom_css_url . '" value="' . $opt_val_custom_css_url . '" class="shortbottom" style="width: 75%;" /><br /><span class="attribute_instructions">note: url should be a complete path to your custom stylesheet and should be a properly defined CSS stylesheet</span><br class="tallbottom" />' . "\n";
+	echo '								<input type="checkbox" id="' . $legacy_even_odd_class . '" name="' . $legacy_even_odd_class . '" value="True" ' . $opt_val_legacy_even_odd_class . '/><label for="' . $legacy_even_odd_class . '">Use legacy "even" / "odd" classes on portfolio items and "top" / "bottom" classes on nav elements</label><br /><br/>' . "\n";
+	echo '						<div style="margin-left: 10px;">Use the following links to see the styling being used.  This is handy if you are going to turn off the included<br />Portfolio styling, or want to see what it is so you can adjust it:</div><br />' . "\n";
+	echo						portfolio_version_alert('portfolio_plugin_css', False);
+	echo						portfolio_version_alert('current_embedded_styling', False);
 	echo '						</div>' . "\n";
 	echo '						<div id="color-selection-helper"">' . "\n";
 	echo '							<p>color selection helper</p>' . "\n";
@@ -1123,12 +1144,13 @@ function portfolio_plugin_page() {
 	echo '					<input type="button" class="button" name="Default" value="Revert to Default Values" id="resetbutton" onClick="reset_to_default(this.form)" />' . "\n";
 	echo '				</div>' . "\n";
 	echo '				<input id="reset_form" name="reset_form" type="hidden" value="False" />' . "\n";
-	echo '			</form>' . "\n";
-	echo '			<form action="https://www.paypal.com/cgi-bin/webscr" method="post" class="portfolio_donate">' . "\n";
-	echo '				<input type="hidden" name="cmd" value="_s-xclick">' . "\n";
-	echo '				<input type="hidden" name="hosted_button_id" value="G6YDH57GS9PCJ">' . "\n";
-	echo '				<input style="background:none . "\n";border:none . "\n";" type="image" src="https://www.paypal.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">' . "\n";
-	echo '				<img alt="" border="0" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1">' . "\n";
+	echo '				<form action="https://www.paypal.com/cgi-bin/webscr" method="post" class="portfolio_donate">' . "\n";
+	echo '					<input type="hidden" name="cmd" value="_s-xclick">' . "\n";
+	echo '					<input type="hidden" name="hosted_button_id" value="G6YDH57GS9PCJ">' . "\n";
+	echo '					<input style="background:none . "\n";border:none . "\n";" type="image" src="https://www.paypal.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">' . "\n";
+	echo '					<img alt="" border="0" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1">' . "\n";
+	echo '				</form>' . "\n";
+	echo '				<div style="clear:both;"></div>';
 	echo '			</form>' . "\n";
 	echo '			</div> <!-- <div class="meta-box-sortables"> -->' . "\n";
 	echo '		</div> <!-- <div class="metabox-holder"> -->' . "\n";
@@ -1180,9 +1202,15 @@ function check_options() {
 	
 	// ASTERISK = make certain to update this with new releases //
 	// check the most recently added option, if it doesn't exist then pass down through all of them and add any that are missing
-	$return = get_option('webphysiology_portfolio_overall_mobile_width');
+	$return = get_option('webphysiology_portfolio_custom_css_url');
 	
 	if ( empty($return) ) {
+		
+		// added in v1.4.7
+		$return = get_option('webphysiology_portfolio_custom_css_url');
+		if ( empty($return) ) {
+			add_option("webphysiology_portfolio_custom_css_url", ''); // This is the default value for the custom css url
+		}
 		
 		// added in v1.4.6
 		$return = get_option('webphysiology_portfolio_mobile_styling');
@@ -1402,6 +1430,7 @@ function portfolio_install() {
 		add_option("webphysiology_portfolio_display_siteurl", 'True'); // This is the default value for whether to display the site URL
 		add_option("webphysiology_portfolio_display_tech", 'True'); // This is the default value for whether to display the technical data
 		add_option("webphysiology_portfolio_missing_image_url", 'images/empty_window.png'); // This is the default value for the missing image url
+		add_option("webphysiology_portfolio_custom_css_url", ''); // This is the default value for the custom stylesheet url
 		add_option("webphysiology_portfolio_allowed_image_sites",""); // This is the default value for the allowed image sites
 		add_option("webphysiology_portfolio_crop_thumbnail", 'False'); // This is the default value for whether to crop thumbnail images
 		add_option("webphysiology_portfolio_mobile_styling", 'False'); // This is the default value for whether to enable the styling changes for mobile devices
@@ -1467,6 +1496,7 @@ function portfolio_remove() {
 		delete_option('webphysiology_portfolio_display_siteurl');
 		delete_option('webphysiology_portfolio_display_tech');
 		delete_option('webphysiology_portfolio_missing_image_url');
+		delete_option('webphysiology_portfolio_custom_css_url');
 		delete_option('webphysiology_portfolio_allowed_image_sites');
 		delete_option('webphysiology_portfolio_crop_thumbnail');
 		delete_option('webphysiology_portfolio_mobile_styling');
@@ -1973,17 +2003,18 @@ function add_new_portfolio_columns($columns) {
 		$tech = 'Technical Details';
 	}
 	
-	// perhaps update column names (e.g., _clientname) to make them more unique (e.g., _webphys_clientname)
+	// a new array is being used to replace the default $columns array
 	
 	// note: columns in the listing are ordered in line with where they are created below
 	$new_columns['title'] = _x('Portfolio Name', 'column name');
+	$new_columns['_webphys_portfolio_type'] = _x( $type, 'column name' );
+	$new_columns['_sortorder'] = _x( 'Sort Order', 'column name' );
 	$new_columns['_createdate'] = _x( $createdate, 'column name' );
 	$new_columns['_clientname'] = _x( $clientname, 'column name' );
 	$new_columns['_technical_details'] = _x( $tech, 'column name' );
 	$new_columns['_siteurl'] = _x( $siteURL, 'column name' );
-	$new_columns['_webphys_portfolio_type'] = _x( $type, 'column name' );
-	$new_columns['_sortorder'] = _x( 'Sort Order', 'column name' );
 	$new_columns['date'] = _x('Create Date', 'column name');
+	$new_columns['author'] = _x('Author', 'column name');
 	$new_columns['id'] = __('ID');
 
 	return $new_columns;
@@ -2047,6 +2078,48 @@ function manage_portfolio_columns($column_name, $id) {
 	default:
 		break;
 	} // end switch
+	
+}
+
+// Register the column as sortable
+function portfolio_column_register_sortable( $columns ) {
+	
+    $columns['_webphys_portfolio_type'] = '_webphys_portfolio_type';
+    $columns['_sortorder'] = '_sortorder';
+    return $columns;
+	
+}
+function sortorder_column_orderby( $vars ) {
+	
+	if (isset( $vars['orderby'] )) {
+		
+		$sort_type = 'meta_value';
+		
+		switch ( $vars['orderby'] ) {
+			
+			case '_sortorder':
+				
+				if ( get_option( 'webphysiology_portfolio_sort_numerically' ) == 'True' ) {
+					$sort_type = 'meta_value_num';
+				}
+				
+				$vars = array_merge( $vars, array(
+					'meta_key' => '_sortorder',
+					'orderby' => $sort_type
+				) );
+				break;
+				
+			case '_webphys_portfolio_type':
+				
+				$vars = array_merge( $vars, array(
+					'meta_key' => '_webphys_portfolio_type',
+					'orderby' => $sort_type
+				) );
+				break;
+		}
+	}
+	
+    return $vars;
 	
 }
 
@@ -2172,14 +2245,32 @@ function portfolio_version_alert($alert_ver,$spacer) {
 			
 		case 'shortcode':
 			
-			$html .= '		<div style="margin-bottom: 10px;"><a class="iframe_msg" href="' . plugin_dir_url(__FILE__) . 'shortcode_help.html">Shortcode Help</a></div>' . "\n";		
+			$html .= '		<div><a class="iframe_msg" href="' . plugins_url('shortcode_help.html', __FILE__) . '">Shortcode Help</a></div>' . "\n";		
 			$space = $spacer;
 			
 			break;
 			
 		case 'release_notes':
 			
-			$html .= '		<div><a href="http://webphysiology.com/plugins/webphysiology-portfolio-plugin/#updates" title="WEBphysiology Portfolio Release Notes" target="_blank">All Release Notes</a></div>' . "\n";		
+			$html .= '		<div><a href="http://webphysiology.com/plugins/webphysiology-portfolio-plugin/#updates" title="WEBphysiology Portfolio Release Notes" target="_blank">All Version Release Notes</a></div>' . "\n";		
+			$space = $spacer;
+			
+			break;
+		
+		case 'current_embedded_styling':
+			
+			$html .= '		<a class="alert_text" href="#current_embedded_styling" style="margin-left: 3em;">Currently saved Dynamic CSS</a>' . "\n";
+			$html .= '		<div style="display: none;">' . "\n";
+			$html .= '			<div id="current_embedded_styling">' . "\n";
+			$html .=			webphys_pop_css() . "\n";
+			$html .= '			</div>' . "\n";
+			$html .= '		</div>' . "\n";
+			
+			break;
+			
+		case 'portfolio_plugin_css':
+			
+			$html .= '		<div style="margin-bottom: 10px; margin-left: 3em;"><a class="iframe_msg" href="' . plugins_url('css/portfolio.css', __FILE__) . '">Standard Portfolio CSS</a></div>' . "\n";		
 			$space = $spacer;
 			
 			break;
@@ -2193,6 +2284,13 @@ function portfolio_version_alert($alert_ver,$spacer) {
 	return $html;
 	
 }
+
+function webphys_pop_css() {
+	
+	return set_portfolio_css();
+	
+}
+
 
 // test for whether a hook should be applied or not
 function portfolio_apply_hook( $query, $hook ) {
@@ -2506,6 +2604,8 @@ class webphys_portfolio_widget extends WP_Widget {
 		extract( $args );
 		
 		$title = apply_filters( 'widget_title', $instance['title'] );
+		$format_type = apply_filters( 'widget_title', $instance['format_type'] );
+		if ( empty($format_type) ) { $format_type = 'flat'; } 
 		
 		echo $before_widget;
 		
@@ -2513,7 +2613,12 @@ class webphys_portfolio_widget extends WP_Widget {
 			echo $before_title . $title . $after_title;
 		}
 		
-		wp_tag_cloud(array('taxonomy' => 'webphys_portfolio_tag'));
+		if ($format_type != 'list') {
+			wp_tag_cloud(array('taxonomy' => 'webphys_portfolio_tag'));
+		} else {
+			// if we are displaying a list as opposed to a cloud, even out the sizes of each item
+			wp_tag_cloud(array('taxonomy' => 'webphys_portfolio_tag', 'format' => $format_type, 'smallest' => '1', 'largest' => '1', 'unit' => 'em'));
+		}
 		
 		echo $after_widget;
 		
@@ -2524,6 +2629,7 @@ class webphys_portfolio_widget extends WP_Widget {
 		
 		$instance = $old_instance;
 		$instance['title'] = strip_tags($new_instance['title']);
+		$instance['format_type'] = strip_tags($new_instance['format_type']);
 		return $instance;
 		
 	}
@@ -2533,13 +2639,21 @@ class webphys_portfolio_widget extends WP_Widget {
 		
 		if ( $instance ) {
 			$title = esc_attr( $instance[ 'title' ] );
+			$format_type = esc_attr( $instance[ 'format_type' ] );
 		} else {
 			$title = __( 'Portfolio Tags', 'text_domain' );
+			$format_type = 'flat';
 		}
+		if ( empty($format_type) ) { $format_type = 'flat'; }
+		
 		?>
 		<p>
 		<label for="<?php echo $this->get_field_id('title'); ?>"><?php _e('Title:'); ?></label> 
 		<input class="widefat" id="<?php echo $this->get_field_id('title'); ?>" name="<?php echo $this->get_field_name('title'); ?>" type="text" value="<?php echo $title; ?>" />
+		</p>
+        <p>Format:
+		<input type="radio" id="rb_flat" name="<?php echo $this->get_field_name('format_type'); ?>" value="flat" <?php if ($format_type == 'flat') {?> checked="checked"<?php } ?>/><label for="rb_flat"> Flat (cloud)</label>&nbsp;&nbsp;&nbsp;
+		<input type="radio" id="rb_list" name="<?php echo $this->get_field_name('format_type'); ?>" value="list" <?php if ($format_type == 'list') {?> checked="checked"<?php } ?>/><label for="rb_flat"> List</label><br />
 		</p>
 		<?php 
 	}
@@ -2573,7 +2687,7 @@ function get_webphys_port_options() {
 }
 
 // if we are on a post or a page with the webphysiology_portfolio shortcode in the content then carry off certain actions
-function has_shortcode() {
+function webphys_has_shortcode() {
 	
 	$cont = "";
 	
@@ -2655,13 +2769,15 @@ function webphys_portfolio_post_template_include($incFile) {
 
 if(!function_exists('prepare_portfolio')) {
 function prepare_portfolio() {
-		use_googleapis_jquery();
-		use_fancybox_styling();
-		set_base_portfolio_css();
-		deregister_competing_plugin_styles();
-		add_action('wp_head', 'set_portfolio_css'); // we are already in wp_print_styles, so, calling this in wp_head
-		add_action('wp_print_scripts', 'set_stw_nopro_script');
-		add_action('wp_print_scripts', 'deregister_competing_plugin_scripts');
+	
+	use_googleapis_jquery();
+	use_fancybox_styling();
+	set_base_portfolio_css();
+	deregister_competing_plugin_styles();
+	add_action('wp_head', 'set_portfolio_css'); // we are already in wp_print_styles, so, calling this in wp_head
+	add_action('wp_print_scripts', 'set_stw_nopro_script');
+	add_action('wp_print_scripts', 'deregister_competing_plugin_scripts');
+	
 }
 }
 
@@ -3335,6 +3451,11 @@ function set_base_portfolio_css() {
 		wp_enqueue_style('portfolio_css');
 	}
 	
+	if ( $custom_css_url = get_option('webphysiology_portfolio_custom_css_url') ) {
+		wp_register_style('portfolio_custom_css', $custom_css_url);
+		wp_enqueue_style('portfolio_custom_css');
+	}
+	
 }
 
 function set_portfolio_css() {
@@ -3342,6 +3463,18 @@ function set_portfolio_css() {
 	$portfolio_css_on = get_option('webphysiology_portfolio_use_css');
 	
 	if (is_wp_error($portfolio_css_on) || $portfolio_css_on=='True') {
+		
+		if ( ! is_admin() ) {
+			$style_open = '<style type="text/css" id="webphysiology_portfolio_embedded_css">';
+			$style_open_mobile = '<style type="text/css" id="webphysiology_portfolio_embedded_mobile_css">';
+			$style_close = '</style>';
+			$line_break = "\n";
+		} else {
+			$style_open = '&lt;style type="text/css" id="webphysiology_portfolio_embedded_css"&gt;<br />';
+			$style_open_mobile = '&lt;style type="text/css" id="webphysiology_portfolio_embedded_mobile_css"&gt;<br />';
+			$style_close = '<br />&lt;/style&gt;<br />';
+			$line_break = '<br />';
+		}
 		
 		$gridstyle = 'webphysiology_portfolio_gridstyle'; // default false
 		$gridcolor = 'webphysiology_portfolio_gridcolor'; // default #eee
@@ -3387,91 +3520,114 @@ function set_portfolio_css() {
 		$meta_value_width_mobile = $detail_width_mobile;
 		$single_details_width_mobile = $detail_width_mobile + 10;
 		
-		$embedded_css = "\n" .
-						'<style type="text/css" id="webphysiology_portfolio_embedded_css">' . "\n" .
-						'    .webphysiology_portfolio, #webphysiology_portfolio.single_portfolio_page {	' . "\n" .
-						'        width: ' . $opt_val_overall_width . 'px;' . "\n" .
-						'    }' . "\n" .
-						'    .webphysiology_portfolio ' . $class . ' {' . "\n" .
-						'        width: ' . $detail_width . 'px;' . "\n" .
-						'    }' . "\n" .
-						'     #webphysiology_portfolio.single_portfolio_page .portfolio_details {' . "\n" .
-						'        width: ' . $single_details_width . 'px;' . "\n" .
-						'    }' . "\n" .
-						'    .webphysiology_portfolio .portfolio_page_img {' . "\n" .
-						'        width: ' . $overall_image_width . 'px;' . "\n" .
-						'    }' . "\n" .
-						'    .webphysiology_portfolio .grid .portfolio_page_img {' . "\n" .
-						'        width: ' . $detail_width . 'px;' . "\n" .
-						'    }' . "\n" .
-						'    .webphysiology_portfolio .portfolio_page_img img {' . "\n" .
-						'        width: ' . $opt_val_img_width . 'px;' . "\n" .
-						'        max-width: ' . $opt_val_img_width . 'px;' . "\n" .
-						'    }' . "\n" .
-						'    .webphysiology_portfolio .portfolio_meta .key, #webphysiology_portfolio.single_portfolio_page .portfolio_meta .key {' . "\n" .
-						'    	width: ' . $opt_val_meta_key_width . 'px;' . "\n" .
-						'    }' . "\n" .
-						'    .webphysiology_portfolio .portfolio_meta .value, #webphysiology_portfolio.single_portfolio_page .portfolio_meta .value {' . "\n" .
-						'        width: ' . $meta_value_width . 'px;' . "\n" .
-						'    }' . "\n" .
-						'    .webphysiology_portfolio ul.grid {' . "\n" .
-						'    	background-color: ' . $opt_val_gridcolor . ';' . "\n" .
-						'    }' . "\n" .
-						'    .webphysiology_portfolio .portfolio_title h1, .webphysiology_portfolio .portfolio_title h2 {' . "\n" .
-						'        color: ' . $opt_val_header_color . ';' . "\n" .
-						'    }' . "\n" .
-						'    .webphysiology_portfolio .portfolio_nav a {' . "\n" .
-						'        color: ' . $opt_val_link_color . ';' . "\n" .
-						'    }' . "\n" .
-						'    .webphysiology_portfolio .portfolio_entry {' . "\n" .
-						'        background-color: ' . $opt_val_even_stripe_color . ';' . "\n" .
-						'    }' . "\n" .
-						'    .webphysiology_portfolio .portfolio_entry.webphysport_odd_stripe {' . "\n" .
-						'        background-color: ' . $opt_val_odd_stripe_color . ';' . "\n" .
-						'    }' . "\n" .
-						'</style>' . "\n";
-		if ($opt_val_mobile_styling) {
-		$embedded_css =	$embedded_css .
-						'<style type="text/css" id="webphysiology_portfolio_embedded_mobile_css">' . "\n" .
-						'    @media only screen and (min-device-width: 320px) and (max-device-width: 480px) {' . "\n" .
-						'        .webphysiology_portfolio, #webphysiology_portfolio.single_portfolio_page {	' . "\n" .
-						'            width: ' . $opt_val_overall_mobile_width . 'px;' . "\n" .
-						'        }' . "\n" .
-						'        .webphysiology_portfolio ' . $class . ' {' . "\n" .
-						'            width: ' . $detail_width_mobile . 'px;' . "\n" .
-						'        }' . "\n" .
-						'        #webphysiology_portfolio.single_portfolio_page .portfolio_details {' . "\n" .
-						'            width: ' . $single_details_width_mobile . 'px;' . "\n" .
-						'        }' . "\n" .
-						'        .webphysiology_portfolio .portfolio_page_img {' . "\n" .
-						'            width: ' . $detail_width_mobile . 'px;' . "\n" .
-						'            margin-left: ' . $detail_img_margin_mobile . 'px;' . "\n" .
-						'        }' . "\n" .
-						'        .webphysiology_portfolio .grid .portfolio_page_img {' . "\n" .
-						'            width: ' . $detail_width_mobile . 'px;' . "\n" .
-						'        }' . "\n" .
-						'        .webphysiology_portfolio .portfolio_meta .value, #webphysiology_portfolio.single_portfolio_page .portfolio_meta .value {' . "\n" .
-						'            width: ' . $meta_value_width_mobile . 'px;' . "\n" .
-						'        }' . "\n" .
-						'    }' . "\n" .
-						'</style>' . "\n";
+		if ( ! is_admin() ) {
+			$embedded_css = $line_break . '
+<!-- DYNAMIC STYLING : WEBphysiology Portfolio ' . WEBPHYSIOLOGY_VERSION . ' by http://WEBphysiology.com -->' . $line_break;
+		} else {
+			$embedded_css = $line_break . '
+&lt;!-- DYNAMIC STYLING : WEBphysiology Portfolio ' . WEBPHYSIOLOGY_VERSION . ' by http://WEBphysiology.com --&gt;' . $line_break;
 		}
 		
-		echo "\n";
-		echo "<!-- WEBphysiology Portfolio " . WEBPHYSIOLOGY_VERSION . " by http://WEBphysiology.com -->";
-		echo $embedded_css;
+		$embedded_css .= $line_break .
+						$style_open . $line_break .
+						'    .webphysiology_portfolio, #webphysiology_portfolio.single_portfolio_page {	' . $line_break .
+						'        width: ' . $opt_val_overall_width . 'px;' . $line_break .
+						'    }' . $line_break .
+						'    .webphysiology_portfolio ' . $class . ' {' . $line_break .
+						'        width: ' . $detail_width . 'px;' . $line_break .
+						'    }' . $line_break .
+						'     #webphysiology_portfolio.single_portfolio_page .portfolio_details {' . $line_break .
+						'        width: ' . $single_details_width . 'px;' . $line_break .
+						'    }' . $line_break .
+						'    .webphysiology_portfolio .portfolio_page_img {' . $line_break .
+						'        width: ' . $overall_image_width . 'px;' . $line_break .
+						'    }' . $line_break .
+						'    .webphysiology_portfolio .grid .portfolio_page_img {' . $line_break .
+						'        width: ' . $detail_width . 'px;' . $line_break .
+						'    }' . $line_break .
+						'    .webphysiology_portfolio .portfolio_page_img img {' . $line_break .
+						'        width: ' . $opt_val_img_width . 'px;' . $line_break .
+						'        max-width: ' . $opt_val_img_width . 'px;' . $line_break .
+						'    }' . $line_break .
+						'    .webphysiology_portfolio .portfolio_meta .key, #webphysiology_portfolio.single_portfolio_page .portfolio_meta .key {' . $line_break .
+						'    	width: ' . $opt_val_meta_key_width . 'px;' . $line_break .
+						'    }' . $line_break .
+						'    .webphysiology_portfolio .portfolio_meta .value, #webphysiology_portfolio.single_portfolio_page .portfolio_meta .value {' . $line_break .
+						'        width: ' . $meta_value_width . 'px;' . $line_break .
+						'    }' . $line_break .
+						'    .webphysiology_portfolio ul.grid {' . $line_break .
+						'    	background-color: ' . $opt_val_gridcolor . ';' . $line_break .
+						'    }' . $line_break .
+						'    .webphysiology_portfolio .portfolio_title h1, .webphysiology_portfolio .portfolio_title h2 {' . $line_break .
+						'        color: ' . $opt_val_header_color . ';' . $line_break .
+						'    }' . $line_break .
+						'    .webphysiology_portfolio .portfolio_nav a {' . $line_break .
+						'        color: ' . $opt_val_link_color . ';' . $line_break .
+						'    }' . $line_break .
+						'    .webphysiology_portfolio .portfolio_entry {' . $line_break .
+						'        background-color: ' . $opt_val_even_stripe_color . ';' . $line_break .
+						'    }' . $line_break .
+						'    .webphysiology_portfolio .portfolio_entry.webphysport_odd_stripe {' . $line_break .
+						'        background-color: ' . $opt_val_odd_stripe_color . ';' . $line_break .
+						'    }' . $line_break .
+						$style_close . $line_break;
+		
+		if ($opt_val_mobile_styling) {
+		$embedded_css .= $style_open_mobile . $line_break .
+						'    @media only screen and (min-device-width: 320px) and (max-device-width: 480px) {' . $line_break .
+						'        .webphysiology_portfolio, #webphysiology_portfolio.single_portfolio_page {	' . $line_break .
+						'            width: ' . $opt_val_overall_mobile_width . 'px;' . $line_break .
+						'        }' . $line_break .
+						'        .webphysiology_portfolio ' . $class . ' {' . $line_break .
+						'            width: ' . $detail_width_mobile . 'px;' . $line_break .
+						'        }' . $line_break .
+						'        #webphysiology_portfolio.single_portfolio_page .portfolio_details {' . $line_break .
+						'            width: ' . $single_details_width_mobile . 'px;' . $line_break .
+						'        }' . $line_break .
+						'        .webphysiology_portfolio .portfolio_page_img {' . $line_break .
+						'            width: ' . $detail_width_mobile . 'px;' . $line_break .
+						'            margin-left: ' . $detail_img_margin_mobile . 'px;' . $line_break .
+						'        }' . $line_break .
+						'        .webphysiology_portfolio .grid .portfolio_page_img {' . $line_break .
+						'            width: ' . $detail_width_mobile . 'px;' . $line_break .
+						'        }' . $line_break .
+						'        .webphysiology_portfolio .portfolio_meta .value, #webphysiology_portfolio.single_portfolio_page .portfolio_meta .value {' . $line_break .
+						'            width: ' . $meta_value_width_mobile . 'px;' . $line_break .
+						'        }' . $line_break .
+						'    }' . $line_break .
+						$style_close . $line_break;
+		}
 		
 		$css = plugins_url('css/', __FILE__);
 		
 		// note: wp_enqueue_style does not support conditional stylesheets at this time
 		
-		echo "\n";
-		echo '<!--[if lte IE 8]>' . "\n";
-		echo '	<link rel="stylesheet" id="webphysiology_portfolio_ie_adjustment_css" type="text/css" href="' . $css . 'portfolio_lte_ie8.css" />' . "\n";
-		echo '<![endif]-->' . "\n";
-		echo '<!--[if lte IE 7]>' . "\n";
-		echo '	<link rel="stylesheet" id="webphysiology_portfolio_ie_adjustment_css" type="text/css" href="' . $css . 'portfolio_lte_ie7.css" />' . "\n";
-		echo '<![endif]-->' . "\n";
+		if ( ! is_admin() ) {
+			
+			$embedded_css .= '
+<!--[if lte IE 8]>' . "\n" . '
+<link rel="stylesheet" id="webphysiology_portfolio_ie_adjustment_css" type="text/css" href="' . $css . 'portfolio_lte_ie8.css" />' . "\n" . '
+<![endif]-->' . "\n" . '
+<!--[if lte IE 7]>' . "\n" . '
+	<link rel="stylesheet" id="webphysiology_portfolio_ie_adjustment_css" type="text/css" href="' . $css . 'portfolio_lte_ie7.css" />' . "\n" . '
+<![endif]-->' . "\n" . "\n" . "\n";
+		
+		} else {
+			
+			$embedded_css .= '&lt;!--[if lte IE 8]&gt;<br />
+&lt;link rel="stylesheet" id="webphysiology_portfolio_ie_adjustment_css" type="text/css" href="' . $css . 'portfolio_lte_ie8.css" /&gt;<br />
+&lt;![endif]--&gt;<br />
+&lt;!--[if lte IE 7]&gt;<br />
+	&lt;link rel="stylesheet" id="webphysiology_portfolio_ie_adjustment_css" type="text/css" href="' . $css . 'portfolio_lte_ie7.css" /&gt;<br />
+&lt;![endif]--&gt;<br />';
+		
+		}
+		
+		if ( ! is_admin() ) {
+			echo $embedded_css;
+		} else {
+			return $embedded_css;
+		}
 	}
 }
 

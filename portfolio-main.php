@@ -2,7 +2,7 @@
 /*
 Plugin Name: WEBphysiology Portfolio
 Plugin URI: http://webphysiology.com/redir/webphysiology-portfolio/
-Version: 1.4.6
+Version: 1.4.7
 Description: Provides a clean Portfolio listing with image, details and portfolio type taxonomy. A [portfolio] shortcode is used to include the portfolio on any page.
 Author: Jeff Lambert
 Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
@@ -41,6 +41,11 @@ Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 
 /*  UPDATES
 	
+	1.4.7 - * Added the ability to sort the Portfolio admin listing by Portfolio Type and Sort Order.
+			* Added the ability to specify a list styled Portfolio Tag cloud.
+			* Deprecated the has_shortcode function by renaming it to webphys_has_shortcode.
+			* Added the ability to specify a stylesheet that will be referenced after the WEBphysiology Portfolio plugin's stylesheet. Note, this still is before the embedded styling if the plugin styling is being used.
+			* Added links to generate a pop-up thickbox containing the styling from the plugin and plugin settings. Handy if you want to know what to adjust or what exists before turning off the plugin styling.
 	1.4.6 - * ShrinkTheWeb has changed their service such that free accounts can now use the process that allows for local caching instead of having to use stw_pagepix.  This is how it use to be, so, updated code to all work like ShrinkTheWeb pro with regard to not using stw_pagepix and, instead, caching images locally
 			* changed "thickbox" class to "wpp-thickbox" to remove conflict with WP eCommerce plugin, who uses the same class.
 			* added the ability to reduce the portfolio width for mobile devices.  currently basic implementation and is off by default.
@@ -161,10 +166,6 @@ Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
     
 */
 
-// TimThumb.php was utilized in order to resize the uploaded site images for display as "thumbnails" on the portfolio listing.
-// 	Code was also "borrowed" from TimThumb for use in checking the existance of the specified image and replacing it with an "empty" image if it no longer existed.
-//	  http://www.darrenhoyt.com/2008/04/02/timthumb-php-script-released/
-
 // the "fancybox" jQuery code was utilized in this plugin in order to allow for a nicer, more modern display of the fullsize image.  http://fancybox.net/
 
 // thanks also to http://www.webmaster-source.com/2010/01/08/using-the-wordpress-uploader-in-your-plugin-or-theme/ for getting me on the road to adding the upload image feature
@@ -178,6 +179,9 @@ Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 
 /**********
 // ASTERISK - future tasks
+
+//			* TODO ASTERISK TODO In addition, a feature to spit out the current set of portfolio CSS is available should you simply want to copy it, turn off the use of portfolio styling and use the output as the starting point of your own styling.
+
 // turn into a Class
 // break functionality into separate scripts
 // add ability to include / exlude multiple variations of Portfolio Types
@@ -188,7 +192,7 @@ Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 
 // ASTERISK = make certain to update these as appropriate with new releases //
 
-define ( 'WEBPHYSIOLOGY_VERSION', '1.4.6' );
+define ( 'WEBPHYSIOLOGY_VERSION', '1.4.7' );
 define ( 'WEBPHYSIOLOGY_DB_VERSION', '3.3.2' );
 define ( 'WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE', basename($_SERVER['PHP_SELF']) );
 
@@ -223,6 +227,9 @@ if ( is_admin() ) {
 	add_action('admin_menu', 'remove_post_custom_fields');
 	add_filter('manage_edit-webphys_portfolio_columns', 'add_new_portfolio_columns');
 	add_action('manage_posts_custom_column', 'manage_portfolio_columns', 10, 2);
+	add_filter( 'manage_edit-webphys_portfolio_sortable_columns', 'portfolio_column_register_sortable' );
+//	add_filter( 'manage_edit-post_sortable_columns', 'portfolio_column_register_sortable' );
+	add_filter( 'request', 'sortorder_column_orderby' );
 	add_action('admin_head-edit.php', 'webphysiology_portfolio_quickedit');
 // 12/23/2011 - added back the viewing of a single portfolio record	add_filter('post_row_actions','remove_quick_edit',10,2);
 	 
@@ -275,9 +282,10 @@ if ( is_admin() ) {
 	}
 } else {
 	add_shortcode('webphysiology_portfolio', 'portfolio_loop');
-	add_action ('wp','has_shortcode');
+	add_action ('wp','webphys_has_shortcode');
 	add_filter('query_vars', 'portfolio_queryvars' );
 	add_filter('posts_join', 'portfolio_search_join', 10, 2 );
 	add_filter('posts_where', 'portfolio_search_where', 10, 2 );
 }
+
 ?>

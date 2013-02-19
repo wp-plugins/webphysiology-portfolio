@@ -3,8 +3,8 @@ Contributors: lambje
 Donate link: http://webphysiology.com/redir/webphysiology-portfolio/donate/
 Tags: portfolio,website,image,screenshot,gallery,list,grid,posts,post,custom post type,custom taxonomy,pagepeeker,shrinktheweb,thumbnail,webphysiology
 Requires at least: 3.1.0
-Tested up to: 3.4.2
-Stable tag: 1.4.6
+Tested up to: 3.5.1
+Stable tag: 1.4.7
 
 Allows for the creation of an expanded-list styled or a grid-styled page containing images and supporting detail, perfect for a portfolio presentation.
 
@@ -81,6 +81,13 @@ Try resetting all the options by using the "Revert to Default Values" button at 
 = 1.0.0 was the initial release =
 
 == Changelog ==
+
+= 1.4.7 =
+* Added the ability to sort the Portfolio admin listing by Portfolio Type and Sort Order.
+* Added the ability to specify a list styled Portfolio Tag cloud.
+* Deprecated the has_shortcode function by renaming it to webphys_has_shortcode.
+* Added the ability to specify a stylesheet that will be referenced after the WEBphysiology Portfolio plugin's stylesheet. Note, this still is before the embedded dynamic styling if the plugin styling is being used.
+* Added links to generate a pop-up thickbox containing the styling from the plugin and plugin settings. Handy if you want to know what to adjust or what exists before turning off the plugin styling.
 
 = 1.4.6 =
 * ShrinkTheWeb has changed their service such that free accounts can now use the process that allows for local caching instead of having to use stw_pagepix.  This is how it use to be, so, updated code to all work like ShrinkTheWeb pro with regard to not using stw_pagepix and, instead, caching images locally.
