@@ -240,15 +240,15 @@ input.webphysiology_portfolio_medium_input {
 	
 	-webkit-border-top-left-radius: 90px;
 	-webkit-border-top-right-radius: 3px;
-	-webkit-border-bottom-right-radius: 30px;
+	-webkit-border-bottom-right-radius: 60px;
 	-webkit-border-bottom-left-radius: 3px;
 	-moz-border-radius-topleft: 90px;
 	-moz-border-radius-topright: 3px;
-	-moz-border-radius-bottomright: 30px;
+	-moz-border-radius-bottomright: 60px;
 	-moz-border-radius-bottomleft: 3px;
 	border-top-left-radius: 90px;
 	border-top-right-radius: 3px;
-	border-bottom-right-radius: 30px;
+	border-bottom-right-radius: 60px;
 	border-bottom-left-radius: 3px;
 	
 	background-image: -ms-linear-gradient(top right, #FFFFFF 0%, #FFFC6D 100%);
