@@ -4,7 +4,7 @@ Donate link: http://webphysiology.com/redir/webphysiology-portfolio/donate/
 Tags: portfolio,website,image,screenshot,gallery,list,grid,posts,post,custom post type,custom taxonomy,pagepeeker,shrinktheweb,thumbnail,webphysiology
 Requires at least: 3.1.0
 Tested up to: 3.5.1
-Stable tag: 1.4.7
+Stable tag: 1.4.8
 
 Allows for the creation of an expanded-list styled or a grid-styled page containing images and supporting detail, perfect for a portfolio presentation.
 
@@ -81,6 +81,12 @@ Try resetting all the options by using the "Revert to Default Values" button at 
 = 1.0.0 was the initial release =
 
 == Changelog ==
+
+= 1.4.8 =
+* Added an option to turn off using the plugin's Single portfolio template when one doesn't exist for the theme.
+* Fixed an issue where an externally hosted missing image was throwing a bad path error.
+* Added the ability to turn on debug mode output from an Options setting.
+* Replaced deprecated image_resize function with new WP_Image_Editor class / functions.
 
 = 1.4.7 =
 * Added the ability to sort the Portfolio admin listing by Portfolio Type and Sort Order.

@@ -2,7 +2,7 @@
 /*
 Plugin Name: WEBphysiology Portfolio
 Plugin URI: http://webphysiology.com/redir/webphysiology-portfolio/
-Version: 1.4.7
+Version: 1.4.8
 Description: Provides a clean Portfolio listing with image, details and portfolio type taxonomy. A [portfolio] shortcode is used to include the portfolio on any page.
 Author: Jeff Lambert
 Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
@@ -41,6 +41,10 @@ Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 
 /*  UPDATES
 	
+	1.4.8 - * Added an option to turn off using the plugin's Single portfolio template when one doesn't exist for the theme.
+			* Fixed an issue where an externally hosted missing image was throwing a bad path error.
+			* Added the ability to turn on debug mode output from an Options setting.
+			* Replaced deprecated image_resize function with new WP_Image_Editor class / functions.
 	1.4.7 - * Added the ability to sort the Portfolio admin listing by Portfolio Type and Sort Order.
 			* Added the ability to specify a list styled Portfolio Tag cloud.
 			* Deprecated the has_shortcode function by renaming it to webphys_has_shortcode.
@@ -192,8 +196,8 @@ Author URI: http://webphysiology.com/redir/webphysiology-portfolio/author/
 
 // ASTERISK = make certain to update these as appropriate with new releases //
 
-define ( 'WEBPHYSIOLOGY_VERSION', '1.4.7' );
-define ( 'WEBPHYSIOLOGY_DB_VERSION', '3.3.2' );
+define ( 'WEBPHYSIOLOGY_VERSION', '1.4.8' );
+define ( 'WEBPHYSIOLOGY_DB_VERSION', '3.5.1' );
 define ( 'WEBPHYSIOLOGY_PORTFOLIO_WP_PAGE', basename($_SERVER['PHP_SELF']) );
 
 include_once("function.php");
